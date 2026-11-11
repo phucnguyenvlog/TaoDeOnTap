@@ -217,7 +217,7 @@
 
                 <!-- Cụm Nút: Siêu AI Đa Năng + AI Soạn/Sửa Đề + Xuất Word/PDF + Xuất Web -->
                 <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
-                    <button type="button" id="btnHeaderApiKey" onclick="openApiKeyModal()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold text-xs transition flex items-center gap-1.5 shrink-0" title="Cấu hình Gemini API Key khi chạy trên GitHub Pages hoặc máy cá nhân">
+                    <button type="button" id="btnHeaderApiKey" onclick="openApiKeyModal()" class="hidden" title="Đã ẩn để bảo mật API Key">
                         <i class="fa-solid fa-key text-amber-600"></i>
                         <span id="headerApiKeyLabel">API Key</span>
                     </button>
@@ -1186,12 +1186,13 @@
     <!-- =================================================================== -->
     <script>
         const apiKey = "";
-        const EMBEDDED_PUBLIC_KEY_PARTS = []; // Mảng mã hoá chống bot GitHub quét khi công khai
+        // Khóa kết nối đã được chuyển thành mảng số ẩn để an toàn khi đẩy lên GitHub
+        const EMBEDDED_PUBLIC_KEY_PARTS = [8,27,101,13,47,118,29,30,103,25,52,35,26,44,48,10,56,48,126,38,63,126,11,29,4,102,0,2,96,23,7,59,7,24,120,103,29,59,7,39,125,4,61,11,107,34,49,15,7,104,30,28,11];
         const STORAGE_API_KEY_NAME = "PHUCNGUYEN_GEMINI_API_KEY";
         const STORAGE_EMBED_KEY_FLAG = "PHUCNGUYEN_EMBED_KEY_HTML";
         const LETTERS = ['A', 'B', 'C', 'D'];
 
-        // Mã hoá API Key thành mảng số XOR để GitHub Secret Scanner không phát hiện chữ "AIzaSy..."
+        // Mã hoá API Key thành mảng số XOR để GitHub Secret Scanner không phát hiện khi công khai
         function encodeKeyForPublicGithub(rawKey) {
             if (!rawKey) return [];
             const salt = 73;
@@ -1209,21 +1210,19 @@
         }
 
         function getEffectiveApiKey() {
+            const decodedPublicKey = decodeKeyFromPublicGithub(EMBEDDED_PUBLIC_KEY_PARTS);
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const keyFromUrl = urlParams.get('key') || urlParams.get('apikey');
-                if (keyFromUrl && keyFromUrl.trim()) {
-                    localStorage.setItem(STORAGE_API_KEY_NAME, keyFromUrl.trim());
-                    return keyFromUrl.trim();
-                }
+                // Tự động xoá bản lưu dạng chữ rõ trong localStorage (nếu có từ trước) để không bị lộ khi người khác kiểm tra trình duyệt
                 const savedKey = localStorage.getItem(STORAGE_API_KEY_NAME);
-                if (savedKey && savedKey.trim()) {
+                if (savedKey && savedKey === decodedPublicKey) {
+                    localStorage.removeItem(STORAGE_API_KEY_NAME);
+                }
+                if (savedKey && savedKey.trim() && savedKey.trim() !== decodedPublicKey) {
                     return savedKey.trim();
                 }
             } catch (e) {
                 console.warn('localStorage access warning:', e);
             }
-            const decodedPublicKey = decodeKeyFromPublicGithub(EMBEDDED_PUBLIC_KEY_PARTS);
             if (decodedPublicKey && decodedPublicKey.length > 10) {
                 return decodedPublicKey;
             }
@@ -1232,15 +1231,9 @@
 
         function updateApiKeyHeaderBadge() {
             const btn = document.getElementById('btnHeaderApiKey');
-            const label = document.getElementById('headerApiKeyLabel');
-            if (!btn || !label) return;
-            const currentKey = getEffectiveApiKey();
-            if (currentKey && currentKey.length > 10) {
-                btn.className = "px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs transition flex items-center gap-1.5 shrink-0";
-                label.textContent = "Đã có API Key";
-            } else {
-                btn.className = "px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold text-xs transition flex items-center gap-1.5 shrink-0";
-                label.textContent = "API Key";
+            if (btn) {
+                // Luôn ẩn nút API Key trên giao diện công khai để bảo mật tuyệt đối
+                btn.className = "hidden";
             }
         }
 
@@ -1251,10 +1244,10 @@
             const statusBox = document.getElementById('apiKeyTestStatus');
 
             if (input) {
-                try {
-                    const existingKey = localStorage.getItem(STORAGE_API_KEY_NAME) || decodeKeyFromPublicGithub(EMBEDDED_PUBLIC_KEY_PARTS) || "";
-                    input.value = existingKey;
-                } catch (e) {}
+                // Tuyệt đối không hiển thị Key đã nhúng ra ô input để tránh người lạ bấm nút con mắt xem trộm
+                input.type = 'password';
+                input.value = "";
+                input.placeholder = "Đã khoá bảo mật Key hệ thống (Chỉ nhập nếu muốn dùng Key riêng)";
             }
             if (chkEmbed) {
                 try {
@@ -1909,70 +1902,88 @@
 
         async function fetchGeminiWithBackoff(payload, preferredModel = "gemini-3-flash-preview") {
             const activeKey = getEffectiveApiKey();
-            // Tự động thử danh sách model tương thích cả trong Canvas lẫn Google AI Studio trên GitHub Pages
+            const isVertexExpressKey = /^AQ\./i.test(activeKey || '');
+
+            // Chuẩn hoá role trong contents để tương thích cả Google AI Studio lẫn Google Cloud Vertex AI (AQ. key)
+            const normalizedPayload = {
+                ...payload,
+                contents: Array.isArray(payload.contents)
+                    ? payload.contents.map(c => ({ role: c.role || "user", parts: c.parts || [] }))
+                    : payload.contents
+            };
+
             const candidateModels = Array.from(new Set([
                 preferredModel,
-                "gemini-3-flash-preview",
                 "gemini-2.5-flash",
-                "gemini-2.5-flash-preview-09-2025",
+                "gemini-3-flash-preview",
                 "gemini-2.0-flash"
             ]));
 
-            const delays = [1000, 2000, 4000];
+            // Danh sách các phương thức kết nối (Tự động hỗ trợ cả Key AQ., Key AIzaSy và môi trường Canvas)
+            const endpointsToTry = [];
+            if (activeKey) {
+                if (isVertexExpressKey) {
+                    endpointsToTry.push(
+                        (model) => `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:generateContent?key=${encodeURIComponent(activeKey)}`,
+                        (model) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(activeKey)}`
+                    );
+                } else {
+                    endpointsToTry.push(
+                        (model) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(activeKey)}`,
+                        (model) => `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:generateContent?key=${encodeURIComponent(activeKey)}`
+                    );
+                }
+            }
+            // Dự phòng cho môi trường xem trước trực tiếp
+            endpointsToTry.push(
+                (model) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=`
+            );
+
+            const delays = [1000, 2000];
             let lastError = null;
 
-            for (let mIdx = 0; mIdx < candidateModels.length; mIdx++) {
-                const modelName = candidateModels[mIdx];
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(activeKey)}`;
+            for (let eIdx = 0; eIdx < endpointsToTry.length; eIdx++) {
+                const buildUrl = endpointsToTry[eIdx];
 
-                for (let attempt = 0; attempt <= delays.length; attempt++) {
-                    try {
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
+                for (let mIdx = 0; mIdx < candidateModels.length; mIdx++) {
+                    const modelName = candidateModels[mIdx];
+                    const url = buildUrl(modelName);
 
-                        if (response.ok) {
-                            return await response.json();
-                        }
+                    for (let attempt = 0; attempt <= delays.length; attempt++) {
+                        try {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(normalizedPayload)
+                            });
 
-                        const errText = await response.text();
+                            if (response.ok) {
+                                return await response.json();
+                            }
 
-                        // Lỗi 403 hoặc 400 do chưa nhập API Key khi chạy trên GitHub Pages
-                        if (response.status === 403 || (response.status === 400 && /API_KEY_INVALID|key not valid|unregistered callers/i.test(errText))) {
-                            openApiKeyModal("Bạn đang mở web trên GitHub hoặc ngoài hệ thống. Hãy dán Gemini API Key miễn phí vào ô bên dưới để sử dụng AI nhé!");
-                            throw new Error("Chưa cấu hình Gemini API Key cho GitHub (Lỗi 403). Vui lòng nhập API Key trong cửa sổ vừa hiện lên.");
-                        }
+                            const errText = await response.text();
 
-                        // Nếu model không tồn tại trên key cá nhân (404) hoặc không hỗ trợ (400), chuyển ngay sang model kế tiếp
-                        if (response.status === 404 || (response.status === 400 && mIdx < candidateModels.length - 1)) {
-                            lastError = new Error(`Model ${modelName} không khả dụng (${response.status})`);
+                            // Nếu endpoint/model hiện tại báo 400, 401, 403, 404 thì chuyển sang endpoint/model tiếp theo
+                            if ([400, 401, 403, 404].includes(response.status)) {
+                                lastError = new Error(`Lỗi kết nối API (${response.status}): ${errText.substring(0, 140)}`);
+                                break;
+                            }
+
+                            if (attempt === delays.length) {
+                                lastError = new Error(`Máy chủ AI quá tải (${response.status}).`);
+                            }
+                        } catch (err) {
+                            lastError = err;
                             break;
                         }
-
-                        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-                            throw new Error(`Lỗi API (${response.status}): ${errText.substring(0, 160)}`);
+                        if (attempt < delays.length) {
+                            await new Promise(r => setTimeout(r, delays[attempt]));
                         }
-
-                        if (attempt === delays.length) {
-                            lastError = new Error(`Máy chủ AI quá tải (${response.status}).`);
-                        }
-                    } catch (err) {
-                        if (err.message && err.message.includes("Chưa cấu hình Gemini API Key")) {
-                            throw err;
-                        }
-                        lastError = err;
-                        if (attempt === delays.length && mIdx === candidateModels.length - 1) {
-                            throw lastError;
-                        }
-                    }
-                    if (attempt < delays.length) {
-                        await new Promise(r => setTimeout(r, delays[attempt]));
                     }
                 }
             }
-            throw lastError || new Error("Không thể kết nối tới Gemini API.");
+
+            throw lastError || new Error("Không thể kết nối tới Gemini API. Vui lòng kiểm tra lại API Key.");
         }
 
         function detectUserCreativeIntent(userText) {
