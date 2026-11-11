@@ -24,7 +24,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
     <!-- PDF.js đọc văn bản & quét hình ảnh từng trang PDF (.pdf) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- html2pdf.js xuất đề ôn tập ra file PDF (.pdf) chuẩn A4 -->
+    <!-- html2canvas + jsPDF + html2pdf.js xuất đề ôn tập ra file PDF (.pdf) chuẩn A4 không bị trang trắng -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body {
@@ -3743,14 +3745,210 @@ Trả về đúng cấu trúc JSON:
             return bodyHtml;
         }
 
-        function getSafeExportFileNameSlug() {
-            const slug = (currentExamSource.title || 'De_On_Tap')
+        function getSafeFilenameSlug(rawTitle, defaultFallback = 'de_on_tap') {
+            const slug = String(rawTitle || defaultFallback)
+                .replace(/đ/g, 'd')
+                .replace(/Đ/g, 'D')
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^a-zA-Z0-9]+/g, '_')
+                .replace(/[^a-z0-9]+/gi, '_')
                 .replace(/^_+|_+$/g, '')
                 .toLowerCase();
-            return slug || 'de_on_tap';
+            return slug || defaultFallback;
+        }
+
+        function getSafeExportFileNameSlug() {
+            return getSafeFilenameSlug(currentExamSource.title, 'de_on_tap');
+        }
+
+        function buildCleanPdfBodyHTML(questionsData, includeAnswerKey = true, includeEssayKey = false, highlightInPlace = false) {
+            const listA = questionsData?.listA || [];
+            const listB = questionsData?.listB || [];
+            const listC = questionsData?.listC || [];
+            const examTitle = questionsData?.title || currentExamSource.title || 'ĐỀ ÔN TẬP';
+
+            const baseBlockStyle = "color:#000000 !important; background:#ffffff !important; font-family:'Times New Roman', Times, serif; font-size:12pt; line-height:1.45; box-sizing:border-box;";
+            let blocksHtml = `
+                <div class="pdf-block" style="${baseBlockStyle} text-align:center; margin-bottom:12pt; padding-bottom:6pt; border-bottom:1.5px solid #1e3a8a;">
+                    <div style="font-size:15pt; font-weight:bold; color:#1e3a8a !important; text-transform:uppercase; letter-spacing:0.3px;">
+                        ${examTitle}
+                    </div>
+                </div>
+            `;
+
+            if (listA.length > 0) {
+                blocksHtml += `
+                    <div class="pdf-block" style="${baseBlockStyle} margin-top:6pt; margin-bottom:6pt;">
+                        <div style="font-size:12.5pt; font-weight:bold; color:#1e3a8a !important; text-transform:uppercase;">
+                            A. TRẮC NGHIỆM
+                        </div>
+                    </div>
+                `;
+                listA.forEach(q => {
+                    const opts = (q.options || []).map((o, idx) => {
+                        const letter = LETTERS[idx] || String.fromCharCode(65 + idx);
+                        if (highlightInPlace && o.isCorrect) {
+                            return `<span style="color:#000000 !important;"><b><u>${letter}. ${formatInlineQuestionHTML(o.text)}</u></b></span>`;
+                        }
+                        return `<span style="color:#000000 !important;"><b>${letter}.</b> ${formatInlineQuestionHTML(o.text)}</span>`;
+                    });
+
+                    blocksHtml += `
+                        <div class="pdf-block" style="${baseBlockStyle} margin-bottom:8pt; page-break-inside:avoid;">
+                            <div style="margin:0 0 4pt 0; color:#000000 !important;">
+                                <b>Câu ${q.displayNumber}.</b> ${formatInlineQuestionHTML(q.question)}
+                            </div>
+                            ${q.tableHtml && q.tableHtml.trim() !== "" ? `<div style="margin:6pt 0; color:#000000 !important;">${q.tableHtml}</div>` : ''}
+                            <table style="width:100%; border:none; border-collapse:collapse; margin-top:2pt; color:#000000 !important; background:#ffffff !important;">
+                                <tr>
+                                    <td style="width:50%; border:none; padding:2pt 6pt 2pt 0; vertical-align:top; color:#000000 !important;">${opts[0] || ''}</td>
+                                    <td style="width:50%; border:none; padding:2pt 0 2pt 6pt; vertical-align:top; color:#000000 !important;">${opts[1] || ''}</td>
+                                </tr>
+                                <tr>
+                                    <td style="width:50%; border:none; padding:2pt 6pt 2pt 0; vertical-align:top; color:#000000 !important;">${opts[2] || ''}</td>
+                                    <td style="width:50%; border:none; padding:2pt 0 2pt 6pt; vertical-align:top; color:#000000 !important;">${opts[3] || ''}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    `;
+                });
+            }
+
+            if (listB.length > 0) {
+                blocksHtml += `
+                    <div class="pdf-block" style="${baseBlockStyle} margin-top:10pt; margin-bottom:6pt;">
+                        <div style="font-size:12.5pt; font-weight:bold; color:#1e3a8a !important; text-transform:uppercase;">
+                            B. TRẮC NGHIỆM ĐÚNG SAI
+                        </div>
+                    </div>
+                `;
+                listB.forEach(q => {
+                    const statementsHtml = (q.statements || []).map(st => {
+                        const mark = highlightInPlace ? ` <b>[${st.isTrue ? 'Đúng' : 'Sai'}]</b>` : '';
+                        return `<div style="margin:2.5pt 0 2.5pt 14pt; color:#000000 !important;"><b>${st.label})</b> ${formatInlineQuestionHTML(st.text)}${mark}</div>`;
+                    }).join('');
+
+                    blocksHtml += `
+                        <div class="pdf-block" style="${baseBlockStyle} margin-bottom:8pt; page-break-inside:avoid;">
+                            <div style="margin:0 0 3pt 0; color:#000000 !important;">
+                                <b>Câu ${q.displayNumber}.</b> ${formatInlineQuestionHTML(q.question)}
+                            </div>
+                            ${statementsHtml}
+                        </div>
+                    `;
+                });
+            }
+
+            if (listC.length > 0) {
+                blocksHtml += `
+                    <div class="pdf-block" style="${baseBlockStyle} margin-top:10pt; margin-bottom:6pt;">
+                        <div style="font-size:12.5pt; font-weight:bold; color:#1e3a8a !important; text-transform:uppercase;">
+                            C. CÂU HỎI TỰ LUẬN
+                        </div>
+                    </div>
+                `;
+                listC.forEach(q => {
+                    const subHtml = (q.subQuestions || []).map(sub =>
+                        `<div style="margin:2.5pt 0 2.5pt 14pt; color:#000000 !important;">${formatInlineQuestionHTML(sub)}</div>`
+                    ).join('');
+
+                    blocksHtml += `
+                        <div class="pdf-block" style="${baseBlockStyle} margin-bottom:8pt; page-break-inside:avoid;">
+                            <div style="margin:0 0 3pt 0; color:#000000 !important;">
+                                <b>Câu ${q.displayNumber}.</b> ${formatInlineQuestionHTML(q.question)}
+                            </div>
+                            ${subHtml}
+                        </div>
+                    `;
+                });
+            }
+
+            if (includeAnswerKey || includeEssayKey) {
+                blocksHtml += `
+                    <div class="pdf-block" data-force-new-page="true" style="${baseBlockStyle} text-align:center; margin-top:8pt; margin-bottom:10pt; padding-bottom:6pt; border-bottom:1.5px solid #1e3a8a;">
+                        <div style="font-size:14pt; font-weight:bold; color:#1e3a8a !important; text-transform:uppercase;">
+                            ĐÁP ÁN VÀ HƯỚNG DẪN GIẢI
+                        </div>
+                    </div>
+                `;
+
+                if (includeAnswerKey && listA.length > 0) {
+                    blocksHtml += `
+                        <div class="pdf-block" style="${baseBlockStyle} margin:6pt 0 4pt 0;">
+                            <div style="font-size:12pt; font-weight:bold; color:#1e3a8a !important;">
+                                A. BẢNG ĐÁP ÁN TRẮC NGHIỆM
+                            </div>
+                        </div>
+                    `;
+                    const chunkSize = 10;
+                    for (let i = 0; i < listA.length; i += chunkSize) {
+                        const slice = listA.slice(i, i + chunkSize);
+                        blocksHtml += `
+                            <div class="pdf-block" style="${baseBlockStyle} margin-bottom:8pt;">
+                                <table style="width:100%; border-collapse:collapse; text-align:center; color:#000000 !important; background:#ffffff !important;">
+                                    <tr style="background-color:#dbeafe !important; font-weight:bold;">
+                                        ${slice.map(q => `<td style="border:1px solid #334155; padding:5pt 4pt; color:#000000 !important;">Câu ${q.displayNumber}</td>`).join('')}
+                                    </tr>
+                                    <tr>
+                                        ${slice.map(q => {
+                                            const cIdx = (q.options || []).findIndex(o => o.isCorrect);
+                                            return `<td style="border:1px solid #334155; padding:5pt 4pt; font-weight:bold; color:#b91c1c !important;">${LETTERS[cIdx] || 'A'}</td>`;
+                                        }).join('')}
+                                    </tr>
+                                </table>
+                            </div>
+                        `;
+                    }
+                }
+
+                if (includeAnswerKey && listB.length > 0) {
+                    blocksHtml += `
+                        <div class="pdf-block" style="${baseBlockStyle} margin:8pt 0 6pt 0;">
+                            <div style="font-size:12pt; font-weight:bold; color:#1e3a8a !important; margin-bottom:4pt;">
+                                B. BẢNG ĐÁP ÁN ĐÚNG / SAI
+                            </div>
+                            <table style="width:100%; border-collapse:collapse; text-align:center; color:#000000 !important; background:#ffffff !important;">
+                                <tr style="background-color:#dbeafe !important; font-weight:bold;">
+                                    <td style="border:1px solid #334155; padding:5pt; color:#000000 !important;">Câu</td>
+                                    <td style="border:1px solid #334155; padding:5pt; color:#000000 !important;">Ý a)</td>
+                                    <td style="border:1px solid #334155; padding:5pt; color:#000000 !important;">Ý b)</td>
+                                    <td style="border:1px solid #334155; padding:5pt; color:#000000 !important;">Ý c)</td>
+                                    <td style="border:1px solid #334155; padding:5pt; color:#000000 !important;">Ý d)</td>
+                                </tr>
+                                ${listB.map(q => `
+                                    <tr>
+                                        <td style="border:1px solid #334155; padding:5pt; font-weight:bold; color:#000000 !important;">Câu ${q.displayNumber}</td>
+                                        ${[0, 1, 2, 3].map(idx => {
+                                            const st = (q.statements || [])[idx];
+                                            return `<td style="border:1px solid #334155; padding:5pt; color:#000000 !important;">${st ? (st.isTrue ? '<b>Đúng</b>' : 'Sai') : '-'}</td>`;
+                                        }).join('')}
+                                    </tr>
+                                `).join('')}
+                            </table>
+                        </div>
+                    `;
+                }
+
+                if (includeEssayKey && listC.length > 0) {
+                    blocksHtml += `
+                        <div class="pdf-block" style="${baseBlockStyle} margin:8pt 0 4pt 0;">
+                            <div style="font-size:12pt; font-weight:bold; color:#1e3a8a !important;">
+                                C. GỢI Ý TRẢ LỜI TỰ LUẬN
+                            </div>
+                        </div>
+                    `;
+                    listC.forEach(q => {
+                        blocksHtml += `
+                            <div class="pdf-block" style="${baseBlockStyle} margin-bottom:8pt;">
+                                <div style="font-weight:bold; color:#b91c1c !important; margin-bottom:3pt;">Câu ${q.displayNumber}:</div>
+                                <div style="margin-left:8pt; color:#000000 !important;">${q.suggestedAnswer || '<p><i>(Chưa có gợi ý trả lời)</i></p>'}</div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            return blocksHtml;
         }
 
         function generateAndDownloadWordDoc() {
@@ -3806,63 +4004,207 @@ Trả về đúng cấu trúc JSON:
             showToast("Đã tải xuống file Word (.doc) thành công!");
         }
 
-        async function generateAndDownloadPDFFile() {
+        async function exportToPdfDocument() {
             const btnPdf = document.getElementById('btnExportPdfFile');
-            const bodyHtml = buildFormattedExamDocumentBodyHTML();
+            const orderChoice = document.querySelector('input[name="wordOrderOption"]:checked')?.value || 'original';
+            const includeAnswerAB = document.getElementById('wordOptIncludeAnswerAB').checked;
+            const includeEssayAnswer = document.getElementById('wordOptIncludeEssayAnswer').checked;
+            const highlightInPlace = document.getElementById('wordOptHighlightCorrectInPlace').checked;
 
-            if (!window.html2pdf) {
+            let listA = [];
+            let listB = [];
+            let listC = [];
+
+            if (orderChoice === 'current') {
+                listA = state.partA;
+                listB = state.partB;
+                listC = state.partC;
+            } else {
+                listA = (currentExamSource.mcq || []).map((q, idx) => ({
+                    ...q,
+                    displayNumber: idx + 1,
+                    options: (q.options || []).map((optText, oIdx) => ({
+                        text: optText,
+                        isCorrect: oIdx === q.correctIndex
+                    }))
+                }));
+                listB = (currentExamSource.tf || []).map((q, idx) => ({ ...q, displayNumber: idx + 1 }));
+                listC = (currentExamSource.essay || []).map((q, idx) => ({ ...q, displayNumber: idx + 1 }));
+            }
+
+            const questionsData = {
+                title: currentExamSource.title || 'ĐỀ ÔN TẬP',
+                listA,
+                listB,
+                listC
+            };
+
+            const filename = `${getSafeExportFileNameSlug()}.pdf`;
+            const cleanBlocksHtml = buildCleanPdfBodyHTML(questionsData, includeAnswerAB, includeEssayAnswer, highlightInPlace);
+
+            const h2c = window.html2canvas;
+            const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+
+            if (!h2c || !jsPDFCtor) {
+                if (window.html2pdf) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = cleanBlocksHtml;
+                    await window.html2pdf().from(tempDiv).save(filename);
+                    closeWordExportModal();
+                    return;
+                }
                 printExamAsVectorPDF();
                 return;
             }
 
             if (btnPdf) {
                 btnPdf.disabled = true;
-                btnPdf.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang tạo PDF...</span>`;
+                btnPdf.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang kết xuất PDF...</span>`;
             }
 
-            const wrapper = document.createElement('div');
-            wrapper.style.width = '700px';
-            wrapper.style.padding = '20px 24px';
-            wrapper.style.background = '#ffffff';
-            wrapper.style.color = '#000000';
-            wrapper.style.fontFamily = '"Times New Roman", Times, serif';
-            wrapper.style.fontSize = '12pt';
-            wrapper.style.lineHeight = '1.4';
-            wrapper.innerHTML = `
+            const savedScrollY = window.scrollY || window.pageYOffset || 0;
+            window.scrollTo(0, 0);
+
+            const overlay = document.createElement('div');
+            overlay.id = 'pdfExportStagingOverlay';
+            overlay.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.88); overflow:auto; display:flex; flex-direction:column; align-items:center; padding:16px 0 40px 0;';
+
+            const statusBanner = document.createElement('div');
+            statusBanner.style.cssText = 'position:sticky; top:12px; z-index:100000; background:#1e293b; color:#ffffff; padding:10px 20px; border-radius:9999px; font-family:Inter, sans-serif; font-size:13px; font-weight:700; box-shadow:0 10px 25px rgba(0,0,0,0.4); margin-bottom:14px; display:flex; align-items:center; gap:10px; border:1px solid rgba(255,255,255,0.15);';
+            statusBanner.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> <span id="pdfRenderProgressLabel">Đang kết xuất trang PDF chuẩn A4...</span>`;
+
+            const stagingRoot = document.createElement('div');
+            stagingRoot.style.cssText = 'width:794px; background:#ffffff; color:#000000; margin:0 auto; box-shadow:0 20px 50px rgba(0,0,0,0.5);';
+
+            const measureContainer = document.createElement('div');
+            measureContainer.style.cssText = 'width:794px; padding:56px 64px; background:#ffffff; color:#000000; box-sizing:border-box; font-family:"Times New Roman", Times, serif; font-size:12pt; line-height:1.45;';
+            measureContainer.innerHTML = `
                 <style>
-                    table.excel-table { border-collapse: collapse; width: 100%; margin: 6pt 0; }
-                    table.excel-table th, table.excel-table td { border: 1px solid #334155; padding: 4pt 6pt; font-size: 11pt; }
+                    #pdfExportStagingOverlay table.excel-table { border-collapse: collapse; width: 100%; margin: 6pt 0; background: #ffffff !important; color: #000000 !important; }
+                    #pdfExportStagingOverlay table.excel-table th, #pdfExportStagingOverlay table.excel-table td { border: 1px solid #334155 !important; padding: 4pt 6pt; font-size: 11pt; color: #000000 !important; }
                 </style>
-                ${bodyHtml}
+                ${cleanBlocksHtml}
             `;
 
-            document.body.appendChild(wrapper);
-            renderMathInElementSafe(wrapper);
-
-            const opt = {
-                margin: [12, 12, 12, 12],
-                filename: `${getSafeExportFileNameSlug()}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
+            stagingRoot.appendChild(measureContainer);
+            overlay.appendChild(statusBanner);
+            overlay.appendChild(stagingRoot);
+            document.body.appendChild(overlay);
 
             try {
-                await window.html2pdf().set(opt).from(wrapper).save();
+                renderMathInElementSafe(measureContainer);
+                if (document.fonts && document.fonts.ready) {
+                    await document.fonts.ready;
+                }
+                await new Promise(r => setTimeout(r, 120));
+
+                const PAGE_WIDTH_PX = 794;
+                const PAGE_HEIGHT_PX = 1123;
+                const PAD_TOP_BOTTOM_PX = 112; // 56px top + 56px bottom
+                const MAX_USABLE_HEIGHT_PX = PAGE_HEIGHT_PX - PAD_TOP_BOTTOM_PX - 26; // chừa 26px cho số trang dưới chân
+
+                const rawBlocks = Array.from(measureContainer.querySelectorAll('.pdf-block'));
+                const pagesWrapper = document.createElement('div');
+                pagesWrapper.style.cssText = 'width:794px; background:#334155; display:flex; flex-direction:column; gap:16px;';
+
+                const pageElements = [];
+
+                const createNewA4Page = () => {
+                    const pageEl = document.createElement('div');
+                    pageEl.className = 'a4-pdf-page';
+                    pageEl.style.cssText = `width:${PAGE_WIDTH_PX}px; min-height:${PAGE_HEIGHT_PX}px; height:${PAGE_HEIGHT_PX}px; padding:56px 64px 64px 64px; background:#ffffff !important; color:#000000 !important; box-sizing:border-box; position:relative; overflow:hidden; font-family:"Times New Roman", Times, serif; font-size:12pt; line-height:1.45;`;
+                    const contentArea = document.createElement('div');
+                    contentArea.className = 'a4-pdf-content';
+                    contentArea.style.cssText = 'width:100%; color:#000000 !important; background:#ffffff !important;';
+                    pageEl.appendChild(contentArea);
+                    pagesWrapper.appendChild(pageEl);
+                    pageElements.push(pageEl);
+                    return { pageEl, contentArea };
+                };
+
+                let currentPage = createNewA4Page();
+                let currentHeightUsed = 0;
+
+                for (let i = 0; i < rawBlocks.length; i++) {
+                    const block = rawBlocks[i];
+                    const forceNewPage = block.getAttribute('data-force-new-page') === 'true';
+                    const rect = block.getBoundingClientRect();
+                    const blockHeight = Math.ceil(rect.height) + 10;
+
+                    if (forceNewPage && currentHeightUsed > 0) {
+                        currentPage = createNewA4Page();
+                        currentHeightUsed = 0;
+                    } else if (currentHeightUsed > 0 && (currentHeightUsed + blockHeight > MAX_USABLE_HEIGHT_PX)) {
+                        currentPage = createNewA4Page();
+                        currentHeightUsed = 0;
+                    }
+
+                    const clonedBlock = block.cloneNode(true);
+                    currentPage.contentArea.appendChild(clonedBlock);
+                    currentHeightUsed += blockHeight;
+                }
+
+                // Gắn nhãn số trang vào chân từng trang A4
+                const totalPages = pageElements.length;
+                pageElements.forEach((pEl, idx) => {
+                    const footerEl = document.createElement('div');
+                    footerEl.style.cssText = 'position:absolute; bottom:22px; left:0; right:0; text-align:center; font-family:"Times New Roman", Times, serif; font-size:10.5pt; color:#475569 !important;';
+                    footerEl.textContent = `Trang ${idx + 1} / ${totalPages}`;
+                    pEl.appendChild(footerEl);
+                });
+
+                stagingRoot.innerHTML = '';
+                stagingRoot.appendChild(pagesWrapper);
+                await new Promise(r => setTimeout(r, 80));
+
+                const pdf = new jsPDFCtor({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+                const progressLabel = document.getElementById('pdfRenderProgressLabel');
+
+                for (let pIdx = 0; pIdx < pageElements.length; pIdx++) {
+                    if (progressLabel) {
+                        progressLabel.textContent = `Đang kết xuất trang PDF ${pIdx + 1} / ${totalPages}...`;
+                    }
+                    const pageNode = pageElements[pIdx];
+                    const canvas = await h2c(pageNode, {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        scrollX: 0,
+                        scrollY: 0,
+                        windowWidth: PAGE_WIDTH_PX,
+                        width: PAGE_WIDTH_PX,
+                        height: PAGE_HEIGHT_PX
+                    });
+
+                    const imgData = canvas.toDataURL('image/jpeg', 0.96);
+                    if (pIdx > 0) {
+                        pdf.addPage('a4', 'portrait');
+                    }
+                    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+                }
+
+                pdf.save(filename);
                 closeWordExportModal();
-                showToast("Đã tải xuống file PDF (.pdf) chuẩn A4 thành công!");
+                showToast(`Đã tải xuống ${filename} (${totalPages} trang A4 sắc nét)!`);
             } catch (err) {
-                console.error(err);
+                console.error('PDF export error:', err);
                 showToast("Đang chuyển sang chế độ In/Lưu PDF sắc nét của trình duyệt...");
                 printExamAsVectorPDF();
             } finally {
-                if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
+                if (overlay && overlay.parentNode) {
+                    overlay.parentNode.removeChild(overlay);
+                }
+                window.scrollTo(0, savedScrollY);
                 if (btnPdf) {
                     btnPdf.disabled = false;
                     btnPdf.innerHTML = `<i class="fa-solid fa-file-pdf"></i> <span>Tải File PDF (.pdf)</span>`;
                 }
             }
+        }
+
+        async function generateAndDownloadPDFFile() {
+            return await exportToPdfDocument();
         }
 
         function printExamAsVectorPDF() {
@@ -3949,13 +4291,8 @@ Trả về đúng cấu trúc JSON:
             if (allowEmptyForGithubIndex) {
                 a.download = 'index.html';
             } else {
-                const safeSlug = (currentExamSource.title || 'Web_On_Tap')
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .replace(/[^a-zA-Z0-9]+/g, '_')
-                    .replace(/^_+|_+$/g, '')
-                    .toLowerCase();
-                a.download = `Web_On_Tap_${safeSlug || 'de_thi'}.html`;
+                const safeSlug = getSafeFilenameSlug(currentExamSource.title, 'de_thi');
+                a.download = `Web_On_Tap_${safeSlug}.html`;
             }
 
             a.href = url;
