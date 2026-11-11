@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Công Cụ Tạo Soạn Sửa Đề Ôn Tập & Siêu Trợ Lý AI Đa Năng</title>
-    <!-- Favicon Logo Phúc nguyên Vlog trên góc Tab trình duyệt -->
-    <link id="appFavicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23FFE66D'/%3E%3Cstop offset='48%25' stop-color='%23BCE5A2'/%3E%3Cstop offset='100%25' stop-color='%2376D4C4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='256' height='256' rx='48' fill='url(%23g)'/%3E%3Ccircle cx='104' cy='134' r='84' fill='%23FFFFFF'/%3E%3Cpath d='M108 82 C100 68, 106 56, 120 62 C116 74, 112 78, 108 82 Z' fill='%23239B38'/%3E%3Cpath d='M117 83 C117 67, 128 58, 136 67 C130 77, 123 81, 117 83 Z' fill='%2368C735'/%3E%3Cpath d='M123 89 C132 78, 146 78, 146 89 C136 93, 129 92, 123 89 Z' fill='%23239B38'/%3E%3Ctext x='98' y='114' text-anchor='middle' fill='%231C9436' font-family='Arial, sans-serif' font-weight='900' font-size='34'%3EPh%C3%BAc%3C/text%3E%3Ctext x='103' y='143' text-anchor='middle' fill='%231C9436' font-family='Arial, sans-serif' font-weight='800' font-size='27'%3Enguy%C3%AAn%3C/text%3E%3Ctext x='108' y='177' text-anchor='middle' fill='%231C9436' font-family='Arial, sans-serif' font-weight='900' font-size='34'%3EVlog%3C/text%3E%3Cg transform='rotate(6 202 128)'%3E%3Crect x='168' y='64' width='66' height='122' rx='13' fill='%237CD7C6' stroke='%23063B64' stroke-width='7'/%3E%3C/g%3E%3Cg transform='rotate(5 168 175)'%3E%3Crect x='143' y='150' width='50' height='47' rx='7' fill='%238CE2CE' stroke='%23063B64' stroke-width='6'/%3E%3Crect x='157' y='164' width='22' height='20' rx='3' fill='%23B8F2E6' stroke='%23063B64' stroke-width='4.5'/%3E%3C/g%3E%3C/svg%3E">
-    <link id="appleTouchFavicon" rel="apple-touch-icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='48' fill='%23BCE5A2'/%3E%3Ccircle cx='104' cy='134' r='84' fill='%23FFFFFF'/%3E%3Ctext x='98' y='114' text-anchor='middle' fill='%231C9436' font-family='Arial, sans-serif' font-weight='900' font-size='34'%3EPh%C3%BAc%3C/text%3E%3Ctext x='103' y='143' text-anchor='middle' fill='%231C9436' font-family='Arial, sans-serif' font-weight='800' font-size='27'%3Enguy%C3%AAn%3C/text%3E%3Ctext x='108' y='177' text-anchor='middle' fill='%231C9436' font-family='Arial, sans-serif' font-weight='900' font-size='34'%3EVlog%3C/text%3E%3C/svg%3E">
+    <!-- Favicon lấy trực tiếp từ file Icon.png trên GitHub của bạn -->
+    <link id="appFavicon" rel="icon" type="image/png" href="Icon.png">
+    <link id="shortcutFavicon" rel="shortcut icon" type="image/png" href="Icon.png">
+    <link id="appleTouchFavicon" rel="apple-touch-icon" href="Icon.png">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
@@ -143,9 +144,15 @@
             <!-- Cụm Logo "Phúc nguyên Vlog" cố định & Tiêu Đề Công Cụ -->
             <div class="flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
-                    <!-- Logo Phúc nguyên Vlog cố định tuyệt đối (không mở hộp thoại chọn ảnh khi bấm) -->
-                    <div class="w-12 h-12 rounded-2xl overflow-hidden shadow-xs border border-emerald-200 shrink-0 select-none pointer-events-none relative">
-                        <svg id="defaultPhucNguyenLogo" viewBox="0 0 256 256" class="w-full h-full block" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Logo lấy trực tiếp từ file Icon.png chung thư mục trên GitHub (kèm fallback tự động) -->
+                    <div class="w-12 h-12 rounded-2xl overflow-hidden shadow-xs border border-emerald-200 shrink-0 select-none pointer-events-none relative bg-white">
+                        <img
+                            id="headerBrandLogoImg"
+                            src="Icon.png"
+                            alt="Phúc nguyên Vlog"
+                            class="w-full h-full object-cover block"
+                            onerror="if(!this.dataset.triedGithub){this.dataset.triedGithub='1';this.src='https://raw.githubusercontent.com/phucnguyenvlog/TaoDeOnTap/main/Icon.png';}else{this.style.display='none';document.getElementById('defaultPhucNguyenLogo').classList.remove('hidden');}">
+                        <svg id="defaultPhucNguyenLogo" viewBox="0 0 256 256" class="w-full h-full hidden" xmlns="http://www.w3.org/2000/svg">
                             <defs>
                                 <linearGradient id="pnBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                                     <stop offset="0%" stop-color="#FFE66D" />
@@ -1368,27 +1375,39 @@
         // 3. KHỞI TẠO & CÁC HÀM TIỆN ÍCH CƠ BẢN (KHÔNG THIẾU BẤT KỲ HÀM NÀO)
         // =========================================================================
         function applyBrandFavicon() {
-            try {
-                const svgEl = document.getElementById('defaultPhucNguyenLogo');
-                if (!svgEl) return;
-                const serializer = new XMLSerializer();
-                let svgStr = serializer.serializeToString(svgEl);
-                if (!svgStr.includes('xmlns=')) {
-                    svgStr = svgStr.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
-                }
-                const svgDataUri = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgStr);
-                let linkIcon = document.getElementById('appFavicon') || document.querySelector("link[rel*='icon']");
-                if (!linkIcon) {
-                    linkIcon = document.createElement('link');
-                    linkIcon.id = 'appFavicon';
-                    linkIcon.rel = 'icon';
-                    document.head.appendChild(linkIcon);
-                }
-                linkIcon.type = 'image/svg+xml';
-                linkIcon.href = svgDataUri;
-            } catch (e) {
-                console.warn('Favicon sync warning:', e);
-            }
+            const setFaviconHref = (hrefUrl, mimeType = 'image/png') => {
+                ['appFavicon', 'shortcutFavicon', 'appleTouchFavicon'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.type = mimeType;
+                        el.href = hrefUrl;
+                    }
+                });
+            };
+
+            // 1. Ưu tiên dùng trực tiếp file Icon.png nằm chung thư mục với index.html trên GitHub
+            const localImg = new Image();
+            localImg.onload = function () {
+                setFaviconHref('Icon.png', 'image/png');
+            };
+            localImg.onerror = function () {
+                // 2. Nếu mở file HTML tải rời hoặc xem trước, tự động lấy Icon.png từ repo GitHub của bạn
+                const githubRawUrl = 'https://raw.githubusercontent.com/phucnguyenvlog/TaoDeOnTap/main/Icon.png';
+                const remoteImg = new Image();
+                remoteImg.onload = function () {
+                    setFaviconHref(githubRawUrl, 'image/png');
+                };
+                remoteImg.onerror = function () {
+                    // 3. Dự phòng khi mất mạng hoàn toàn
+                    const svgEl = document.getElementById('defaultPhucNguyenLogo');
+                    if (!svgEl) return;
+                    const serializer = new XMLSerializer();
+                    let svgStr = serializer.serializeToString(svgEl).replace('class="w-full h-full hidden"', '');
+                    setFaviconHref('data:image/svg+xml;utf8,' + encodeURIComponent(svgStr), 'image/svg+xml');
+                };
+                remoteImg.src = githubRawUrl;
+            };
+            localImg.src = 'Icon.png';
         }
 
         window.onload = function () {
