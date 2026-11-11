@@ -207,6 +207,11 @@
 
                 <!-- Cụm Nút: Siêu AI Đa Năng + AI Soạn/Sửa Đề + Xuất Word/PDF + Xuất Web -->
                 <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+                    <button type="button" id="btnHeaderApiKey" onclick="openApiKeyModal()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold text-xs transition flex items-center gap-1.5 shrink-0" title="Cấu hình Gemini API Key khi chạy trên GitHub Pages hoặc máy cá nhân">
+                        <i class="fa-solid fa-key text-amber-600"></i>
+                        <span id="headerApiKeyLabel">API Key</span>
+                    </button>
+
                     <button type="button" onclick="openAssistantWithBot('tutor')" class="px-3 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold text-xs transition flex items-center gap-1.5 shrink-0" title="Hỏi mọi thứ, Giải file Word/PDF, Tạo Hình AI, Tạo Video AI">
                         <i class="fa-solid fa-robot text-teal-600"></i>
                         <span>Siêu AI (Hỏi/Hình/Video)</span>
@@ -1037,6 +1042,84 @@
     <!-- Vùng ẩn hỗ trợ kết xuất PDF chuẩn A4 -->
     <div id="hiddenPdfRenderZone" class="fixed -left-[9999px] top-0 w-[794px] bg-white text-black pointer-events-none opacity-0 overflow-hidden"></div>
 
+    <!-- =================================================================== -->
+    <!-- MODAL CẤU HÌNH GEMINI API KEY (KHẮC PHỤC LỖI 403 TRÊN GITHUB PAGES)  -->
+    <!-- =================================================================== -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-fade-in">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-extrabold text-slate-900">Cài Đặt Gemini API Key (GitHub / Web Ngoài)</h3>
+                        <p class="text-xs text-slate-500">Khắc phục lỗi HTTP 403 khi đưa trang web lên GitHub Pages</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeApiKeyModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="mt-4 space-y-3.5 text-xs sm:text-sm text-slate-600">
+                <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 leading-relaxed">
+                    <div class="font-extrabold flex items-center gap-1.5 mb-1">
+                        <i class="fa-solid fa-circle-info text-amber-600"></i>
+                        <span>Vì sao trên GitHub báo lỗi 403?</span>
+                    </div>
+                    <p class="text-xs">
+                        Khi chạy trên GitHub Pages (<code>.github.io</code>), Google yêu cầu phải có <strong>Gemini API Key</strong> cá nhân (hoàn toàn miễn phí). Khóa của bạn chỉ lưu trực tiếp trên trình duyệt máy bạn (<code>localStorage</code>), an toàn và không bị lộ.
+                    </p>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="userGeminiApiKeyInput" class="font-extrabold text-slate-800">Nhập Gemini API Key của bạn:</label>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-bold text-xs flex items-center gap-1">
+                            <span>Lấy Key miễn phí tại đây</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </div>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="userGeminiApiKeyInput"
+                            placeholder="Dán mã bắt đầu bằng AIzaSy... vào đây"
+                            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 outline-none font-mono text-xs sm:text-sm text-slate-900">
+                        <button type="button" onclick="toggleApiKeyVisibility()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1">
+                            <i id="apiKeyEyeIcon" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer select-none">
+                    <input type="checkbox" id="chkEmbedKeyOnExport" class="w-4 h-4 rounded text-blue-600">
+                    <span class="text-xs text-slate-700">
+                        Nhúng sẵn API Key này khi bấm <strong>"Tải Web (.html)"</strong> (Chỉ bật nếu dùng cá nhân, <strong>không bật</strong> nếu đẩy code công khai lên GitHub Public).
+                    </span>
+                </label>
+
+                <div id="apiKeyTestStatus" class="hidden p-3 rounded-xl text-xs font-bold"></div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                <button type="button" onclick="clearSavedApiKey()" class="px-3.5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition">
+                    <i class="fa-solid fa-trash-can mr-1"></i>Xoá Key đã lưu
+                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btnTestApiKey" onclick="testAndSaveApiKey()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition">
+                        Kiểm tra kết nối
+                    </button>
+                    <button type="button" onclick="saveApiKeyFromModal()" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs sm:text-sm shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Lưu API Key</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL XÁC NHẬN DÙNG CHUNG -->
     <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-fade-in">
@@ -1080,7 +1163,156 @@
     <!-- =================================================================== -->
     <script>
         const apiKey = "";
+        const STORAGE_API_KEY_NAME = "PHUCNGUYEN_GEMINI_API_KEY";
+        const STORAGE_EMBED_KEY_FLAG = "PHUCNGUYEN_EMBED_KEY_HTML";
         const LETTERS = ['A', 'B', 'C', 'D'];
+
+        function getEffectiveApiKey() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const keyFromUrl = urlParams.get('key') || urlParams.get('apikey');
+                if (keyFromUrl && keyFromUrl.trim()) {
+                    localStorage.setItem(STORAGE_API_KEY_NAME, keyFromUrl.trim());
+                    return keyFromUrl.trim();
+                }
+                const savedKey = localStorage.getItem(STORAGE_API_KEY_NAME);
+                if (savedKey && savedKey.trim()) {
+                    return savedKey.trim();
+                }
+            } catch (e) {
+                console.warn('localStorage access warning:', e);
+            }
+            return apiKey;
+        }
+
+        function updateApiKeyHeaderBadge() {
+            const btn = document.getElementById('btnHeaderApiKey');
+            const label = document.getElementById('headerApiKeyLabel');
+            if (!btn || !label) return;
+            const currentKey = getEffectiveApiKey();
+            if (currentKey && currentKey.length > 10) {
+                btn.className = "px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs transition flex items-center gap-1.5 shrink-0";
+                label.textContent = "Đã có API Key";
+            } else {
+                btn.className = "px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold text-xs transition flex items-center gap-1.5 shrink-0";
+                label.textContent = "API Key";
+            }
+        }
+
+        function openApiKeyModal(autoReasonText = "") {
+            const modal = document.getElementById('apiKeyModal');
+            const input = document.getElementById('userGeminiApiKeyInput');
+            const chkEmbed = document.getElementById('chkEmbedKeyOnExport');
+            const statusBox = document.getElementById('apiKeyTestStatus');
+
+            if (input) {
+                try {
+                    input.value = localStorage.getItem(STORAGE_API_KEY_NAME) || "";
+                } catch (e) {}
+            }
+            if (chkEmbed) {
+                try {
+                    chkEmbed.checked = localStorage.getItem(STORAGE_EMBED_KEY_FLAG) === "true";
+                } catch (e) {}
+            }
+
+            if (statusBox) {
+                if (autoReasonText) {
+                    statusBox.className = "p-3 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-800 block";
+                    statusBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ${autoReasonText}`;
+                } else {
+                    statusBox.classList.add('hidden');
+                }
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => { if (input) input.focus(); }, 150);
+        }
+
+        function closeApiKeyModal() {
+            const modal = document.getElementById('apiKeyModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('userGeminiApiKeyInput');
+            const icon = document.getElementById('apiKeyEyeIcon');
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                input.type = 'password';
+                if (icon) icon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        function saveApiKeyFromModal() {
+            const input = document.getElementById('userGeminiApiKeyInput');
+            const chkEmbed = document.getElementById('chkEmbedKeyOnExport');
+            const val = (input?.value || '').trim();
+
+            try {
+                if (val) {
+                    localStorage.setItem(STORAGE_API_KEY_NAME, val);
+                } else {
+                    localStorage.removeItem(STORAGE_API_KEY_NAME);
+                }
+                localStorage.setItem(STORAGE_EMBED_KEY_FLAG, chkEmbed?.checked ? "true" : "false");
+            } catch (e) {}
+
+            updateApiKeyHeaderBadge();
+            closeApiKeyModal();
+            showToast(val ? "Đã lưu Gemini API Key! Bạn có thể dùng AI trên GitHub ngay." : "Đã cập nhật cài đặt API Key.");
+        }
+
+        function clearSavedApiKey() {
+            try {
+                localStorage.removeItem(STORAGE_API_KEY_NAME);
+                localStorage.removeItem(STORAGE_EMBED_KEY_FLAG);
+            } catch (e) {}
+            const input = document.getElementById('userGeminiApiKeyInput');
+            if (input) input.value = '';
+            updateApiKeyHeaderBadge();
+            showToast("Đã xoá API Key khỏi trình duyệt!");
+        }
+
+        async function testAndSaveApiKey() {
+            const input = document.getElementById('userGeminiApiKeyInput');
+            const statusBox = document.getElementById('apiKeyTestStatus');
+            const btnTest = document.getElementById('btnTestApiKey');
+            const val = (input?.value || '').trim();
+
+            if (!val) {
+                statusBox.className = "p-3 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-800 block";
+                statusBox.textContent = "Vui lòng dán mã Gemini API Key (bắt đầu bằng AIza...) trước khi kiểm tra.";
+                return;
+            }
+
+            try {
+                localStorage.setItem(STORAGE_API_KEY_NAME, val);
+            } catch (e) {}
+            updateApiKeyHeaderBadge();
+
+            if (btnTest) btnTest.disabled = true;
+            statusBox.className = "p-3 rounded-xl text-xs font-bold bg-blue-50 border border-blue-200 text-blue-800 block";
+            statusBox.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang kiểm tra kết nối tới Google Gemini...`;
+
+            try {
+                await fetchGeminiWithBackoff({
+                    contents: [{ role: "user", parts: [{ text: "Xin chào, trả lời OK ngắn gọn." }] }]
+                });
+                statusBox.className = "p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 block";
+                statusBox.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Kết nối thành công! API Key hoạt động hoàn hảo trên GitHub.`;
+            } catch (err) {
+                statusBox.className = "p-3 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-800 block";
+                statusBox.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1"></i> Không thể kết nối: ${err.message}`;
+            } finally {
+                if (btnTest) btnTest.disabled = false;
+            }
+        }
 
         // =========================================================================
         // 1. DỮ LIỆU ĐỀ KHỞI TẠO (RỖNG MẶC ĐỊNH, SẼ ĐƯỢC GHI ĐÈ KHI XUẤT FILE HTML)
@@ -1136,6 +1368,7 @@
             if (window.pdfjsLib) {
                 window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             }
+            updateApiKeyHeaderBadge();
             setupDragAndPasteEvents();
             buildQuestionSet();
             startTimer();
@@ -1230,45 +1463,43 @@
         }
 
         // =========================================================================
-        // 4. QUẢN LÝ KÉO THẢ, DÁN & ĐỌC FILE ẢNH / WORD (.DOCX, .DOC) / PDF (.PDF)
+        // 4. XỬ LÝ TẢI LÊN ẢNH, FILE WORD (.DOCX/.DOC) & FILE PDF (.PDF)
         // =========================================================================
         function setupDragAndPasteEvents() {
             const dropzone = document.getElementById('imageDropzone');
             if (dropzone) {
-                dropzone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    dropzone.classList.add('dropzone-active');
+                ['dragenter', 'dragover'].forEach(evtName => {
+                    dropzone.addEventListener(evtName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropzone.classList.add('dropzone-active');
+                    });
                 });
-                dropzone.addEventListener('dragleave', () => {
-                    dropzone.classList.remove('dropzone-active');
+                ['dragleave', 'drop'].forEach(evtName => {
+                    dropzone.addEventListener(evtName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropzone.classList.remove('dropzone-active');
+                    });
                 });
                 dropzone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropzone.classList.remove('dropzone-active');
-                    if (e.dataTransfer && e.dataTransfer.files) {
-                        handleImageFilesSelected(e.dataTransfer.files);
+                    const files = e.dataTransfer?.files;
+                    if (files && files.length > 0) {
+                        handleImageFilesSelected(files);
                     }
                 });
             }
 
             window.addEventListener('paste', (e) => {
-                const clipboardData = e.clipboardData || e.originalEvent?.clipboardData;
-                if (!clipboardData) return;
-
+                const items = e.clipboardData?.items;
+                if (!items) return;
                 const pastedFiles = [];
-                if (clipboardData.files && clipboardData.files.length > 0) {
-                    for (let i = 0; i < clipboardData.files.length; i++) {
-                        pastedFiles.push(clipboardData.files[i]);
-                    }
-                } else if (clipboardData.items) {
-                    for (let i = 0; i < clipboardData.items.length; i++) {
-                        if (clipboardData.items[i].kind === 'file') {
-                            const f = clipboardData.items[i].getAsFile();
-                            if (f) pastedFiles.push(f);
-                        }
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].kind === 'file') {
+                        const f = items[i].getAsFile();
+                        if (f) pastedFiles.push(f);
                     }
                 }
-
                 if (pastedFiles.length > 0) {
                     const drawer = document.getElementById('aiChatDrawer');
                     const isDrawerOpen = drawer && !drawer.classList.contains('translate-x-full');
@@ -1276,9 +1507,6 @@
                         handleChatImageSelected(pastedFiles);
                     } else {
                         handleImageFilesSelected(pastedFiles);
-                        if (state.activeWorkspace !== 'scanner') {
-                            switchMainWorkspace('scanner');
-                        }
                     }
                 }
             });
@@ -1296,196 +1524,152 @@
             }
             if (
                 type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-                name.endsWith('.docx')
+                type === 'application/msword' ||
+                name.endsWith('.docx') ||
+                name.endsWith('.doc')
             ) {
-                return 'docx';
-            }
-            if (type === 'application/msword' || name.endsWith('.doc') || name.endsWith('.txt')) {
-                return 'doc';
+                return 'word';
             }
             return null;
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error("Không thể đọc tệp " + file.name));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function readFileAsArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error("Không thể đọc dữ liệu tệp " + file.name));
+                reader.readAsArrayBuffer(file);
+            });
         }
 
         async function parseSingleUploadedFile(file) {
             const kind = detectSupportedFileKind(file);
             if (!kind) {
-                throw new Error(`Định dạng tệp "${file.name}" chưa được hỗ trợ.`);
+                throw new Error("Định dạng tệp chưa hỗ trợ. Hãy chọn Ảnh, Word (.docx/.doc) hoặc PDF (.pdf).");
             }
 
-            // 1. HÌNH ẢNH (.JPG, .PNG, .WEBP)
             if (kind === 'image') {
-                return await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const dataUrl = e.target.result;
-                        resolve({
-                            id: Date.now() + Math.random(),
-                            fileKind: 'image',
-                            name: file.name || `Anh_${Date.now()}.jpg`,
-                            mimeType: file.type || 'image/jpeg',
-                            base64Data: dataUrl.split(',')[1],
-                            dataUrl: dataUrl,
-                            summaryMeta: 'Hình ảnh đề thi'
-                        });
-                    };
-                    reader.onerror = () => reject(new Error('Không thể đọc tệp hình ảnh.'));
-                    reader.readAsDataURL(file);
-                });
+                const dataUrl = await readFileAsDataURL(file);
+                const base64Data = dataUrl.split(',')[1] || '';
+                return {
+                    id: Date.now() + Math.random(),
+                    name: file.name || 'Anh_de_thi.jpg',
+                    fileKind: 'image',
+                    mimeType: file.type || 'image/jpeg',
+                    dataUrl,
+                    base64Data,
+                    summaryMeta: `Hình ảnh (${Math.round((file.size || 0) / 1024)} KB)`
+                };
             }
 
-            // 2. FILE WORD (.DOCX) - DÙNG MAMMOTH TRÍCH XUẤT CẢ VĂN BẢN LẪN BẢNG BIỂU HTML
-            if (kind === 'docx') {
-                const arrayBuffer = await file.arrayBuffer();
+            if (kind === 'word') {
+                const arrayBuffer = await readFileAsArrayBuffer(file);
+                let extractedText = '';
                 let extractedHtml = '';
-                let extractedRawText = '';
-
                 if (window.mammoth) {
                     try {
+                        const textRes = await window.mammoth.extractRawText({ arrayBuffer });
+                        extractedText = (textRes?.value || '').trim();
                         const htmlRes = await window.mammoth.convertToHtml({ arrayBuffer });
-                        extractedHtml = htmlRes.value || '';
-                        const txtRes = await window.mammoth.extractRawText({ arrayBuffer });
-                        extractedRawText = txtRes.value || '';
-                    } catch (err) {
-                        console.warn('Mammoth parse fallback:', err);
+                        extractedHtml = (htmlRes?.value || '').trim();
+                    } catch (mammothErr) {
+                        console.warn('Mammoth fallback to text decoder:', mammothErr);
                     }
                 }
-
-                const charCount = (extractedRawText || extractedHtml).trim().length;
-                return {
-                    id: Date.now() + Math.random(),
-                    fileKind: 'word',
-                    name: file.name || 'De_Word.docx',
-                    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                    extractedText: extractedRawText.trim(),
-                    extractedHtml: extractedHtml.trim(),
-                    summaryMeta: `Word (.docx) • ${charCount.toLocaleString('vi-VN')} ký tự`
-                };
-            }
-
-            // 3. FILE WORD CŨ (.DOC) HOẶC VĂN BẢN (.TXT)
-            if (kind === 'doc') {
-                const rawText = await file.text();
-                // Làm sạch nếu là file .doc được xuất dưới dạng HTML/XML hoặc văn bản thuần
-                let cleanContent = rawText;
-                if (/<html|<body|<p|<table/i.test(rawText)) {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(rawText, 'text/html');
-                    cleanContent = doc.body ? doc.body.innerHTML : rawText;
-                } else {
-                    cleanContent = rawText.replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\uFFFF]/g, ' ').replace(/\s{2,}/g, ' ').trim();
+                if (!extractedText && !extractedHtml) {
+                    const decoder = new TextDecoder('utf-8', { fatal: false });
+                    extractedText = decoder.decode(arrayBuffer).replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\uFFFF]/g, ' ');
                 }
-
                 return {
                     id: Date.now() + Math.random(),
+                    name: file.name || 'Tai_lieu_Word.docx',
                     fileKind: 'word',
-                    name: file.name || 'De_Word.doc',
-                    mimeType: 'application/msword',
-                    extractedText: cleanContent,
-                    extractedHtml: cleanContent,
-                    summaryMeta: `Word (.doc) • ${cleanContent.length.toLocaleString('vi-VN')} ký tự`
+                    mimeType: file.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    extractedText,
+                    extractedHtml,
+                    summaryMeta: `File Word • ${extractedText.length} ký tự`
                 };
             }
 
-            // 4. FILE PDF (.PDF) - DÙNG PDF.JS ĐỌC VĂN BẢN & CHỤP ẢNH TỪNG TRANG (ĐỌC ĐƯỢC CẢ PDF SCAN)
             if (kind === 'pdf') {
-                const arrayBuffer = await file.arrayBuffer();
+                const arrayBuffer = await readFileAsArrayBuffer(file);
                 let extractedText = '';
                 const pageImages = [];
-                let numPages = 0;
-
-                // Lưu thêm bản base64 PDF gốc nếu tệp nhỏ hơn 12MB để gửi trực tiếp cho Gemini
-                let pdfBase64 = null;
-                if (file.size <= 12 * 1024 * 1024) {
-                    pdfBase64 = await new Promise((resolve) => {
-                        const r = new FileReader();
-                        r.onload = (ev) => resolve(String(ev.target.result || '').split(',')[1] || null);
-                        r.onerror = () => resolve(null);
-                        r.readAsDataURL(file);
-                    });
-                }
+                let totalPages = 0;
 
                 if (window.pdfjsLib) {
                     try {
                         const pdfDoc = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                        numPages = pdfDoc.numPages;
-                        const maxPagesToRender = Math.min(numPages, 8); // Quét ảnh tối đa 8 trang đầu để giữ tốc độ nhanh
+                        totalPages = pdfDoc.numPages;
+                        const maxPagesToRender = Math.min(totalPages, 8);
 
-                        for (let p = 1; p <= numPages; p++) {
-                            const page = await pdfDoc.getPage(p);
+                        for (let pageNum = 1; pageNum <= maxPagesToRender; pageNum++) {
+                            const page = await pdfDoc.getPage(pageNum);
                             const textContent = await page.getTextContent();
                             const pageStr = textContent.items.map(it => it.str).join(' ');
                             if (pageStr.trim()) {
-                                extractedText += `\n--- [TRANG PDF ${p}] ---\n` + pageStr.trim() + '\n';
+                                extractedText += `\n--- Trang ${pageNum} ---\n` + pageStr.trim();
                             }
 
-                            if (p <= maxPagesToRender) {
-                                const viewport = page.getViewport({ scale: 1.5 });
-                                const canvas = document.createElement('canvas');
-                                canvas.width = viewport.width;
-                                canvas.height = viewport.height;
-                                const ctx = canvas.getContext('2d');
-                                await page.render({ canvasContext: ctx, viewport }).promise;
-                                const pageDataUrl = canvas.toDataURL('image/jpeg', 0.84);
-                                pageImages.push({
-                                    pageNumber: p,
-                                    mimeType: 'image/jpeg',
-                                    base64Data: pageDataUrl.split(',')[1],
-                                    dataUrl: pageDataUrl
-                                });
-                            }
+                            const viewport = page.getViewport({ scale: 1.5 });
+                            const canvas = document.createElement('canvas');
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+                            const ctx = canvas.getContext('2d');
+                            await page.render({ canvasContext: ctx, viewport }).promise;
+                            const pageDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                            pageImages.push({
+                                pageNumber: pageNum,
+                                mimeType: 'image/jpeg',
+                                dataUrl: pageDataUrl,
+                                base64Data: pageDataUrl.split(',')[1] || ''
+                            });
                         }
-                    } catch (err) {
-                        console.warn('PDF.js fallback:', err);
+                    } catch (pdfErr) {
+                        console.warn('PDF.js render warning, fallback to base64 PDF:', pdfErr);
                     }
                 }
 
+                const rawDataUrl = await readFileAsDataURL(file);
                 return {
                     id: Date.now() + Math.random(),
+                    name: file.name || 'De_thi.pdf',
                     fileKind: 'pdf',
-                    name: file.name || 'De_Thi.pdf',
                     mimeType: 'application/pdf',
-                    base64Data: pdfBase64,
                     extractedText: extractedText.trim(),
-                    pageImages: pageImages,
+                    pageImages,
                     dataUrl: pageImages[0]?.dataUrl || '',
-                    summaryMeta: `PDF • ${numPages || 1} trang`
+                    base64Data: rawDataUrl.split(',')[1] || '',
+                    summaryMeta: `File PDF • ${totalPages || pageImages.length || 1} trang`
                 };
             }
         }
 
         async function handleImageFilesSelected(fileList) {
             if (!fileList || fileList.length === 0) return;
-            const rawFiles = Array.from(fileList);
-            const validFiles = rawFiles.filter(f => detectSupportedFileKind(f) !== null);
+            const filesArray = Array.from(fileList);
+            showToast(`Đang đọc ${filesArray.length} tệp...`);
 
-            if (validFiles.length === 0) {
-                showToast("Vui lòng chọn File Word (.docx, .doc), PDF (.pdf) hoặc Hình ảnh (.jpg, .png)!");
-                return;
-            }
-
-            showToast(`Đang đọc ${validFiles.length} tệp (Ảnh / Word / PDF)...`);
-
-            let addedCount = 0;
-            for (const file of validFiles) {
+            for (const file of filesArray) {
                 try {
                     const parsedItem = await parseSingleUploadedFile(file);
-                    if (parsedItem) {
-                        uploadedImages.push(parsedItem);
-                        addedCount++;
-                    }
+                    uploadedImages.push(parsedItem);
                 } catch (err) {
-                    console.error(err);
-                    showToast(`Lỗi đọc tệp ${file.name}: ${err.message}`);
+                    showToast(err.message);
                 }
             }
-
+            renderUploadedImagesGrid();
             const fileInput = document.getElementById('imageFileInput');
             if (fileInput) fileInput.value = '';
-
-            renderUploadedImagesGrid();
-            if (addedCount > 0) {
-                showToast(`Đã tải lên thành công ${addedCount} tệp đề thi!`);
-            }
         }
 
         function renderUploadedImagesGrid() {
@@ -1498,82 +1682,45 @@
 
             if (uploadedImages.length === 0) {
                 section.classList.add('hidden');
-                badge.classList.add('hidden');
+                if (badge) badge.classList.add('hidden');
+                grid.innerHTML = '';
                 return;
             }
 
             section.classList.remove('hidden');
-            badge.classList.remove('hidden');
-            countText.textContent = uploadedImages.length;
-            badge.textContent = uploadedImages.length;
+            if (countText) countText.textContent = uploadedImages.length;
+            if (badge) {
+                badge.textContent = uploadedImages.length;
+                badge.classList.remove('hidden');
+            }
 
             grid.innerHTML = uploadedImages.map((item, idx) => {
+                let thumbHtml = '';
                 if (item.fileKind === 'word') {
-                    const snippet = (item.extractedText || '').replace(/<[^>]+>/g, ' ').substring(0, 110);
-                    return `
-                        <div class="relative rounded-2xl border border-blue-200 bg-blue-50/50 p-3.5 flex flex-col justify-between gap-2 shadow-2xs">
-                            <div class="flex items-start justify-between gap-2">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg shrink-0">
-                                        <i class="fa-solid fa-file-word"></i>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <span class="inline-block px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-extrabold uppercase">📘 WORD</span>
-                                        <h5 class="text-xs font-extrabold text-slate-800 truncate mt-0.5" title="${item.name}">${item.name}</h5>
-                                    </div>
-                                </div>
-                                <button type="button" onclick="removeUploadedImage(${idx})" class="w-6 h-6 rounded-lg bg-rose-100 hover:bg-rose-600 text-rose-600 hover:text-white flex items-center justify-center text-xs transition shrink-0">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
-                            </div>
-                            <p class="text-[11px] text-slate-600 line-clamp-2 bg-white/80 p-2 rounded-xl border border-blue-100">${snippet || 'Đã trích xuất nội dung và bảng biểu từ file Word.'}...</p>
-                            <div class="text-[10px] font-bold text-blue-700">${item.summaryMeta || 'File Word'}</div>
+                    thumbHtml = `
+                        <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xl shrink-0">
+                            <i class="fa-solid fa-file-word"></i>
                         </div>
                     `;
+                } else if (item.fileKind === 'pdf') {
+                    thumbHtml = item.dataUrl
+                        ? `<img src="${item.dataUrl}" class="w-12 h-12 rounded-xl object-cover border border-rose-200 shrink-0">`
+                        : `<div class="w-12 h-12 rounded-xl bg-rose-600 text-white flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-file-pdf"></i></div>`;
+                } else {
+                    thumbHtml = `<img src="${item.dataUrl}" class="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0">`;
                 }
 
-                if (item.fileKind === 'pdf') {
-                    return `
-                        <div class="relative rounded-2xl border border-rose-200 bg-rose-50/40 p-3.5 flex flex-col justify-between gap-2 shadow-2xs">
-                            <div class="flex items-start justify-between gap-2">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    ${item.dataUrl ? `
-                                        <img src="${item.dataUrl}" alt="${item.name}" class="w-10 h-12 rounded-lg object-cover border border-rose-300 shrink-0">
-                                    ` : `
-                                        <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center text-lg shrink-0">
-                                            <i class="fa-solid fa-file-pdf"></i>
-                                        </div>
-                                    `}
-                                    <div class="min-w-0">
-                                        <span class="inline-block px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-extrabold uppercase">📕 PDF</span>
-                                        <h5 class="text-xs font-extrabold text-slate-800 truncate mt-0.5" title="${item.name}">${item.name}</h5>
-                                    </div>
-                                </div>
-                                <button type="button" onclick="removeUploadedImage(${idx})" class="w-6 h-6 rounded-lg bg-rose-100 hover:bg-rose-600 text-rose-600 hover:text-white flex items-center justify-center text-xs transition shrink-0">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
-                            </div>
-                            <p class="text-[11px] text-slate-600 line-clamp-2 bg-white/80 p-2 rounded-xl border border-rose-100">
-                                ${item.extractedText ? item.extractedText.substring(0, 95) + '...' : 'Đã chụp hình ảnh các trang PDF để AI đọc bằng thị giác máy tính.'}
-                            </p>
-                            <div class="text-[10px] font-bold text-rose-700">${item.summaryMeta || 'File PDF'}</div>
-                        </div>
-                    `;
-                }
-
-                // Mặc định: HÌNH ẢNH
                 return `
-                    <div class="relative rounded-2xl border border-emerald-200 bg-emerald-50/30 p-3 flex items-center justify-between gap-3 shadow-2xs">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <img src="${item.dataUrl}" alt="${item.name}" class="w-14 h-16 rounded-xl object-cover border border-emerald-300 shrink-0">
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2.5">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            ${thumbHtml}
                             <div class="min-w-0">
-                                <span class="inline-block px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase">🖼️ ẢNH #${idx + 1}</span>
-                                <h5 class="text-xs font-extrabold text-slate-800 truncate mt-0.5" title="${item.name}">${item.name}</h5>
-                                <div class="text-[10px] text-slate-500 mt-0.5">${item.summaryMeta || 'Hình ảnh đề thi'}</div>
+                                <div class="text-xs font-bold text-slate-800 truncate">${item.name}</div>
+                                <div class="text-[11px] text-slate-500 truncate">${item.summaryMeta || 'Đã sẵn sàng'}</div>
                             </div>
                         </div>
-                        <button type="button" onclick="removeUploadedImage(${idx})" class="w-7 h-7 rounded-lg bg-rose-100 hover:bg-rose-600 text-rose-600 hover:text-white flex items-center justify-center text-xs transition shrink-0">
-                            <i class="fa-solid fa-xmark"></i>
+                        <button type="button" onclick="removeUploadedImage(${idx})" class="w-7 h-7 rounded-lg bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-xmark text-xs"></i>
                         </button>
                     </div>
                 `;
@@ -1587,91 +1734,49 @@
 
         function clearAllUploadedImages() {
             uploadedImages = [];
-            const fileInput = document.getElementById('imageFileInput');
-            if (fileInput) fileInput.value = '';
             renderUploadedImagesGrid();
             showToast("Đã xoá danh sách tệp tải lên!");
         }
 
         // =========================================================================
-        // 5. BỘ HIỂN THỊ CÔNG THỨC TOÁN / LÝ / HÓA (KATEX) & BẢO VỆ ĐỊA CHỈ EXCEL ($E$5)
+        // 5. HIỂN THỊ CÔNG THỨC TOÁN / LÝ / HÓA (KATEX) & BẢO VỆ ĐỊA CHỈ EXCEL ($E$5)
         // =========================================================================
-        function protectExcelReferences(text) {
-            if (!text) return '';
-            const placeholders = [];
-            // Bảo vệ các địa chỉ ô tuyệt đối/hỗn hợp trong Excel như $E$5, $F$2, $C$4*$D$4, E$1, $E5
-            const protectedText = String(text).replace(/(\$[A-Z]{1,3}\$\d+|\$[A-Z]{1,3}\d+|[A-Z]{1,3}\$\d+)/g, (match) => {
-                const token = `@@EXCEL_REF_${placeholders.length}@@`;
-                placeholders.push(match);
-                return token;
-            });
-            return { protectedText, placeholders };
+        function protectExcelCellRefs(str) {
+            if (!str) return '';
+            return String(str).replace(/\$([A-Za-z]{1,3})\$([0-9]{1,5})/g, '&#36;$1&#36;$2');
         }
 
-        function restoreExcelReferences(html, placeholders) {
-            if (!html || !placeholders || placeholders.length === 0) return html;
-            let result = html;
-            placeholders.forEach((orig, idx) => {
-                result = result.split(`@@EXCEL_REF_${idx}@@`).join(orig);
-            });
-            return result;
+        function formatInlineQuestionHTML(rawText) {
+            if (!rawText) return '';
+            let safe = protectExcelCellRefs(rawText);
+            return safe;
         }
 
-        function renderFormulaStringWithKaTeX(str) {
-            if (!str || !window.katex) return str;
-            // Xử lý $$...$$ (block math) trước
-            let out = str.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
-                try {
-                    return window.katex.renderToString(math.trim(), { displayMode: true, throwOnError: false });
-                } catch (e) {
-                    return `$$${math}$$`;
-                }
-            });
-            // Xử lý $...$ (inline math)
-            out = out.replace(/\$([^\$\n]+?)\$/g, (_, math) => {
-                try {
-                    return window.katex.renderToString(math.trim(), { displayMode: false, throwOnError: false });
-                } catch (e) {
-                    return `$${math}$`;
-                }
-            });
-            return out;
-        }
-
-        function formatInlineQuestionHTML(text) {
-            if (!text) return '';
-            const { protectedText, placeholders } = protectExcelReferences(String(text));
-            const withMath = renderFormulaStringWithKaTeX(protectedText);
-            return restoreExcelReferences(withMath, placeholders);
-        }
-
-        function formatRichAcademicHTML(text) {
-            if (!text) return '';
-            const { protectedText, placeholders } = protectExcelReferences(String(text));
-            let mathRendered = renderFormulaStringWithKaTeX(protectedText);
-            let html = mathRendered;
+        function formatRichAcademicHTML(rawMarkdown) {
+            if (!rawMarkdown) return '';
+            let protectedText = protectExcelCellRefs(rawMarkdown);
             if (window.marked && typeof window.marked.parse === 'function') {
                 try {
-                    html = window.marked.parse(mathRendered, { breaks: true });
+                    return window.marked.parse(protectedText);
                 } catch (e) {
-                    html = mathRendered.replace(/\n/g, '<br>');
+                    console.warn('Marked parse error:', e);
                 }
-            } else {
-                html = mathRendered.replace(/\n/g, '<br>');
             }
-            return restoreExcelReferences(html, placeholders);
+            return protectedText.replace(/\n/g, '<br>');
         }
 
-        function renderMathInElementSafe(element) {
-            if (!element || typeof window.renderMathInElement !== 'function') return;
+        function renderMathInElementSafe(targetEl) {
+            if (!targetEl || typeof window.renderMathInElement !== 'function') return;
             try {
-                window.renderMathInElement(element, {
+                window.renderMathInElement(targetEl, {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
                         { left: '\\[', right: '\\]', display: true },
-                        { left: '\\(', right: '\\)', display: false }
+                        { left: '\\(', right: '\\)', display: false },
+                        { left: '$', right: '$', display: false }
                     ],
-                    throwOnError: false
+                    throwOnError: false,
+                    ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
                 });
             } catch (e) {
                 console.warn('KaTeX render warning:', e);
@@ -1679,7 +1784,7 @@
         }
 
         // =========================================================================
-        // 6. HÀM GỌI GEMINI API VỚI RETRY BACKOFF & PARSE JSON AN TOÀN
+        // 6. HÀM GỌI GEMINI API VỚI RETRY BACKOFF & TỰ ĐỘNG HỖ TRỢ GITHUB PAGES
         // =========================================================================
         function safeParseJSON(rawText) {
             if (!rawText) throw new Error("AI trả về dữ liệu rỗng.");
@@ -1698,34 +1803,72 @@
             }
         }
 
-        async function fetchGeminiWithBackoff(payload, modelName = "gemini-2.5-flash-preview-09-2025") {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        async function fetchGeminiWithBackoff(payload, preferredModel = "gemini-3-flash-preview") {
+            const activeKey = getEffectiveApiKey();
+            // Tự động thử danh sách model tương thích cả trong Canvas lẫn Google AI Studio trên GitHub Pages
+            const candidateModels = Array.from(new Set([
+                preferredModel,
+                "gemini-3-flash-preview",
+                "gemini-2.5-flash",
+                "gemini-2.5-flash-preview-09-2025",
+                "gemini-2.0-flash"
+            ]));
+
             const delays = [1000, 2000, 4000];
+            let lastError = null;
 
-            for (let attempt = 0; attempt <= delays.length; attempt++) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+            for (let mIdx = 0; mIdx < candidateModels.length; mIdx++) {
+                const modelName = candidateModels[mIdx];
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(activeKey)}`;
 
-                    if (response.ok) {
-                        return await response.json();
-                    }
+                for (let attempt = 0; attempt <= delays.length; attempt++) {
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
 
-                    const errText = await response.text();
-                    if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-                        throw new Error(`Lỗi API (${response.status}): ${errText.substring(0, 180)}`);
+                        if (response.ok) {
+                            return await response.json();
+                        }
+
+                        const errText = await response.text();
+
+                        // Lỗi 403 hoặc 400 do chưa nhập API Key khi chạy trên GitHub Pages
+                        if (response.status === 403 || (response.status === 400 && /API_KEY_INVALID|key not valid|unregistered callers/i.test(errText))) {
+                            openApiKeyModal("Bạn đang mở web trên GitHub hoặc ngoài hệ thống. Hãy dán Gemini API Key miễn phí vào ô bên dưới để sử dụng AI nhé!");
+                            throw new Error("Chưa cấu hình Gemini API Key cho GitHub (Lỗi 403). Vui lòng nhập API Key trong cửa sổ vừa hiện lên.");
+                        }
+
+                        // Nếu model không tồn tại trên key cá nhân (404) hoặc không hỗ trợ (400), chuyển ngay sang model kế tiếp
+                        if (response.status === 404 || (response.status === 400 && mIdx < candidateModels.length - 1)) {
+                            lastError = new Error(`Model ${modelName} không khả dụng (${response.status})`);
+                            break;
+                        }
+
+                        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+                            throw new Error(`Lỗi API (${response.status}): ${errText.substring(0, 160)}`);
+                        }
+
+                        if (attempt === delays.length) {
+                            lastError = new Error(`Máy chủ AI quá tải (${response.status}).`);
+                        }
+                    } catch (err) {
+                        if (err.message && err.message.includes("Chưa cấu hình Gemini API Key")) {
+                            throw err;
+                        }
+                        lastError = err;
+                        if (attempt === delays.length && mIdx === candidateModels.length - 1) {
+                            throw lastError;
+                        }
                     }
-                    if (attempt === delays.length) {
-                        throw new Error(`Máy chủ AI quá tải (${response.status}).`);
+                    if (attempt < delays.length) {
+                        await new Promise(r => setTimeout(r, delays[attempt]));
                     }
-                } catch (err) {
-                    if (attempt === delays.length) throw err;
                 }
-                await new Promise(r => setTimeout(r, delays[attempt]));
             }
+            throw lastError || new Error("Không thể kết nối tới Gemini API.");
         }
 
         function detectUserCreativeIntent(userText) {
@@ -1743,20 +1886,21 @@
 
         async function handleAIImageGeneration(userText, loadingBubble) {
             const cleanPrompt = userText.replace(/^(tạo hình|vẽ hình|tạo ảnh|vẽ ảnh)[:\s]*/i, '').trim() || userText;
+            const activeKey = getEffectiveApiKey();
             try {
-                const imagenUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
-                const response = await fetch(imagenUrl, {
+                const imgGenUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${encodeURIComponent(activeKey)}`;
+                const response = await fetch(imgGenUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        instances: [{ prompt: cleanPrompt }],
-                        parameters: { sampleCount: 1 }
+                        contents: [{ parts: [{ text: cleanPrompt }] }],
+                        generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
                     })
                 });
 
                 if (response.ok) {
-                    const data = await response.json();
-                    const b64 = data?.predictions?.[0]?.bytesBase64Encoded;
+                    const result = await response.json();
+                    const b64 = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
                     if (b64) {
                         const dataUrl = `data:image/png;base64,${b64}`;
                         loadingBubble.remove();
@@ -1778,10 +1922,10 @@
                     }
                 }
             } catch (e) {
-                console.warn('Imagen fallback to SVG generation:', e);
+                console.warn('Image model fallback to SVG generation:', e);
             }
 
-            // Dự phòng thông minh: Yêu cầu Gemini thiết kế tranh minh họa SVG chất lượng cao và chuyển sang PNG
+            // Dự phòng thông minh: Yêu cầu Gemini thiết kế tranh minh họa SVG chất lượng cao
             const svgResult = await fetchGeminiWithBackoff({
                 contents: [{
                     role: 'user',
@@ -3661,11 +3805,25 @@ Trả về đúng cấu trúc JSON:
             }
             const closeScriptRegex = new RegExp('<' + '/script>', 'gi');
             const serializedExam = JSON.stringify(currentExamSource, null, 2).replace(closeScriptRegex, '<\\/script>');
-            const currentDocHTML = document.documentElement.outerHTML;
+            let currentDocHTML = document.documentElement.outerHTML;
 
             const regexMarker = /const DEFAULT_EXAM_DATA = \{[\s\S]*?\n        \};/;
             const replacementCode = `const DEFAULT_EXAM_DATA = ${serializedExam};`;
-            const finalStandaloneHTML = '<!DOCTYPE html>\n' + currentDocHTML.replace(regexMarker, replacementCode);
+            currentDocHTML = currentDocHTML.replace(regexMarker, replacementCode);
+
+            // Nếu người dùng bật tuỳ chọn nhúng sẵn API Key cá nhân khi xuất file HTML
+            try {
+                const shouldEmbedKey = localStorage.getItem(STORAGE_EMBED_KEY_FLAG) === "true";
+                const savedKey = localStorage.getItem(STORAGE_API_KEY_NAME) || "";
+                if (shouldEmbedKey && savedKey) {
+                    currentDocHTML = currentDocHTML.replace(
+                        'const apiKey = "";',
+                        `const apiKey = ${JSON.stringify(savedKey)};`
+                    );
+                }
+            } catch (e) {}
+
+            const finalStandaloneHTML = '<!DOCTYPE html>\n' + currentDocHTML;
 
             const blob = new Blob([finalStandaloneHTML], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
