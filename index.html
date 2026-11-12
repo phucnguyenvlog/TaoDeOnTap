@@ -28,7 +28,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- LZ-String nén dữ liệu đề thi trực tiếp vào đường Link chia sẻ kiểu Azota -->
+    <!-- LZ-String nén dữ liệu đề thi siêu gọn cho tính năng Chia Sẻ Link Online -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <style>
         body {
@@ -241,9 +241,9 @@
                         <span>AI Soạn/Sửa Đề</span>
                     </button>
 
-                    <button type="button" id="btnHeaderShareLink" onclick="openShareLinkModal()" class="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-2xs transition flex items-center gap-1.5 shrink-0" title="Tạo đường link chia sẻ giống Azota cho học sinh và bạn bè vào làm bài ngay">
+                    <button type="button" id="btnHeaderShareLink" onclick="openShareLinkModal()" class="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-2xs transition flex items-center gap-1.5 shrink-0" title="Tạo đường link ngắn chia sẻ cho học sinh và bạn bè vào làm bài ngay">
                         <i class="fa-solid fa-share-nodes"></i>
-                        <span>Chia Sẻ Link (Azota)</span>
+                        <span>Chia Sẻ Link</span>
                     </button>
 
                     <button type="button" id="btnHeaderExportDoc" onclick="openWordExportModal()" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-2xs transition flex items-center gap-1.5 shrink-0" title="Xuất ra file Word (.doc) hoặc file PDF (.pdf)">
@@ -743,7 +743,7 @@
                             <div id="sidebarTeacherExportBtns" class="space-y-2 pt-1">
                                 <button type="button" onclick="openShareLinkModal()" class="w-full py-2.5 px-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 font-extrabold text-xs transition flex items-center justify-center gap-1.5">
                                     <i class="fa-solid fa-share-nodes text-purple-600"></i>
-                                    <span>Lấy Link Chia Sẻ Làm Bài (Azota)</span>
+                                    <span>Lấy Link Giao Bài Online</span>
                                 </button>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <button type="button" onclick="openWordExportModal()" class="w-full py-2.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 font-bold text-xs transition flex items-center gap-1.5">
@@ -1104,7 +1104,7 @@
     </div>
 
     <!-- =================================================================== -->
-    <!-- MODAL CHIA SẺ LINK LÀM BÀI TRỰC TUYẾN NHƯ AZOTA + MÃ QR              -->
+    <!-- MODAL CHIA SẺ LINK LÀM BÀI TRỰC TUYẾN SIÊU NGẮN + MÃ QR              -->
     <!-- =================================================================== -->
     <div id="shareLinkModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 animate-fade-in my-auto">
@@ -1114,8 +1114,8 @@
                         <i class="fa-solid fa-share-nodes"></i>
                     </div>
                     <div>
-                        <h3 class="text-lg font-extrabold text-slate-900">Chia Sẻ Link Làm Bài Trực Tuyến (Kiểu Azota)</h3>
-                        <p class="text-xs text-slate-500">Gửi link qua Zalo, Messenger, Facebook cho học sinh & bạn bè vào làm bài ngay</p>
+                        <h3 class="text-lg font-extrabold text-slate-900">Chia Sẻ Link Giao Bài Online</h3>
+                        <p class="text-xs text-slate-500">Tạo đường link ngắn gọn & mã QR gửi qua Zalo, Messenger cho học sinh làm bài ngay</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeShareLinkModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
@@ -1130,7 +1130,7 @@
                         <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
                             1. Chế độ chấm khi mở Link:
                         </label>
-                        <select id="shareDefaultQuizMode" onchange="regenerateShareableAzotaLink()" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-xs text-slate-800 outline-none focus:border-purple-600">
+                        <select id="shareDefaultQuizMode" onchange="regenerateShareableExamLink()" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-xs text-slate-800 outline-none focus:border-purple-600">
                             <option value="practice">⚡ Luyện tập (Chọn câu nào biết KQ ngay)</option>
                             <option value="exam">📝 Thi thử (Làm hết bấm Nộp bài mới chấm)</option>
                         </select>
@@ -1139,7 +1139,7 @@
                         <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
                             2. Thứ tự câu hỏi mặc định:
                         </label>
-                        <select id="shareDefaultOrderMode" onchange="regenerateShareableAzotaLink()" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-xs text-slate-800 outline-none focus:border-purple-600">
+                        <select id="shareDefaultOrderMode" onchange="regenerateShareableExamLink()" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-xs text-slate-800 outline-none focus:border-purple-600">
                             <option value="shuffled">🔀 Tự động đảo câu hỏi & đáp án</option>
                             <option value="original">📄 Giữ nguyên thứ tự Đề gốc</option>
                         </select>
@@ -1155,21 +1155,21 @@
                     <input
                         type="text"
                         id="shareBaseUrlInput"
-                        oninput="regenerateShareableAzotaLink()"
+                        oninput="regenerateShareableExamLink()"
                         value="https://phucnguyenvlog.github.io/TaoDeOnTap/"
                         placeholder="https://phucnguyenvlog.github.io/TaoDeOnTap/"
                         class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono text-slate-700 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none">
                 </div>
 
-                <!-- Ô chứa đường link đã tạo + nút Sao chép -->
-                <div class="p-4 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-2.5">
-                    <div class="flex items-center justify-between">
+                <!-- Ô chứa đường link đã tạo + nút Sao chép + Mã QR -->
+                <div class="p-4 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
                         <span class="font-extrabold text-purple-950 text-xs flex items-center gap-1.5">
                             <i class="fa-solid fa-link text-purple-600"></i>
-                            <span>Đường Link Làm Bài Trực Tiếp (Chỉ hiển thị phần làm bài cho Học sinh):</span>
+                            <span>Link Làm Bài Online (Tự động rút gọn siêu ngắn):</span>
                         </span>
-                        <span id="shareLinkStatusBadge" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                            Hoạt động vĩnh viễn
+                        <span id="shareLinkStatusBadge" class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                            Đang tạo link ngắn...
                         </span>
                     </div>
 
@@ -1182,37 +1182,57 @@
                             class="flex-1 px-3.5 py-2.5 rounded-xl border border-purple-300 bg-white font-mono text-xs text-slate-800 outline-none">
                         <button
                             type="button"
-                            onclick="copyShareableAzotaLink()"
+                            onclick="copyShareableExamLink()"
                             class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow transition flex items-center gap-1.5 shrink-0">
                             <i class="fa-solid fa-copy"></i>
                             <span>Sao chép Link</span>
                         </button>
                     </div>
 
-                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-                        <button
-                            type="button"
-                            id="btnShortenShareLink"
-                            onclick="shortenAzotaShareLink()"
-                            class="px-3 py-1.5 rounded-xl bg-white hover:bg-purple-100 text-purple-800 border border-purple-300 font-bold text-xs transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
-                            <span>Rút gọn thành Link ngắn (is.gd / TinyURL)</span>
-                        </button>
+                    <!-- Khung Mã QR + Các tuỳ chọn rút gọn -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-purple-200/70">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                id="btnShortenShareLink"
+                                onclick="createUltraShortExamLink(true)"
+                                class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-2xs">
+                                <i class="fa-solid fa-compress"></i>
+                                <span>Tạo Link Siêu Ngắn (~30 ký tự)</span>
+                            </button>
 
-                        <button
-                            type="button"
-                            onclick="previewStudentShareModeNow()"
-                            class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold text-xs transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-eye"></i>
-                            <span>Xem thử giao diện khi học sinh bấm vào Link</span>
-                        </button>
+                            <button
+                                type="button"
+                                onclick="switchToSelfContainedBackupLink()"
+                                class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs transition flex items-center gap-1.5"
+                                title="Link tự chứa toàn bộ câu hỏi trong URL, không phụ thuộc máy chủ rút gọn">
+                                <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                                <span>Dùng Link Dự Phòng</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onclick="previewStudentShareModeNow()"
+                                class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold text-xs transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-eye"></i>
+                                <span>Xem thử giao diện Học sinh</span>
+                            </button>
+                        </div>
+
+                        <div id="shareQrCodeBox" class="hidden sm:flex items-center gap-2 bg-white p-1.5 rounded-xl border border-purple-200 shrink-0">
+                            <img id="shareQrCodeImg" src="" alt="QR" class="w-14 h-14 rounded-lg object-contain">
+                            <div class="text-[10px] text-slate-600 leading-tight pr-1">
+                                <div class="font-extrabold text-slate-800">Mã QR Làm Bài</div>
+                                <div>Quét bằng Zalo / Camera</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Lưu ý quan trọng để Link chạy trên GitHub -->
                 <div class="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] text-amber-950 leading-relaxed">
                     <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
-                    <strong>Hướng dẫn 1 lần duy nhất:</strong> Bạn chỉ cần cập nhật file <code>index.html</code> mới nhất này lên kho GitHub <code>phucnguyenvlog/TaoDeOnTap</code> của bạn 1 lần. Từ đó về sau, mỗi khi tạo đề mới xong, bạn chỉ cần bấm <strong>"Sao chép Link"</strong> ở trên rồi gửi qua Zalo/Messenger là mọi người bấm vào làm bài được ngay lập tức (không cần upload lại file lên GitHub nữa)!
+                    <strong>Hướng dẫn 1 lần duy nhất:</strong> Bạn chỉ cần cập nhật file <code>index.html</code> mới nhất này lên kho GitHub <code>phucnguyenvlog/TaoDeOnTap</code> của bạn 1 lần. Từ đó về sau, mỗi khi tạo đề mới xong, hệ thống sẽ tự tạo <strong>Link Siêu Ngắn</strong> (chỉ ~30-50 ký tự) để bạn gửi qua Zalo/Messenger cho học sinh vào làm ngay!
                 </div>
             </div>
 
@@ -1573,18 +1593,124 @@
             if (footerTitle) footerTitle.textContent = examTitle;
         }
 
-        // Kiểm tra xem trên URL có chứa gói đề thi chia sẻ kiểu Azota (#de=... hoặc ?de=...) không
-        function checkAndLoadSharedExamFromUrl() {
+        // Nén bộ đề sang cấu trúc mảng siêu gọn (giảm 60% dung lượng chuỗi)
+        function packExamToCompactArray(examObj, quizMode, orderMode) {
+            return [
+                2, // version 2 compact
+                quizMode === 'exam' ? 1 : 0,
+                orderMode === 'original' ? 1 : 0,
+                examObj.title || "ĐỀ ÔN TẬP",
+                (examObj.mcq || []).map(q => [
+                    q.question || "",
+                    q.options || [],
+                    typeof q.correctIndex === 'number' ? q.correctIndex : 0,
+                    q.explanation || "",
+                    q.tableHtml || "",
+                    q.paperCorrectionNote || ""
+                ]),
+                (examObj.tf || []).map(q => [
+                    q.question || "",
+                    (q.statements || []).map(s => [
+                        s.label || "a",
+                        s.text || "",
+                        s.isTrue ? 1 : 0,
+                        s.explanation || ""
+                    ])
+                ]),
+                (examObj.essay || []).map(q => [
+                    q.question || "",
+                    q.subQuestions || [],
+                    q.suggestedAnswer || ""
+                ])
+            ];
+        }
+
+        function unpackExamFromCompactArray(arr) {
+            if (!Array.isArray(arr) || arr[0] !== 2) return null;
+            return {
+                quizMode: arr[1] === 1 ? 'exam' : 'practice',
+                orderMode: arr[2] === 1 ? 'original' : 'shuffled',
+                exam: {
+                    title: arr[3] || "ĐỀ ÔN TẬP",
+                    mcq: (arr[4] || []).map((item, i) => ({
+                        id: i + 1,
+                        question: item[0] || "",
+                        options: item[1] || ["A", "B", "C", "D"],
+                        correctIndex: typeof item[2] === 'number' ? item[2] : 0,
+                        explanation: item[3] || "",
+                        tableHtml: item[4] || "",
+                        paperCorrectionNote: item[5] || ""
+                    })),
+                    tf: (arr[5] || []).map((item, i) => ({
+                        id: i + 1,
+                        question: item[0] || "",
+                        statements: (item[1] || []).map(st => ({
+                            label: st[0] || "a",
+                            text: st[1] || "",
+                            isTrue: st[2] === 1,
+                            explanation: st[3] || ""
+                        }))
+                    })),
+                    essay: (arr[6] || []).map((item, i) => ({
+                        id: i + 1,
+                        question: item[0] || "",
+                        subQuestions: item[1] || [],
+                        suggestedAnswer: item[2] || ""
+                    }))
+                }
+            };
+        }
+
+        function applyDecodedSharedPackage(parsed) {
+            if (!parsed) return false;
+            if (Array.isArray(parsed) && parsed[0] === 2) {
+                parsed = unpackExamFromCompactArray(parsed);
+            }
+            if (parsed && parsed.exam) {
+                currentExamSource = parsed.exam;
+                if (parsed.quizMode === 'exam' || parsed.quizMode === 'practice') {
+                    state.quizMode = parsed.quizMode;
+                }
+                if (parsed.orderMode === 'shuffled' || parsed.orderMode === 'original') {
+                    state.orderMode = parsed.orderMode;
+                }
+                IS_STANDALONE_STUDENT_APP = true;
+                return true;
+            }
+            return false;
+        }
+
+        // Kiểm tra xem trên URL có chứa Mã Đề Ngắn (?ma=...) hoặc gói đề nén (#d=... / #de=...) không
+        async function checkAndLoadSharedExamFromUrl() {
             try {
+                const params = new URLSearchParams(window.location.search);
+                const cloudKey = params.get("ma");
+                if (cloudKey) {
+                    showToast("Đang tải đề ôn tập từ đường link...");
+                    const resp = await fetch(`https://bytebin.lucko.me/${encodeURIComponent(cloudKey)}`);
+                    if (resp.ok) {
+                        const cloudJson = await resp.json();
+                        if (cloudJson && cloudJson.d && window.LZString) {
+                            const rawStr = window.LZString.decompressFromEncodedURIComponent(cloudJson.d);
+                            if (rawStr && applyDecodedSharedPackage(JSON.parse(rawStr))) {
+                                return true;
+                            }
+                        } else if (applyDecodedSharedPackage(cloudJson)) {
+                            return true;
+                        }
+                    }
+                }
+
                 let encodedPayload = "";
                 const hash = window.location.hash || "";
-                if (hash.startsWith("#de=")) {
+                if (hash.startsWith("#d=")) {
+                    encodedPayload = hash.substring(3);
+                } else if (hash.startsWith("#de=")) {
                     encodedPayload = hash.substring(4);
-                } else {
-                    const params = new URLSearchParams(window.location.search);
-                    if (params.has("de")) {
-                        encodedPayload = params.get("de") || "";
-                    }
+                } else if (params.has("d")) {
+                    encodedPayload = params.get("d") || "";
+                } else if (params.has("de")) {
+                    encodedPayload = params.get("de") || "";
                 }
 
                 if (!encodedPayload || !window.LZString) return false;
@@ -1593,17 +1719,7 @@
                 if (!jsonStr) return false;
 
                 const parsed = JSON.parse(jsonStr);
-                if (parsed && parsed.exam) {
-                    currentExamSource = parsed.exam;
-                    if (parsed.quizMode === 'exam' || parsed.quizMode === 'practice') {
-                        state.quizMode = parsed.quizMode;
-                    }
-                    if (parsed.orderMode === 'shuffled' || parsed.orderMode === 'original') {
-                        state.orderMode = parsed.orderMode;
-                    }
-                    IS_STANDALONE_STUDENT_APP = true;
-                    return true;
-                }
+                return applyDecodedSharedPackage(parsed);
             } catch (e) {
                 console.warn("Không thể giải nén đề từ URL:", e);
             }
@@ -1634,12 +1750,12 @@
             testImg.src = 'Icon.png';
         }
 
-        window.onload = function () {
+        window.onload = async function () {
             if (window.pdfjsLib) {
                 window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             }
 
-            const loadedFromShareUrl = checkAndLoadSharedExamFromUrl();
+            const loadedFromShareUrl = await checkAndLoadSharedExamFromUrl();
 
             applyBrandFavicon();
             updateApiKeyHeaderBadge();
@@ -4047,8 +4163,10 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
         }
 
         // =========================================================================
-        // 13. CHIA SẺ LINK LÀM BÀI TRỰC TUYẾN NHƯ AZOTA (#de=...)
+        // 13. CHIA SẺ LINK LÀM BÀI TRỰC TUYẾN SIÊU NGẮN (?ma=... & #d=...)
         // =========================================================================
+        let lastSelfContainedShareLink = "";
+
         function openShareLinkModal() {
             if (isCurrentExamEmpty()) {
                 showToast("Thầy cô hãy tạo hoặc tải đề lên trước khi lấy Link chia sẻ nhé!");
@@ -4063,11 +4181,11 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
                     baseInput.value = "https://phucnguyenvlog.github.io/TaoDeOnTap/";
                 }
             }
-            regenerateShareableAzotaLink();
             if (modal) {
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             }
+            regenerateShareableExamLink();
         }
 
         function closeShareLinkModal() {
@@ -4078,26 +4196,55 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
             }
         }
 
-        function regenerateShareableAzotaLink() {
-            const baseInput = document.getElementById('shareBaseUrlInput');
-            const outInput = document.getElementById('generatedShareLinkInput');
+        function updateShareQrCodePreview(urlText) {
+            const qrBox = document.getElementById('shareQrCodeBox');
+            const qrImg = document.getElementById('shareQrCodeImg');
+            if (!qrBox || !qrImg) return;
+            if (urlText && urlText.length < 900) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(urlText)}`;
+                qrBox.classList.remove('hidden');
+                qrBox.classList.add('flex');
+            } else {
+                qrBox.classList.add('hidden');
+            }
+        }
+
+        function buildCompactCompressedExamString() {
             const quizMode = document.getElementById('shareDefaultQuizMode')?.value || 'practice';
             const orderMode = document.getElementById('shareDefaultOrderMode')?.value || 'shuffled';
+            const compactArr = packExamToCompactArray(currentExamSource, quizMode, orderMode);
+            return window.LZString.compressToEncodedURIComponent(JSON.stringify(compactArr));
+        }
 
+        function regenerateShareableExamLink() {
+            const baseInput = document.getElementById('shareBaseUrlInput');
+            const outInput = document.getElementById('generatedShareLinkInput');
             if (!outInput || !window.LZString) return;
 
             let baseUrl = (baseInput?.value || "https://phucnguyenvlog.github.io/TaoDeOnTap/").trim();
             baseUrl = baseUrl.split('#')[0].split('?')[0];
 
-            const sharePackage = {
-                exam: currentExamSource,
-                quizMode,
-                orderMode
-            };
+            const compressed = buildCompactCompressedExamString();
+            lastSelfContainedShareLink = `${baseUrl}#d=${compressed}`;
+            outInput.value = lastSelfContainedShareLink;
 
-            const compressed = window.LZString.compressToEncodedURIComponent(JSON.stringify(sharePackage));
-            const fullShareUrl = `${baseUrl}#de=${compressed}`;
-            outInput.value = fullShareUrl;
+            // Tự động tạo Link Siêu Ngắn (~50 ký tự) ngay khi mở bảng
+            createUltraShortExamLink(false);
+        }
+
+        function switchToSelfContainedBackupLink() {
+            const outInput = document.getElementById('generatedShareLinkInput');
+            const badge = document.getElementById('shareLinkStatusBadge');
+            if (!outInput) return;
+            if (!lastSelfContainedShareLink) regenerateShareableExamLink();
+            outInput.value = lastSelfContainedShareLink;
+            if (badge) {
+                badge.className = "px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]";
+                badge.textContent = "Link dự phòng tự chứa đề";
+            }
+            updateShareQrCodePreview(lastSelfContainedShareLink);
+            copyTextToClipboardFallback(lastSelfContainedShareLink);
+            showToast("Đã chuyển sang Link dự phòng tự chứa dữ liệu & sao chép!");
         }
 
         function copyTextToClipboardFallback(text) {
@@ -4109,7 +4256,7 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
             document.body.removeChild(tempInput);
         }
 
-        function copyShareableAzotaLink() {
+        function copyShareableExamLink() {
             const outInput = document.getElementById('generatedShareLinkInput');
             if (!outInput || !outInput.value) return;
             outInput.select();
@@ -4117,31 +4264,78 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
             showToast("Đã sao chép Link làm bài! Bạn có thể dán gửi qua Zalo / Messenger ngay.");
         }
 
-        async function shortenAzotaShareLink() {
+        async function createUltraShortExamLink(copyAfterSuccess = false) {
+            const baseInput = document.getElementById('shareBaseUrlInput');
             const outInput = document.getElementById('generatedShareLinkInput');
             const btn = document.getElementById('btnShortenShareLink');
-            if (!outInput || !outInput.value) return;
+            const badge = document.getElementById('shareLinkStatusBadge');
+            if (!outInput || !window.LZString) return;
 
-            const longUrl = outInput.value;
+            let baseUrl = (baseInput?.value || "https://phucnguyenvlog.github.io/TaoDeOnTap/").trim();
+            baseUrl = baseUrl.split('#')[0].split('?')[0];
+
+            const compressed = buildCompactCompressedExamString();
+            lastSelfContainedShareLink = `${baseUrl}#d=${compressed}`;
+
             if (btn) btn.disabled = true;
-            showToast("Đang tạo Link rút gọn...");
+            if (badge) {
+                badge.className = "px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]";
+                badge.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang rút gọn link...`;
+            }
 
             try {
-                const apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
-                const resp = await fetch(apiUrl);
-                if (resp.ok) {
-                    const shortUrl = (await resp.text()).trim();
-                    if (shortUrl.startsWith('http')) {
-                        outInput.value = shortUrl;
-                        copyTextToClipboardFallback(shortUrl);
-                        showToast("Đã rút gọn & sao chép Link ngắn thành công!");
-                        return;
+                // Bước 1: Tạo mã đề siêu ngắn (?ma=...) qua Cloud JSON (chỉ ~50 ký tự, không giới hạn độ dài đề)
+                let shortParamUrl = "";
+                const postResp = await fetch("https://bytebin.lucko.me/post", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ d: compressed })
+                });
+
+                if (postResp.ok) {
+                    const postData = await postResp.json();
+                    if (postData && postData.key) {
+                        shortParamUrl = `${baseUrl}?ma=${postData.key}`;
                     }
                 }
-                throw new Error("Link đề chứa nhiều câu hỏi nên dùng trực tiếp Link gốc sẽ ổn định nhất.");
+
+                // Bước 2: Nếu có shortParamUrl (~52 ký tự), thử rút gọn thêm 1 tầng nữa qua TinyURL (~26 ký tự)
+                let finalUrl = shortParamUrl || lastSelfContainedShareLink;
+                if (shortParamUrl) {
+                    try {
+                        const tinyResp = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(shortParamUrl)}`);
+                        if (tinyResp.ok) {
+                            const tinyTxt = (await tinyResp.text()).trim();
+                            if (tinyTxt.startsWith('http')) {
+                                finalUrl = tinyTxt;
+                            }
+                        }
+                    } catch (tinyIgnore) {}
+                }
+
+                outInput.value = finalUrl;
+                updateShareQrCodePreview(finalUrl);
+
+                if (badge) {
+                    badge.className = "px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]";
+                    badge.innerHTML = `<i class="fa-solid fa-check mr-1"></i>Link siêu ngắn (${finalUrl.length} ký tự)`;
+                }
+
+                if (copyAfterSuccess) {
+                    copyTextToClipboardFallback(finalUrl);
+                    showToast(`Đã tạo & sao chép Link siêu ngắn (${finalUrl.length} ký tự)!`);
+                }
             } catch (e) {
-                copyTextToClipboardFallback(longUrl);
-                showToast("Đã sao chép Link trực tiếp (Link đề dài nên dùng trực tiếp không lo bị giới hạn ký tự)!");
+                outInput.value = lastSelfContainedShareLink;
+                updateShareQrCodePreview(lastSelfContainedShareLink);
+                if (badge) {
+                    badge.className = "px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]";
+                    badge.textContent = "Đã nén gọn trực tiếp";
+                }
+                if (copyAfterSuccess) {
+                    copyTextToClipboardFallback(lastSelfContainedShareLink);
+                    showToast("Đã sao chép Link làm bài đã nén gọn!");
+                }
             } finally {
                 if (btn) btn.disabled = false;
             }
