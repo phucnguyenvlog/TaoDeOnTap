@@ -2288,26 +2288,43 @@
         // =========================================================================
         // 6. KẾT NỐI GEMINI API THÔNG MINH & PHÂN TÍCH FILE TẠO ĐỀ ÔN TẬP
         // =========================================================================
+        function extractCleanModelText(data) {
+            const parts = data?.candidates?.[0]?.content?.parts;
+            if (!Array.isArray(parts) || parts.length === 0) return '';
+            const nonThoughtParts = parts.filter(p => !p.thought && typeof p.text === 'string');
+            if (nonThoughtParts.length > 0) {
+                return nonThoughtParts.map(p => p.text).join('').trim();
+            }
+            return parts.map(p => p.text || '').join('').trim();
+        }
+
         async function fetchGeminiWithBackoff(payload, maxRetries = 2) {
             const effectiveKey = getEffectiveApiKey();
             const isVertexExpressKey = effectiveKey && effectiveKey.startsWith('AQ.');
 
+            // Chỉ sử dụng các model Gemini thế hệ mới đang hoạt động (đã loại bỏ hoàn toàn gemini-2.0-flash bị 404)
+            const activeModels = [
+                'gemini-2.5-flash',
+                'gemini-2.5-flash-lite',
+                'gemini-3-flash-preview',
+                'gemini-flash-latest'
+            ];
+
             const candidateEndpoints = [];
-            if (isVertexExpressKey) {
+            for (const modelName of activeModels) {
                 candidateEndpoints.push(
-                    `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(effectiveKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(effectiveKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(effectiveKey)}`
+                    `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(effectiveKey)}`
                 );
-            } else {
-                candidateEndpoints.push(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(effectiveKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${encodeURIComponent(effectiveKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(effectiveKey)}`
-                );
+                if (isVertexExpressKey) {
+                    candidateEndpoints.push(
+                        `https://aiplatform.googleapis.com/v1/publishers/google/models/${modelName}:generateContent?key=${encodeURIComponent(effectiveKey)}`
+                    );
+                }
             }
 
+            let primaryError = null;
             let lastError = null;
+
             for (const endpoint of candidateEndpoints) {
                 for (let attempt = 0; attempt <= maxRetries; attempt++) {
                     try {
@@ -2319,11 +2336,16 @@
 
                         if (res.ok) {
                             const data = await res.json();
-                            const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+                            const text = extractCleanModelText(data);
                             if (text) return text;
                         } else {
                             const errBody = await res.text();
-                            lastError = new Error(`HTTP ${res.status}: ${errBody.substring(0, 180)}`);
+                            const currentErr = new Error(`HTTP ${res.status}: ${errBody.substring(0, 180)}`);
+                            if (!primaryError && res.status !== 404) {
+                                primaryError = currentErr;
+                            }
+                            lastError = currentErr;
+
                             if (res.status === 400 && payload.generationConfig) {
                                 const fallbackPayload = {
                                     contents: payload.contents,
@@ -2336,21 +2358,22 @@
                                 });
                                 if (retryRes.ok) {
                                     const retryData = await retryRes.json();
-                                    const retryText = retryData?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+                                    const retryText = extractCleanModelText(retryData);
                                     if (retryText) return retryText;
                                 }
                             }
-                            if (res.status === 404 || res.status === 403 || res.status === 400) {
+                            // Nếu model không tồn tại (404), quá tải (429/503) hoặc lỗi quyền (403/400), chuyển ngay sang model dự phòng kế tiếp
+                            if (res.status === 404 || res.status === 403 || res.status === 400 || res.status === 429 || res.status === 503) {
                                 break;
                             }
                         }
                     } catch (err) {
                         lastError = err;
                     }
-                    await new Promise(r => setTimeout(r, 700 * (attempt + 1)));
+                    await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
                 }
             }
-            throw lastError || new Error("Không thể kết nối tới máy chủ AI. Vui lòng thử lại!");
+            throw primaryError || lastError || new Error("Không thể kết nối tới máy chủ AI. Vui lòng thử lại!");
         }
 
         function cleanAndParseJSON(rawText) {
@@ -2477,11 +2500,14 @@ QUY TẮC QUAN TRỌNG:
                 } else if (item.fileType === 'word' && item.extractedText) {
                     combinedDocText += `\n=== NỘI DUNG FILE WORD (${item.name}) ===\n${item.extractedText}\n`;
                 } else if (item.fileType === 'pdf') {
+                    const hasRichPdfText = item.extractedText && item.extractedText.trim().length > 400;
                     if (item.extractedText) {
                         combinedDocText += `\n=== VĂN BẢN TRÍCH XUẤT TỪ FILE PDF (${item.name}) ===\n${item.extractedText}\n`;
                     }
                     if (Array.isArray(item.pageImages)) {
-                        for (const pg of item.pageImages) {
+                        // Nếu PDF đã có sẵn văn bản đầy đủ thì chỉ gửi kèm tối đa 3 trang ảnh đại diện để xử lý cực nhanh, còn PDF scan ảnh thì gửi đủ các trang
+                        const pagesToSend = hasRichPdfText ? item.pageImages.slice(0, 3) : item.pageImages;
+                        for (const pg of pagesToSend) {
                             userParts.push({
                                 inlineData: {
                                     mimeType: pg.mimeType || 'image/jpeg',
