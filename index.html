@@ -28,6 +28,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- LZ-String nén dữ liệu đề thi trực tiếp vào đường Link chia sẻ kiểu Azota -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -239,12 +241,17 @@
                         <span>AI Soạn/Sửa Đề</span>
                     </button>
 
+                    <button type="button" id="btnHeaderShareLink" onclick="openShareLinkModal()" class="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-2xs transition flex items-center gap-1.5 shrink-0" title="Tạo đường link chia sẻ giống Azota cho học sinh và bạn bè vào làm bài ngay">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <span>Chia Sẻ Link (Azota)</span>
+                    </button>
+
                     <button type="button" id="btnHeaderExportDoc" onclick="openWordExportModal()" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-2xs transition flex items-center gap-1.5 shrink-0" title="Xuất ra file Word (.doc) hoặc file PDF (.pdf)">
                         <i class="fa-solid fa-file-export"></i>
                         <span>Xuất Word / PDF</span>
                     </button>
 
-                    <button type="button" id="btnHeaderExportWeb" onclick="exportStandaloneWebApp()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs transition flex items-center gap-1.5 shrink-0">
+                    <button type="button" id="btnHeaderExportWeb" onclick="exportStandaloneWebApp(false)" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs transition flex items-center gap-1.5 shrink-0">
                         <i class="fa-solid fa-download"></i>
                         <span>Tải Web (.html)</span>
                     </button>
@@ -723,25 +730,31 @@
                             </button>
 
                             <div class="grid grid-cols-2 gap-2">
-                                <button type="button" onclick="handleReshuffleClick()" class="py-2.5 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs transition flex items-center justify-center gap-1.5">
+                                <button type="button" onclick="handleReshuffleClick()" class="py-2.5 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs transition flex items-center gap-1.5">
                                     <i class="fa-solid fa-shuffle"></i>
                                     <span>Đảo đề mới</span>
                                 </button>
-                                <button type="button" onclick="openResetModal()" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5">
+                                <button type="button" onclick="openResetModal()" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-700 border border-slate-200 font-bold text-xs transition flex items-center justify-center gap-1.5">
                                     <i class="fa-solid fa-rotate-right"></i>
                                     <span>Làm lại</span>
                                 </button>
                             </div>
 
-                            <div id="sidebarTeacherExportBtns" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                                <button type="button" onclick="openWordExportModal()" class="w-full py-2.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 font-bold text-xs transition flex items-center justify-center gap-1.5">
-                                    <i class="fa-solid fa-file-export"></i>
-                                    <span>Xuất Word / PDF</span>
+                            <div id="sidebarTeacherExportBtns" class="space-y-2 pt-1">
+                                <button type="button" onclick="openShareLinkModal()" class="w-full py-2.5 px-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 font-extrabold text-xs transition flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-share-nodes text-purple-600"></i>
+                                    <span>Lấy Link Chia Sẻ Làm Bài (Azota)</span>
                                 </button>
-                                <button type="button" onclick="exportStandaloneWebApp()" class="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs transition flex items-center justify-center gap-1.5">
-                                    <i class="fa-solid fa-file-code"></i>
-                                    <span>Xuất Web (.html)</span>
-                                </button>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <button type="button" onclick="openWordExportModal()" class="w-full py-2.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 font-bold text-xs transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-file-export"></i>
+                                        <span>Xuất Word / PDF</span>
+                                    </button>
+                                    <button type="button" onclick="exportStandaloneWebApp(false)" class="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-file-code"></i>
+                                        <span>Xuất Web (.html)</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1048,7 +1061,7 @@
                         <i class="fa-solid fa-file-pdf"></i>
                         <span>Tải File PDF (.pdf)</span>
                     </button>
-                    <button type="button" onclick="printExamAsVectorPDF()" class="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition flex items-center justify-center gap-1.5" title="In hoặc Lưu PDF Vector sắc nét qua hộp thoại hệ thống">
+                    <button type="button" onclick="printExamAsVectorPDF()" class="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs sm:text-sm transition flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-print"></i>
                         <span>In / Lưu PDF Sắc Nét</span>
                     </button>
@@ -1057,119 +1070,155 @@
         </div>
     </div>
 
-    <!-- Vùng ẩn hỗ trợ kết xuất PDF chuẩn A4 -->
-    <div id="hiddenPdfRenderZone" class="fixed -left-[9999px] top-0 w-[794px] bg-white text-black pointer-events-none opacity-0 overflow-hidden"></div>
-
-    <!-- =================================================================== -->
-    <!-- MODAL CẤU HÌNH GEMINI API KEY (KHẮC PHỤC LỖI 403 TRÊN GITHUB PAGES)  -->
-    <!-- =================================================================== -->
-    <div id="apiKeyModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 animate-fade-in my-auto">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0">
-                        <i class="fa-solid fa-key"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-extrabold text-slate-900">Cài Đặt Gemini API Key & Công Khai GitHub</h3>
-                        <p class="text-xs text-slate-500">Hỗ trợ dùng cá nhân hoặc mở công khai trên GitHub Pages cho mọi người</p>
-                    </div>
+    <!-- HỘP THOẠI XÁC NHẬN DÙNG CHUNG -->
+    <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-fade-in">
+            <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg shrink-0">
+                    <i class="fa-solid fa-circle-question"></i>
                 </div>
-                <button type="button" onclick="closeApiKeyModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="mt-4 space-y-3.5 text-xs sm:text-sm text-slate-600">
-                <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 leading-relaxed">
-                    <div class="font-extrabold flex items-center gap-1.5 mb-1">
-                        <i class="fa-solid fa-earth-asia text-amber-600"></i>
-                        <span>Làm sao để công khai lên GitHub cho mọi người vào dùng luôn?</span>
-                    </div>
-                    <p class="text-xs">
-                        Nếu để nguyên chữ <code>AIzaSy...</code> trong code đẩy lên GitHub Public, bot của GitHub sẽ phát hiện và tự khoá Key. Hãy tích chọn ô <strong>"Nhúng Key Công Khai lên GitHub (Đã mã hoá chống quét)"</strong> bên dưới rồi bấm <strong>"Tải Web (.html)"</strong> để upload lên GitHub!
-                    </p>
-                </div>
-
                 <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label for="userGeminiApiKeyInput" class="font-extrabold text-slate-800">Nhập Gemini API Key của bạn:</label>
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-bold text-xs flex items-center gap-1">
-                            <span>Lấy Key miễn phí tại đây</span>
-                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                        </a>
-                    </div>
-                    <div class="relative">
-                        <input
-                            type="password"
-                            id="userGeminiApiKeyInput"
-                            placeholder="Dán mã bắt đầu bằng AIzaSy... vào đây"
-                            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 outline-none font-mono text-xs sm:text-sm text-slate-900">
-                        <button type="button" onclick="toggleApiKeyVisibility()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1">
-                            <i id="apiKeyEyeIcon" class="fa-solid fa-eye"></i>
-                        </button>
-                    </div>
+                    <h3 id="modalTitle" class="text-base font-extrabold text-slate-900">Xác nhận</h3>
+                    <p id="modalSubtitle" class="text-xs text-slate-500"></p>
                 </div>
-
-                <label class="flex items-start gap-2.5 p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-300 cursor-pointer select-none">
-                    <input type="checkbox" id="chkEmbedKeyOnExport" checked class="w-4 h-4 rounded text-emerald-600 mt-0.5">
-                    <div class="text-xs text-slate-800 leading-relaxed">
-                        <span class="font-extrabold text-emerald-900 block">🔓 Nhúng Key Công Khai lên GitHub khi bấm "Tải Web (.html)"</span>
-                        <span>Tự động <strong>mã hoá ẩn chuỗi <code>AIzaSy...</code></strong> để GitHub không quét khoá Key. Học sinh và người truy cập vào link GitHub của bạn sẽ dùng được AI ngay mà không cần nhập Key!</span>
-                    </div>
-                </label>
-
-                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
-                    <div class="font-extrabold text-slate-800 flex items-center gap-1.5">
-                        <i class="fa-solid fa-shield-halved text-blue-600"></i>
-                        <span>Mẹo bảo vệ Key khi công khai (Không bắt buộc):</span>
-                    </div>
-                    <p>Để chỉ trang GitHub của bạn dùng được Key này, bạn có thể vào <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" class="text-blue-600 font-bold hover:underline">Google Cloud Credentials</a> &rarr; chọn Key &rarr; bật <strong>Website restrictions</strong> và thêm <code>https://phucnguyenvlog.github.io/*</code>.</p>
-                </div>
-
-                <div id="apiKeyTestStatus" class="hidden p-3 rounded-xl text-xs font-bold"></div>
             </div>
-
-            <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                <button type="button" onclick="clearSavedApiKey()" class="px-3 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition">
-                    <i class="fa-solid fa-trash-can mr-1"></i>Xoá Key
+            <p id="modalMessage" class="mt-4 text-xs sm:text-sm text-slate-700 leading-relaxed"></p>
+            <div class="mt-6 flex items-center justify-end gap-2">
+                <button type="button" onclick="closeCustomModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+                    Huỷ
                 </button>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" id="btnTestApiKey" onclick="testAndSaveApiKey()" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition">
-                        Kiểm tra kết nối
-                    </button>
-                    <button type="button" onclick="saveAndDownloadPublicGithubHtml()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow transition flex items-center gap-1.5" title="Lưu Key đã mã hoá vào thẳng file index.html để upload lên GitHub">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <span>Lưu & Tải index.html lên GitHub</span>
-                    </button>
-                    <button type="button" onclick="saveApiKeyFromModal()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-check"></i>
-                        <span>Lưu Key</span>
-                    </button>
-                </div>
+                <button type="button" id="modalConfirmBtn" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow transition">
+                    Đồng ý
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL XÁC NHẬN DÙNG CHUNG -->
-    <div id="customModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-fade-in">
-            <div class="flex items-center gap-3.5 mb-3">
-                <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl shrink-0">
-                    <i class="fa-solid fa-circle-question"></i>
+    <!-- Vùng hỗ trợ kết xuất PDF chuẩn A4 -->
+    <div id="pdfCaptureModalOverlay" class="fixed inset-0 bg-slate-900/75 z-50 hidden flex-col items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl px-5 py-3 mb-3 shadow-lg flex items-center gap-3 text-xs sm:text-sm font-bold text-slate-800">
+            <i class="fa-solid fa-spinner fa-spin text-rose-600 text-base"></i>
+            <span>Đang xuất file PDF chuẩn A4 sắc nét... Vui lòng đợi vài giây!</span>
+        </div>
+        <div id="hiddenPdfRenderZone" class="bg-white text-black w-[794px] max-w-full shadow-2xl rounded-lg overflow-hidden"></div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MODAL CHIA SẺ LINK LÀM BÀI TRỰC TUYẾN NHƯ AZOTA + MÃ QR              -->
+    <!-- =================================================================== -->
+    <div id="shareLinkModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 animate-fade-in my-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center text-xl shrink-0 shadow-xs">
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-extrabold text-slate-900">Chia Sẻ Link Làm Bài Trực Tuyến (Kiểu Azota)</h3>
+                        <p class="text-xs text-slate-500">Gửi link qua Zalo, Messenger, Facebook cho học sinh & bạn bè vào làm bài ngay</p>
+                    </div>
                 </div>
+                <button type="button" onclick="closeShareLinkModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="mt-4 space-y-4 text-xs sm:text-sm">
+                <!-- Bước cấu hình chế độ làm bài khi người khác mở link -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
+                            1. Chế độ chấm khi mở Link:
+                        </label>
+                        <select id="shareDefaultQuizMode" onchange="regenerateShareableAzotaLink()" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-xs text-slate-800 outline-none focus:border-purple-600">
+                            <option value="practice">⚡ Luyện tập (Chọn câu nào biết KQ ngay)</option>
+                            <option value="exam">📝 Thi thử (Làm hết bấm Nộp bài mới chấm)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1">
+                            2. Thứ tự câu hỏi mặc định:
+                        </label>
+                        <select id="shareDefaultOrderMode" onchange="regenerateShareableAzotaLink()" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-xs text-slate-800 outline-none focus:border-purple-600">
+                            <option value="shuffled">🔀 Tự động đảo câu hỏi & đáp án</option>
+                            <option value="original">📄 Giữ nguyên thứ tự Đề gốc</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Địa chỉ GitHub Pages gốc -->
                 <div>
-                    <h3 id="modalTitle" class="text-lg font-extrabold text-slate-900">Xác nhận</h3>
-                    <p id="modalSubtitle" class="text-xs text-slate-500">Vui lòng kiểm tra trước khi tiếp tục</p>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="font-bold text-slate-700 text-xs">Địa chỉ Web GitHub Pages của bạn (nơi mở đề):</label>
+                        <span class="text-[11px] text-emerald-700 font-semibold">Đã kết nối GitHub của bạn</span>
+                    </div>
+                    <input
+                        type="text"
+                        id="shareBaseUrlInput"
+                        oninput="regenerateShareableAzotaLink()"
+                        value="https://phucnguyenvlog.github.io/TaoDeOnTap/"
+                        placeholder="https://phucnguyenvlog.github.io/TaoDeOnTap/"
+                        class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono text-slate-700 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none">
+                </div>
+
+                <!-- Ô chứa đường link đã tạo + nút Sao chép -->
+                <div class="p-4 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-extrabold text-purple-950 text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-link text-purple-600"></i>
+                            <span>Đường Link Làm Bài Trực Tiếp (Chỉ hiển thị phần làm bài cho Học sinh):</span>
+                        </span>
+                        <span id="shareLinkStatusBadge" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                            Hoạt động vĩnh viễn
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <input
+                            type="text"
+                            id="generatedShareLinkInput"
+                            readonly
+                            onclick="this.select()"
+                            class="flex-1 px-3.5 py-2.5 rounded-xl border border-purple-300 bg-white font-mono text-xs text-slate-800 outline-none">
+                        <button
+                            type="button"
+                            onclick="copyShareableAzotaLink()"
+                            class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow transition flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>Sao chép Link</span>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                        <button
+                            type="button"
+                            id="btnShortenShareLink"
+                            onclick="shortenAzotaShareLink()"
+                            class="px-3 py-1.5 rounded-xl bg-white hover:bg-purple-100 text-purple-800 border border-purple-300 font-bold text-xs transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
+                            <span>Rút gọn thành Link ngắn (is.gd / TinyURL)</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onclick="previewStudentShareModeNow()"
+                            class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold text-xs transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-eye"></i>
+                            <span>Xem thử giao diện khi học sinh bấm vào Link</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lưu ý quan trọng để Link chạy trên GitHub -->
+                <div class="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] text-amber-950 leading-relaxed">
+                    <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
+                    <strong>Hướng dẫn 1 lần duy nhất:</strong> Bạn chỉ cần cập nhật file <code>index.html</code> mới nhất này lên kho GitHub <code>phucnguyenvlog/TaoDeOnTap</code> của bạn 1 lần. Từ đó về sau, mỗi khi tạo đề mới xong, bạn chỉ cần bấm <strong>"Sao chép Link"</strong> ở trên rồi gửi qua Zalo/Messenger là mọi người bấm vào làm bài được ngay lập tức (không cần upload lại file lên GitHub nữa)!
                 </div>
             </div>
-            <p id="modalMessage" class="text-sm text-slate-600 leading-relaxed mb-6"></p>
-            <div class="flex items-center justify-end gap-2.5">
-                <button type="button" onclick="closeCustomModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition">
-                    Huỷ bỏ
-                </button>
-                <button type="button" id="modalConfirmBtn" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow transition">
-                    Đồng ý
+
+            <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button type="button" onclick="closeShareLinkModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition">
+                    Đóng
                 </button>
             </div>
         </div>
@@ -1194,7 +1243,7 @@
     <!-- =================================================================== -->
     <script>
         const apiKey = "";
-        const IS_STANDALONE_STUDENT_APP = false;
+        let IS_STANDALONE_STUDENT_APP = false;
         // Khóa kết nối đã được chuyển thành mảng số ẩn để an toàn khi đẩy lên GitHub
         const EMBEDDED_PUBLIC_KEY_PARTS = [8,27,101,13,47,118,29,30,103,25,52,35,26,44,48,10,56,48,126,38,63,126,11,29,4,102,0,2,96,23,7,59,7,24,120,103,29,59,7,39,125,4,61,11,107,34,49,15,7,104,30,28,11];
         const STORAGE_API_KEY_NAME = "PHUCNGUYEN_GEMINI_API_KEY";
@@ -1454,8 +1503,7 @@
             for (const item of subjectRules) {
                 if (item.regex.test(t)) return item.code;
             }
-            // Nếu không trùng tên môn học quen thuộc, lấy 2 chữ cái đầu của từ khóa chính (bỏ qua chữ ĐỀ, ÔN, TẬP, GIỮA, KỲ...)
-            constcleaned = t
+            const cleaned = t
                 .replace(/ĐỀ|CƯƠNG|ÔN|TẬP|KIỂM|TRA|GIỮA|CUỐI|HỌC|KỲ|KÌ|THAM|KHẢO|LỚP|\d+/g, ' ')
                 .trim();
             const words = cleaned.split(/\s+/).filter(Boolean);
@@ -1476,7 +1524,7 @@
                         <stop offset="100%" stop-color="#4338ca"/>
                     </linearGradient>
                 </defs>
-                <rect width="128" height="128" rx="28" fill="url(#g)"/>
+                <rect width="256" height="256" rx="28" fill="url(#g)"/>
                 <text x="64" y="79" text-anchor="middle" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="54">${shortCode}</text>
             </svg>`;
             return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
@@ -1488,7 +1536,6 @@
             const examTitle = currentExamSource.title || 'ĐỀ ÔN TẬP';
             const shortCode = getSubjectShortCodeFromTitle(examTitle);
 
-            // Đổi tiêu đề tab trình duyệt và đổi cả Favicon góc tab thành chữ viết tắt môn học (CN, LS...)
             document.title = `${shortCode} • ${examTitle}`;
             const faviconDataUrl = createSubjectTextFaviconDataUrl(shortCode);
             ['appFavicon', 'shortcutFavicon', 'appleTouchFavicon'].forEach(id => {
@@ -1499,7 +1546,6 @@
                 }
             });
 
-            // Ẩn hoàn toàn logo Phúc nguyên Vlog và hiện Huy hiệu chữ viết tắt tài liệu ôn (CN, LS...)
             const teacherLogo = document.getElementById('teacherBrandLogoBox');
             const studentBadge = document.getElementById('studentSubjectBadgeBox');
             const studentCodeText = document.getElementById('studentSubjectCodeText');
@@ -1510,17 +1556,15 @@
             }
             if (studentCodeText) studentCodeText.textContent = shortCode;
 
-            // Bỏ dòng chữ "CÔNG CỤ TẠO SOẠN SỬA ĐỀ ÔN TẬP", đưa tên tài liệu ôn lên làm tiêu đề chính
             const toolSub = document.getElementById('headerToolSubtitle');
             const titleEl = document.getElementById('headerExamTitle');
             if (toolSub) toolSub.classList.add('hidden');
             if (titleEl) {
                 titleEl.textContent = examTitle;
-                titleEl.className = "text-sm sm:text-lg font-extrabold text-slate-900 truncate";
+                titleEl.className = "text-sm sm:text-lg font-extrabold text-slate-900 truncate block";
             }
 
-            // Ẩn các tab soạn đề, sửa đề và các nút Xuất file / AI Soạn đề của giáo viên
-            ['headerStepNav', 'btnHeaderAIBuilder', 'btnHeaderExportDoc', 'btnHeaderExportWeb', 'studyTopQuickBanner', 'sidebarTeacherExportBtns', 'btnFloatingAIBuilder', 'tabBotBuilder'].forEach(id => {
+            ['headerStepNav', 'btnHeaderAIBuilder', 'btnHeaderShareLink', 'btnHeaderExportDoc', 'btnHeaderExportWeb', 'studyTopQuickBanner', 'sidebarTeacherExportBtns', 'btnFloatingAIBuilder', 'tabBotBuilder'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.add('hidden');
             });
@@ -1529,54 +1573,84 @@
             if (footerTitle) footerTitle.textContent = examTitle;
         }
 
-        function applyBrandFavicon() {
-            if (IS_STANDALONE_STUDENT_APP) {
-                applyStandaloneStudentModeUI();
-                return;
+        // Kiểm tra xem trên URL có chứa gói đề thi chia sẻ kiểu Azota (#de=... hoặc ?de=...) không
+        function checkAndLoadSharedExamFromUrl() {
+            try {
+                let encodedPayload = "";
+                const hash = window.location.hash || "";
+                if (hash.startsWith("#de=")) {
+                    encodedPayload = hash.substring(4);
+                } else {
+                    const params = new URLSearchParams(window.location.search);
+                    if (params.has("de")) {
+                        encodedPayload = params.get("de") || "";
+                    }
+                }
+
+                if (!encodedPayload || !window.LZString) return false;
+
+                const jsonStr = window.LZString.decompressFromEncodedURIComponent(encodedPayload);
+                if (!jsonStr) return false;
+
+                const parsed = JSON.parse(jsonStr);
+                if (parsed && parsed.exam) {
+                    currentExamSource = parsed.exam;
+                    if (parsed.quizMode === 'exam' || parsed.quizMode === 'practice') {
+                        state.quizMode = parsed.quizMode;
+                    }
+                    if (parsed.orderMode === 'shuffled' || parsed.orderMode === 'original') {
+                        state.orderMode = parsed.orderMode;
+                    }
+                    IS_STANDALONE_STUDENT_APP = true;
+                    return true;
+                }
+            } catch (e) {
+                console.warn("Không thể giải nén đề từ URL:", e);
             }
-            const setFaviconHref = (hrefUrl, mimeType = 'image/png') => {
+            return false;
+        }
+
+        function applyBrandFavicon() {
+            const testImg = new Image();
+            testImg.onload = function () {
                 ['appFavicon', 'shortcutFavicon', 'appleTouchFavicon'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) {
-                        el.type = mimeType;
-                        el.href = hrefUrl;
+                        el.type = 'image/png';
+                        el.href = 'Icon.png';
                     }
                 });
             };
-
-            // 1. Ưu tiên dùng trực tiếp file Icon.png nằm chung thư mục với index.html trên GitHub
-            const localImg = new Image();
-            localImg.onload = function () {
-                setFaviconHref('Icon.png', 'image/png');
+            testImg.onerror = function () {
+                const fallbackGithubIcon = 'https://raw.githubusercontent.com/phucnguyenvlog/TaoDeOnTap/main/Icon.png';
+                ['appFavicon', 'shortcutFavicon', 'appleTouchFavicon'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.type = 'image/png';
+                        el.href = fallbackGithubIcon;
+                    }
+                });
             };
-            localImg.onerror = function () {
-                // 2. Nếu mở file HTML tải rời hoặc xem trước, tự động lấy Icon.png từ repo GitHub của bạn
-                const githubRawUrl = 'https://raw.githubusercontent.com/phucnguyenvlog/TaoDeOnTap/main/Icon.png';
-                const remoteImg = new Image();
-                remoteImg.onload = function () {
-                    setFaviconHref(githubRawUrl, 'image/png');
-                };
-                remoteImg.onerror = function () {
-                    // 3. Dự phòng khi mất mạng hoàn toàn
-                    const svgEl = document.getElementById('defaultPhucNguyenLogo');
-                    if (!svgEl) return;
-                    const serializer = new XMLSerializer();
-                    let svgStr = serializer.serializeToString(svgEl).replace('class="w-full h-full hidden"', '');
-                    setFaviconHref('data:image/svg+xml;utf8,' + encodeURIComponent(svgStr), 'image/svg+xml');
-                };
-                remoteImg.src = githubRawUrl;
-            };
-            localImg.src = 'Icon.png';
+            testImg.src = 'Icon.png';
         }
 
         window.onload = function () {
-            applyBrandFavicon();
             if (window.pdfjsLib) {
                 window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             }
+
+            const loadedFromShareUrl = checkAndLoadSharedExamFromUrl();
+
+            applyBrandFavicon();
             updateApiKeyHeaderBadge();
             setupDragAndPasteEvents();
             buildQuestionSet();
+
+            if (loadedFromShareUrl) {
+                setOrderMode(state.orderMode);
+                setQuizMode(state.quizMode);
+            }
+
             startTimer();
             if (typeof switchActiveAIBot === 'function') {
                 switchActiveAIBot('tutor');
@@ -3756,27 +3830,34 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
         function buildCleanPdfBodyHTML() {
             const includeAnsAB = document.getElementById('wordOptIncludeAnswerAB')?.checked ?? true;
             const includeEssay = document.getElementById('wordOptIncludeEssayAnswer')?.checked ?? false;
-            let mcqSource = currentExamSource.mcq || [];
-            let tfSource = currentExamSource.tf || [];
+            const highlightInPlace = document.getElementById('wordOptHighlightCorrectInPlace')?.checked ?? false;
+            const orderOption = document.querySelector('input[name="wordOrderOption"]:checked')?.value || 'original';
+
+            let mcqSource = orderOption === 'original' ? (currentExamSource.mcq || []) : state.partA;
+            let tfSource = orderOption === 'original' ? (currentExamSource.tf || []) : state.partB;
             let essaySource = currentExamSource.essay || [];
 
             let html = `
-                <div style="font-family: 'Times New Roman', Times, serif; font-size: 13pt; line-height: 1.35; color: #000000; background: #ffffff; padding: 24px; max-width: 740px; margin: 0 auto;">
-                    <h1 style="text-align: center; font-size: 16pt; font-weight: bold; color: #1f4e79; margin-bottom: 4px;">${currentExamSource.title || 'ĐỀ ÔN TẬP'}</h1>
+                <div style="font-family: 'Times New Roman', Times, serif; font-size: 13pt; line-height: 1.4; color: #000000; background: #ffffff; padding: 32px 40px; width: 100%; box-sizing: border-box;">
+                    <h1 style="text-align: center; font-size: 16pt; font-weight: bold; color: #1f4e79; margin: 0 0 4px 0;">${currentExamSource.title || 'ĐỀ ÔN TẬP'}</h1>
                     <div style="text-align:center; font-style:italic; font-size:11pt; margin-bottom:18px;">(Thời gian làm bài: 45 phút)</div>
             `;
 
             if (mcqSource.length > 0) {
-                html += `<div style="font-size: 13pt; font-weight: bold; color: #1f4e79; margin-top: 14px; margin-bottom: 6px;">A. TRẮC NGHIỆM NHIỀU LỰA CHỌN</div>`;
+                html += `<div style="font-size: 13pt; font-weight: bold; color: #1f4e79; margin-top: 14px; margin-bottom: 8px;">A. TRẮC NGHIỆM NHIỀU LỰA CHỌN</div>`;
                 mcqSource.forEach((q, idx) => {
+                    const correctIdx = typeof q.correctIndex === 'number' ? q.correctIndex : (q.options || []).findIndex(o => o.isCorrect);
                     html += `
-                        <div style="margin-bottom: 10px; page-break-inside: avoid;">
+                        <div style="margin-bottom: 12px; page-break-inside: avoid;">
                             <div style="font-weight: bold;">Câu ${idx + 1}. ${q.question}</div>
-                            ${q.tableHtml ? `<div style="margin: 4px 0;">${q.tableHtml}</div>` : ''}
+                            ${q.tableHtml ? `<div style="margin: 6px 0;">${q.tableHtml}</div>` : ''}
                             <div style="margin-left: 16px; margin-top: 4px;">
-                                ${(q.options || []).map((opt, oIdx) => `
-                                    <div style="margin-bottom: 3px;"><strong>${LETTERS[oIdx] || 'A'}.</strong> ${typeof opt === 'string' ? opt : opt.text}</div>
-                                `).join('')}
+                                ${(q.options || []).map((opt, oIdx) => {
+                                    const textVal = typeof opt === 'string' ? opt : opt.text;
+                                    const isRight = oIdx === correctIdx;
+                                    const styleRight = (highlightInPlace && isRight) ? 'font-weight:bold; text-decoration:underline; color:#0f5132;' : '';
+                                    return `<div style="margin-bottom: 3px; ${styleRight}"><strong>${LETTERS[oIdx] || 'A'}.</strong> ${textVal}</div>`;
+                                }).join('')}
                             </div>
                         </div>
                     `;
@@ -3784,14 +3865,17 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
             }
 
             if (tfSource.length > 0) {
-                html += `<div style="font-size: 13pt; font-weight: bold; color: #1f4e79; margin-top: 14px; margin-bottom: 6px;">B. TRẮC NGHIỆM ĐÚNG / SAI</div>`;
+                html += `<div style="font-size: 13pt; font-weight: bold; color: #1f4e79; margin-top: 16px; margin-bottom: 8px;">B. TRẮC NGHIỆM ĐÚNG / SAI</div>`;
                 tfSource.forEach((q, idx) => {
                     html += `
-                        <div style="margin-bottom: 10px; page-break-inside: avoid;">
+                        <div style="margin-bottom: 12px; page-break-inside: avoid;">
                             <div style="font-weight: bold;">Câu ${idx + 1}. ${q.question}</div>
                             <div style="margin-left: 16px; margin-top: 4px;">
                                 ${(q.statements || []).map(st => `
-                                    <div style="margin-bottom: 3px;"><strong>${st.label})</strong> ${st.text}</div>
+                                    <div style="margin-bottom: 3px;">
+                                        <strong>${st.label})</strong> ${st.text}
+                                        ${highlightInPlace ? `<b style="color:#1f4e79;"> [${st.isTrue ? 'Đúng' : 'Sai'}]</b>` : ''}
+                                    </div>
                                 `).join('')}
                             </div>
                         </div>
@@ -3800,10 +3884,10 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
             }
 
             if (essaySource.length > 0) {
-                html += `<div style="font-size: 13pt; font-weight: bold; color: #1f4e79; margin-top: 14px; margin-bottom: 6px;">C. CÂU HỎI TỰ LUẬN</div>`;
+                html += `<div style="font-size: 13pt; font-weight: bold; color: #1f4e79; margin-top: 16px; margin-bottom: 8px;">C. CÂU HỎI TỰ LUẬN</div>`;
                 essaySource.forEach((q, idx) => {
                     html += `
-                        <div style="margin-bottom: 10px; page-break-inside: avoid;">
+                        <div style="margin-bottom: 12px; page-break-inside: avoid;">
                             <div style="font-weight: bold;">Câu ${idx + 1}. ${q.question}</div>
                             ${(q.subQuestions || []).map(sub => `<div style="margin-left: 14px; margin-top: 2px;">${sub}</div>`).join('')}
                         </div>
@@ -3812,16 +3896,35 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
             }
 
             if (includeAnsAB) {
-                html += `<div style="page-break-before: always; margin-top: 20px;"><h2 style="text-align:center; font-size:15pt; color:#1f4e79;">BẢNG ĐÁP ÁN THAM KHẢO</h2></div>`;
+                html += `<div style="margin-top: 24px; padding-top: 14px; border-top: 1px solid #999; page-break-inside: avoid;"><h2 style="text-align:center; font-size:14pt; font-weight:bold; color:#1f4e79; margin-bottom: 10px;">BẢNG ĐÁP ÁN THAM KHẢO</h2>`;
                 if (mcqSource.length > 0) {
-                    html += `<div style="font-weight:bold; color:#1f4e79; margin:10px 0;">Phần A. Trắc nghiệm</div><table style="border-collapse:collapse; width:100%;"><tr>`;
+                    html += `<div style="font-weight:bold; color:#1f4e79; margin:8px 0;">Phần A. Trắc nghiệm</div><table style="border-collapse:collapse; width:100%; margin-bottom:12px;"><tr>`;
                     mcqSource.forEach((q, idx) => {
-                        const correctIdx = q.correctIndex ?? (q.options || []).findIndex(o => o.isCorrect);
-                        html += `<td style="border:1px solid #777; padding:4px; text-align:center;"><b>C${idx + 1}:</b> ${LETTERS[correctIdx] || 'A'}</td>`;
+                        const correctIdx = typeof q.correctIndex === 'number' ? q.correctIndex : (q.options || []).findIndex(o => o.isCorrect);
+                        html += `<td style="border:1px solid #666; padding:5px; text-align:center; font-size:11pt;"><b>C${idx + 1}:</b> ${LETTERS[correctIdx] || 'A'}</td>`;
                         if ((idx + 1) % 10 === 0 && idx < mcqSource.length - 1) html += `</tr><tr>`;
                     });
                     html += `</tr></table>`;
                 }
+                if (tfSource.length > 0) {
+                    html += `<div style="font-weight:bold; color:#1f4e79; margin:8px 0;">Phần B. Đúng / Sai</div><table style="border-collapse:collapse; width:100%; margin-bottom:12px;"><tr><th style="border:1px solid #666; padding:5px;">Câu</th><th style="border:1px solid #666; padding:5px;">Ý a)</th><th style="border:1px solid #666; padding:5px;">Ý b)</th><th style="border:1px solid #666; padding:5px;">Ý c)</th><th style="border:1px solid #666; padding:5px;">Ý d)</th></tr>`;
+                    tfSource.forEach((q, idx) => {
+                        html += `<tr><td style="border:1px solid #666; padding:5px; text-align:center;"><b>Câu ${idx + 1}</b></td>`;
+                        (q.statements || []).forEach(st => {
+                            html += `<td style="border:1px solid #666; padding:5px; text-align:center;">${st.isTrue ? 'Đúng' : 'Sai'}</td>`;
+                        });
+                        html += `</tr>`;
+                    });
+                    html += `</table>`;
+                }
+                html += `</div>`;
+            }
+
+            if (includeEssay && essaySource.length > 0) {
+                html += `<div style="font-weight:bold; color:#1f4e79; margin:14px 0 6px 0;">Gợi ý trả lời Tự luận</div>`;
+                essaySource.forEach((q, idx) => {
+                    html += `<div style="margin-bottom:10px;"><b>Câu ${idx + 1}:</b><br>${q.suggestedAnswer || '(Đang cập nhật)'}</div>`;
+                });
             }
 
             html += `</div>`;
@@ -3829,26 +3932,36 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
         }
 
         async function generateAndDownloadPDFFile() {
-            showToast("Đang kết xuất file PDF chuẩn A4, vui lòng đợi trong giây lát...");
+            if (isCurrentExamEmpty()) {
+                showToast("Chưa có câu hỏi nào trong đề để xuất PDF!");
+                return;
+            }
+            const overlay = document.getElementById('pdfCaptureModalOverlay');
             const zone = document.getElementById('hiddenPdfRenderZone');
-            if (!zone) return;
+            if (!zone || !overlay) return;
+
+            closeWordExportModal();
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
 
             zone.innerHTML = buildCleanPdfBodyHTML();
             renderMathInElementSafe(zone);
 
+            await new Promise(r => setTimeout(r, 350));
+
             const opt = {
-                margin: 10,
+                margin: [10, 10, 10, 10],
                 filename: `De_On_Tap_${getSafeFilenameSlug(currentExamSource.title, 'de_thi')}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollY: 0 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
             try {
                 if (window.html2pdf) {
-                    await window.html2pdf().from(zone).set(opt).save();
-                    closeWordExportModal();
-                    showToast("Đã tải xuống file PDF (.pdf) thành công!");
+                    await window.html2pdf().set(opt).from(zone).save();
+                    showToast("Đã tải xuống file PDF (.pdf) chuẩn A4 thành công!");
                 } else {
                     throw new Error("Thư viện html2pdf chưa sẵn sàng");
                 }
@@ -3856,6 +3969,8 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
                 showToast("Lỗi kết xuất PDF: " + err.message);
             } finally {
                 zone.innerHTML = '';
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
             }
         }
 
@@ -3869,6 +3984,206 @@ Hãy trả về ĐỒNG THỜI khối JSON được bọc trong cặp thẻ \`\`
             printWin.document.write(`<!DOCTYPE html><html><head><title>${currentExamSource.title || 'Đề ôn tập'}</title></head><body onload="window.print(); window.close()">${htmlStr}</body></html>`);
             printWin.document.close();
             closeWordExportModal();
+        }
+
+        // =========================================================================
+        // 12. XUẤT FILE WEB (.HTML) CHO HỌC SINH HOẶC CÔNG KHAI GITHUB
+        // =========================================================================
+        function exportStandaloneWebApp(exportAsFullToolForGithub = false) {
+            if (!exportAsFullToolForGithub && isCurrentExamEmpty()) {
+                showToast("Hãy tải đề lên hoặc tạo câu hỏi trước khi xuất file Web (.html)!");
+                return;
+            }
+
+            let fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+            // Nhúng dữ liệu đề hiện tại vào DEFAULT_EXAM_DATA
+            const examDataJson = JSON.stringify(currentExamSource, null, 2);
+            fullHtml = fullHtml.replace(
+                /const\s+DEFAULT_EXAM_DATA\s*=\s*\{[\s\S]*?\};/,
+                `const DEFAULT_EXAM_DATA = ${examDataJson};`
+            );
+
+            // Nhúng API Key đã mã hoá nếu có
+            const activeKey = getEffectiveApiKey();
+            if (activeKey) {
+                const encodedParts = JSON.stringify(encodeKeyForPublicGithub(activeKey));
+                fullHtml = fullHtml.replace(
+                    /const\s+EMBEDDED_PUBLIC_KEY_PARTS\s*=\s*\[[^\]]*\];/,
+                    `const EMBEDDED_PUBLIC_KEY_PARTS = ${encodedParts};`
+                );
+            }
+
+            if (exportAsFullToolForGithub) {
+                fullHtml = fullHtml.replace(
+                    /let\s+IS_STANDALONE_STUDENT_APP\s*=\s*(?:true|false);/,
+                    `let IS_STANDALONE_STUDENT_APP = false;`
+                );
+            } else {
+                fullHtml = fullHtml.replace(
+                    /let\s+IS_STANDALONE_STUDENT_APP\s*=\s*(?:true|false);/,
+                    `let IS_STANDALONE_STUDENT_APP = true;`
+                );
+            }
+
+            const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            if (exportAsFullToolForGithub) {
+                a.download = 'index.html';
+            } else {
+                const slug = getSafeFilenameSlug(currentExamSource.title, 'de_on_tap');
+                a.download = `Web_On_Tap_${slug}.html`;
+            }
+            a.href = url;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast(exportAsFullToolForGithub
+                ? "Đã tải file index.html sẵn sàng đưa lên GitHub!"
+                : "Đã tải trang Web ôn tập (.html) gọn đẹp cho học sinh!");
+        }
+
+        // =========================================================================
+        // 13. CHIA SẺ LINK LÀM BÀI TRỰC TUYẾN NHƯ AZOTA (#de=...)
+        // =========================================================================
+        function openShareLinkModal() {
+            if (isCurrentExamEmpty()) {
+                showToast("Thầy cô hãy tạo hoặc tải đề lên trước khi lấy Link chia sẻ nhé!");
+                return;
+            }
+            const modal = document.getElementById('shareLinkModal');
+            const baseInput = document.getElementById('shareBaseUrlInput');
+            if (baseInput) {
+                if (window.location.hostname.endsWith('.github.io')) {
+                    baseInput.value = window.location.origin + window.location.pathname;
+                } else if (!baseInput.value.trim()) {
+                    baseInput.value = "https://phucnguyenvlog.github.io/TaoDeOnTap/";
+                }
+            }
+            regenerateShareableAzotaLink();
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeShareLinkModal() {
+            const modal = document.getElementById('shareLinkModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function regenerateShareableAzotaLink() {
+            const baseInput = document.getElementById('shareBaseUrlInput');
+            const outInput = document.getElementById('generatedShareLinkInput');
+            const quizMode = document.getElementById('shareDefaultQuizMode')?.value || 'practice';
+            const orderMode = document.getElementById('shareDefaultOrderMode')?.value || 'shuffled';
+
+            if (!outInput || !window.LZString) return;
+
+            let baseUrl = (baseInput?.value || "https://phucnguyenvlog.github.io/TaoDeOnTap/").trim();
+            baseUrl = baseUrl.split('#')[0].split('?')[0];
+
+            const sharePackage = {
+                exam: currentExamSource,
+                quizMode,
+                orderMode
+            };
+
+            const compressed = window.LZString.compressToEncodedURIComponent(JSON.stringify(sharePackage));
+            const fullShareUrl = `${baseUrl}#de=${compressed}`;
+            outInput.value = fullShareUrl;
+        }
+
+        function copyTextToClipboardFallback(text) {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+        }
+
+        function copyShareableAzotaLink() {
+            const outInput = document.getElementById('generatedShareLinkInput');
+            if (!outInput || !outInput.value) return;
+            outInput.select();
+            copyTextToClipboardFallback(outInput.value);
+            showToast("Đã sao chép Link làm bài! Bạn có thể dán gửi qua Zalo / Messenger ngay.");
+        }
+
+        async function shortenAzotaShareLink() {
+            const outInput = document.getElementById('generatedShareLinkInput');
+            const btn = document.getElementById('btnShortenShareLink');
+            if (!outInput || !outInput.value) return;
+
+            const longUrl = outInput.value;
+            if (btn) btn.disabled = true;
+            showToast("Đang tạo Link rút gọn...");
+
+            try {
+                const apiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
+                const resp = await fetch(apiUrl);
+                if (resp.ok) {
+                    const shortUrl = (await resp.text()).trim();
+                    if (shortUrl.startsWith('http')) {
+                        outInput.value = shortUrl;
+                        copyTextToClipboardFallback(shortUrl);
+                        showToast("Đã rút gọn & sao chép Link ngắn thành công!");
+                        return;
+                    }
+                }
+                throw new Error("Link đề chứa nhiều câu hỏi nên dùng trực tiếp Link gốc sẽ ổn định nhất.");
+            } catch (e) {
+                copyTextToClipboardFallback(longUrl);
+                showToast("Đã sao chép Link trực tiếp (Link đề dài nên dùng trực tiếp không lo bị giới hạn ký tự)!");
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function previewStudentShareModeNow() {
+            const quizMode = document.getElementById('shareDefaultQuizMode')?.value || 'practice';
+            const orderMode = document.getElementById('shareDefaultOrderMode')?.value || 'shuffled';
+            closeShareLinkModal();
+            IS_STANDALONE_STUDENT_APP = true;
+            applyStandaloneStudentModeUI();
+            setOrderMode(orderMode);
+            setQuizMode(quizMode);
+            switchMainWorkspace('study');
+            showToast("Đang xem trước giao diện Học sinh làm bài khi mở Link chia sẻ!");
+        }
+
+        // =========================================================================
+        // 14. HỘP THOẠI XÁC NHẬN DÙNG CHUNG (CUSTOM MODAL)
+        // =========================================================================
+        function openCustomModal({ title, subtitle, message, confirmText, onConfirm }) {
+            const modal = document.getElementById('customModal');
+            if (!modal) return;
+            document.getElementById('modalTitle').textContent = title || 'Xác nhận';
+            document.getElementById('modalSubtitle').textContent = subtitle || '';
+            document.getElementById('modalMessage').textContent = message || '';
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            confirmBtn.textContent = confirmText || 'Đồng ý';
+            confirmBtn.onclick = () => {
+                closeCustomModal();
+                if (typeof onConfirm === 'function') onConfirm();
+            };
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCustomModal() {
+            const modal = document.getElementById('customModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
         }
     </script>
 </body>
