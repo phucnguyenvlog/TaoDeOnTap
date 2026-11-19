@@ -1468,9 +1468,21 @@
                             </div>
 
                             <!-- Hộp Báo Lỗi TTS (nếu có) -->
-                            <div id="ttsErrorBox" class="hidden p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-start gap-2">
-                                <i class="fa-solid fa-circle-exclamation text-rose-600 mt-0.5"></i>
-                                <span id="ttsErrorText"></span>
+                            <div id="ttsErrorBox" class="hidden p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold space-y-2.5">
+                                <div class="flex items-start gap-2">
+                                    <i class="fa-solid fa-circle-exclamation text-rose-600 mt-0.5 shrink-0"></i>
+                                    <span id="ttsErrorText" class="leading-relaxed"></span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 pl-5">
+                                    <button type="button" onclick="generateSpeechFromText()" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-rotate-right"></i>
+                                        <span>Thử tạo lại bằng AI</span>
+                                    </button>
+                                    <button type="button" onclick="speakTTSTextWithDeviceVoice()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-cyan-50 text-cyan-800 border border-cyan-300 text-[11px] font-bold transition flex items-center gap-1.5">
+                                        <i class="fa-solid fa-volume-high"></i>
+                                        <span>Nghe ngay bằng giọng thiết bị (Không giới hạn)</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -2609,7 +2621,9 @@
                 candidateEndpoints.push(
                     `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(effectiveKey)}`
                 );
-                if (isVertexExpressKey) {
+            }
+            if (isVertexExpressKey) {
+                for (const modelName of activeModels) {
                     candidateEndpoints.push(
                         `https://aiplatform.googleapis.com/v1/publishers/google/models/${modelName}:generateContent?key=${encodeURIComponent(effectiveKey)}`
                     );
@@ -5213,9 +5227,12 @@ QUY TẮC QUAN TRỌNG:
             if (readyCount >= totalCount) {
                 badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0";
                 badge.textContent = `⚡ Sẵn sàng ${readyCount}/${totalCount} giọng`;
+            } else if (readyCount > 0) {
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0";
+                badge.textContent = `⚡ Đã lưu ${readyCount}/${totalCount} giọng`;
             } else {
                 badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 shrink-0";
-                badge.textContent = `⏳ Đang nạp mẫu (${readyCount}/${totalCount})`;
+                badge.textContent = `🎧 Bấm giọng để nghe mẫu`;
             }
         }
 
@@ -5262,10 +5279,8 @@ QUY TẮC QUAN TRỌNG:
             modal.classList.add('flex');
             applyTTSFullscreenStyle();
 
-            // Nạp ngay các mẫu giọng đã lưu trong máy & tải ngầm các mẫu còn thiếu để bấm vào nghe liền 0ms
-            hydrateTTSCacheFromIDB().then(() => {
-                prewarmTTSVoiceSamples();
-            });
+            // Chỉ nạp các mẫu giọng đã lưu sẵn trong máy (0 lượt gọi API) để bảo toàn hạn mức tạo âm thanh chính
+            hydrateTTSCacheFromIDB();
 
             setTimeout(() => {
                 document.getElementById('ttsInputText')?.focus();
@@ -5286,9 +5301,7 @@ QUY TẮC QUAN TRỌNG:
 
         function onTTSLanguageChanged() {
             stopTTSVoicePreview();
-            hydrateTTSCacheFromIDB().then(() => {
-                if (isTTSStudioOpen) prewarmTTSVoiceSamples();
-            });
+            hydrateTTSCacheFromIDB();
         }
 
         function toggleTTSFullscreen() {
@@ -5404,9 +5417,9 @@ QUY TẮC QUAN TRỌNG:
                     return url;
                 }
 
-                // Gọi AI tạo mẫu giọng chuẩn chất lượng cao
+                // Gọi AI tạo mẫu giọng chuẩn chất lượng cao (chỉ gọi 1 lần khi bấm, không tự lặp khi gặp giới hạn)
                 const { text: sampleText } = getVoicePreviewSampleText(voiceInfo, effectiveLang);
-                const res = await callGeminiTTSChunk(sampleText, voiceInfo.id, 'natural', effectiveLang, 'normal', 1);
+                const res = await callGeminiTTSChunk(sampleText, voiceInfo.id, 'natural', effectiveLang, 'normal', { maxRetries: 0, isPreview: true });
                 const wavBlob = pcmInt16ToWavBlob(res.pcm16, res.sampleRate || 24000, 1);
                 const blobUrl = URL.createObjectURL(wavBlob);
                 ttsVoicePreviewCache[cacheKey] = blobUrl;
@@ -5805,67 +5818,11 @@ QUY TẮC QUAN TRỌNG:
             const binaryString = atob(base64);
             const len = binaryString.length;
             const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes;
-        }
+        async function callGeminiTTSChunk(chunkText, voiceName, styleKey, langKey, paceKey, options = {}) {
+            const maxRetries = typeof options === 'number' ? options : (options.maxRetries ?? 2);
+            const isPreview = typeof options === 'object' ? Boolean(options.isPreview) : false;
+            const onStatusUpdate = typeof options === 'object' ? options.onStatusUpdate : null;
 
-        function pcmInt16ToWavBlob(pcmInt16, sampleRate = 24000, numChannels = 1) {
-            const bytesPerSample = 2;
-            const blockAlign = numChannels * bytesPerSample;
-            const byteRate = sampleRate * blockAlign;
-            const dataSize = pcmInt16.length * bytesPerSample;
-            const buffer = new ArrayBuffer(44 + dataSize);
-            const view = new DataView(buffer);
-
-            const writeStr = (offset, str) => {
-                for (let i = 0; i < str.length; i++) {
-                    view.setUint8(offset + i, str.charCodeAt(i));
-                }
-            };
-
-            writeStr(0, 'RIFF');
-            view.setUint32(4, 36 + dataSize, true);
-            writeStr(8, 'WAVE');
-            writeStr(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, numChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, byteRate, true);
-            view.setUint16(32, blockAlign, true);
-            view.setUint16(34, 16, true);
-            writeStr(36, 'data');
-            view.setUint32(40, dataSize, true);
-
-            let offset = 44;
-            for (let i = 0; i < pcmInt16.length; i++) {
-                view.setInt16(offset, pcmInt16[i], true);
-                offset += 2;
-            }
-            return new Blob([buffer], { type: 'audio/wav' });
-        }
-
-        function mergeInt16ArraysWithSilence(arrays, sampleRate = 24000) {
-            const silenceSamples = Math.floor(sampleRate * 0.25);
-            let totalLength = 0;
-            arrays.forEach((arr, idx) => {
-                totalLength += arr.length;
-                if (idx < arrays.length - 1) totalLength += silenceSamples;
-            });
-
-            const merged = new Int16Array(totalLength);
-            let offset = 0;
-            arrays.forEach((arr, idx) => {
-                merged.set(arr, offset);
-                offset += arr.length;
-                if (idx < arrays.length - 1) offset += silenceSamples;
-            });
-            return merged;
-        }
-
-        async function callGeminiTTSChunk(chunkText, voiceName, styleKey, langKey, paceKey, maxRetries = 2) {
             const styleMap = {
                 natural: 'clearly and naturally',
                 expressive: 'warmly, expressively, and emotionally',
@@ -5893,16 +5850,12 @@ QUY TẮC QUAN TRỌNG:
 
             const promptDirective = `Read the following text aloud ${styleMap[styleKey] || styleMap.natural}, ${paceMap[paceKey] || paceMap.normal}, ${langMap[langKey] || langMap.auto}:\n${chunkText}`;
             const effectiveKey = getEffectiveApiKey();
-            const isVertexExpressKey = effectiveKey && effectiveKey.startsWith('AQ.');
 
-            const endpoints = [
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${encodeURIComponent(effectiveKey)}`
+            // Sử dụng cổng Google Gemini AI Studio với 2 model TTS có hạn mức độc lập (tránh lỗi 403 Agent Platform API)
+            const ttsModels = [
+                'gemini-2.5-flash-preview-tts',
+                'gemini-2.5-pro-preview-tts'
             ];
-            if (isVertexExpressKey) {
-                endpoints.push(
-                    `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash-preview-tts:generateContent?key=${encodeURIComponent(effectiveKey)}`
-                );
-            }
 
             const payload = {
                 contents: [{ role: "user", parts: [{ text: promptDirective }] }],
@@ -5916,8 +5869,13 @@ QUY TẮC QUAN TRỌNG:
                 }
             };
 
+            let hitRateLimit = false;
             let lastErr = null;
-            for (const url of endpoints) {
+
+            for (let mIdx = 0; mIdx < ttsModels.length; mIdx++) {
+                const modelName = ttsModels[mIdx];
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(effectiveKey)}`;
+
                 for (let attempt = 0; attempt <= maxRetries; attempt++) {
                     try {
                         const response = await fetch(url, {
@@ -5934,24 +5892,70 @@ QUY TẮC QUAN TRỌNG:
                                 const rateMatch = mimeType.match(/rate=(\d+)/);
                                 const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
                                 const rawBytes = base64ToUint8Array(audioData);
-                                // Đảm bảo độ dài chẵn byte cho Int16 PCM
                                 const evenLen = rawBytes.byteLength - (rawBytes.byteLength % 2);
                                 const pcm16 = new Int16Array(rawBytes.buffer, rawBytes.byteOffset, evenLen / 2);
                                 return { pcm16, sampleRate };
                             }
-                            lastErr = new Error("API không trả về dữ liệu âm thanh.");
+                            lastErr = new Error("AI chưa trả về dữ liệu âm thanh cho đoạn này.");
                         } else {
                             const errText = await response.text();
-                            lastErr = new Error(`HTTP ${response.status}: ${errText.substring(0, 160)}`);
+                            if (response.status === 429) {
+                                hitRateLimit = true;
+                                lastErr = new Error("RATE_LIMIT_429");
+                                if (isPreview) break; // Nghe thử chuyển ngay sang giọng dự phòng, không chờ
+                                if (attempt < maxRetries) {
+                                    const waitSec = 4 + attempt * 4;
+                                    if (typeof onStatusUpdate === 'function') {
+                                        onStatusUpdate(`Google AI đang bận, tự động thử lại sau ${waitSec} giây...`);
+                                    }
+                                    await new Promise(r => setTimeout(r, waitSec * 1000));
+                                    continue;
+                                }
+                                break; // Chuyển sang model TTS dự phòng kế tiếp
+                            }
+                            lastErr = new Error(`HTTP ${response.status}: ${errText.substring(0, 140)}`);
                             if (response.status === 400 || response.status === 404 || response.status === 403) break;
                         }
                     } catch (e) {
                         lastErr = e;
                     }
-                    await new Promise(r => setTimeout(r, 800 * Math.pow(2, attempt)));
+                    if (isPreview) break;
+                    await new Promise(r => setTimeout(r, 900 * (attempt + 1)));
                 }
             }
+
+            if (hitRateLimit) {
+                throw new Error("Google AI (gói miễn phí) đang tạm giới hạn số lượt tạo giọng nói mỗi phút. Bạn hãy đợi khoảng 20–30 giây rồi bấm thử lại, hoặc bấm nút 'Nghe ngay bằng giọng thiết bị' bên dưới!");
+            }
             throw lastErr || new Error("Không thể tạo âm thanh lúc này. Vui lòng thử lại!");
+        }
+
+        function speakTTSTextWithDeviceVoice() {
+            const rawText = (document.getElementById('ttsInputText')?.value || '').trim();
+            if (!rawText) {
+                showToast("Chưa có văn bản để đọc!");
+                return;
+            }
+            if (!('speechSynthesis' in window)) {
+                showToast("Trình duyệt hiện tại không hỗ trợ giọng đọc thiết bị.");
+                return;
+            }
+            stopTTSVoicePreview();
+            const langKey = getActivePreviewLang();
+            const voiceInfo = TTS_VOICE_CATALOG.find(v => v.id === selectedTTSVoiceId) || TTS_VOICE_CATALOG[0];
+            const langTagMap = { vi: 'vi-VN', en: 'en-US', fr: 'fr-FR', ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN', de: 'de-DE', es: 'es-ES' };
+            const paceKey = document.getElementById('ttsPaceSelect')?.value || 'normal';
+
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(rawText);
+            utter.lang = langTagMap[langKey] || 'vi-VN';
+            utter.pitch = voiceInfo.gender === 'male' ? 0.88 : 1.08;
+            utter.rate = paceKey === 'slow' ? 0.85 : (paceKey === 'fast' ? 1.2 : 1.0);
+            const allVoices = window.speechSynthesis.getVoices() || [];
+            const matched = allVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(langKey));
+            if (matched) utter.voice = matched;
+            window.speechSynthesis.speak(utter);
+            showToast("Đang phát văn bản bằng giọng đọc thiết bị (Miễn phí không giới hạn)!");
         }
 
         async function generateSpeechFromText() {
@@ -5982,7 +5986,8 @@ QUY TẮC QUAN TRỌNG:
             const paceKey = document.getElementById('ttsPaceSelect')?.value || 'normal';
             const voiceInfo = TTS_VOICE_CATALOG.find(v => v.id === selectedTTSVoiceId) || TTS_VOICE_CATALOG[0];
 
-            const chunks = splitTextIntoTTSChunks(rawText, 1100);
+            // Tăng độ dài mỗi đoạn lên 2200 ký tự để văn bản ngắn/trung bình chỉ tốn đúng 1 lượt gọi AI
+            const chunks = splitTextIntoTTSChunks(rawText, 2200);
             isGeneratingMainTTS = true;
             if (btn) btn.disabled = true;
             if (progBox) progBox.classList.remove('hidden');
@@ -5999,7 +6004,15 @@ QUY TẮC QUAN TRỌNG:
                     if (progPct) progPct.textContent = `${pct}%`;
                     if (progBar) progBar.style.width = `${pct}%`;
 
-                    const chunkRes = await callGeminiTTSChunk(chunks[i], voiceInfo.id, styleKey, langKey, paceKey);
+                    const chunkRes = await callGeminiTTSChunk(chunks[i], voiceInfo.id, styleKey, langKey, paceKey, {
+                        maxRetries: 1,
+                        isPreview: false,
+                        onStatusUpdate: (msg) => {
+                            if (progLabel) {
+                                progLabel.innerHTML = `<i class="fa-solid fa-clock text-amber-600"></i> <span>${escapeHtml(msg)}</span>`;
+                            }
+                        }
+                    });
                     pcmChunks.push(chunkRes.pcm16);
                     finalSampleRate = chunkRes.sampleRate || 24000;
                 }
