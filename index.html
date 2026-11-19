@@ -5818,6 +5818,65 @@ QUY TẮC QUAN TRỌNG:
             const binaryString = atob(base64);
             const len = binaryString.length;
             const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        function mergeInt16ArraysWithSilence(arrays, sampleRate = 24000, silenceMs = 280) {
+            if (!Array.isArray(arrays) || arrays.length === 0) return new Int16Array(0);
+            const silenceSamples = Math.floor((sampleRate * silenceMs) / 1000);
+            let totalLength = 0;
+            for (let i = 0; i < arrays.length; i++) {
+                totalLength += arrays[i].length;
+                if (i < arrays.length - 1) totalLength += silenceSamples;
+            }
+            const merged = new Int16Array(totalLength);
+            let offset = 0;
+            for (let i = 0; i < arrays.length; i++) {
+                merged.set(arrays[i], offset);
+                offset += arrays[i].length;
+                if (i < arrays.length - 1) {
+                    offset += silenceSamples;
+                }
+            }
+            return merged;
+        }
+
+        function pcmInt16ToWavBlob(pcm16, sampleRate = 24000, numChannels = 1) {
+            const bytesPerSample = 2;
+            const dataSize = pcm16.length * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            const writeString = (offset, str) => {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset + i, str.charCodeAt(i));
+                }
+            };
+
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numChannels * bytesPerSample, true);
+            view.setUint16(32, numChannels * bytesPerSample, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            let offset = 44;
+            for (let i = 0; i < pcm16.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16[i], true);
+            }
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
         async function callGeminiTTSChunk(chunkText, voiceName, styleKey, langKey, paceKey, options = {}) {
             const maxRetries = typeof options === 'number' ? options : (options.maxRetries ?? 2);
             const isPreview = typeof options === 'object' ? Boolean(options.isPreview) : false;
