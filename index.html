@@ -1264,14 +1264,14 @@
                             </div>
 
                             <audio id="ttsAudioPlayer" controls playsinline referrerpolicy="no-referrer" class="w-full h-11 rounded-xl"></audio>
+                            <audio id="ttsAudioPlayer" controls playsinline class="w-full h-11 rounded-xl"></audio>
 
-                            <!-- Thanh hỗ trợ riêng khi mạng máy tính chặn Proxy (Phát trực tiếp không CORS + Ghi WAV 1 chạm) -->
-                            <div id="ttsDirectModeNotice" class="hidden p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 space-y-2">
+                            <!-- Hộp ghi chú bổ sung (nếu cần) -->
+                            <div id="ttsDirectModeNotice" class="hidden p-3 rounded-2xl bg-cyan-50 border border-cyan-200 text-[11px] text-cyan-900 space-y-1.5">
                                 <div class="font-bold flex items-start gap-1.5 leading-snug">
-                                    <i class="fa-solid fa-shield-halved text-amber-600 mt-0.5 shrink-0"></i>
-                                    <span id="ttsDirectModeHintText">Mạng máy tính đang chặn tải proxy trực tiếp — đã tự chuyển sang chế độ <strong>Phát Trực Tiếp Không Chặn</strong>. Bấm nút xanh bên dưới để ghi &amp; lưu thành file <strong>.WAV</strong> sắc nét về máy tính!</span>
+                                    <i class="fa-solid fa-microchip text-cyan-600 mt-0.5 shrink-0"></i>
+                                    <span id="ttsDirectModeHintText">Âm thanh được tạo trực tiếp ngay trên thiết bị của bạn (không qua proxy, không giới hạn lượt mỗi ngày).</span>
                                 </div>
-                                <div id="ttsDirectChunkLinks" class="hidden flex-wrap items-center gap-1.5 pt-0.5"></div>
                             </div>
 
                             <button
@@ -4045,21 +4045,10 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
         let previewLoadingVoiceId = null;
         let previewPlayingVoiceId = null;
         let previewRequestCounter = 0;
-        let fastestTTSGatewayIndex = -1;
-        let fastCloudGatewaysBlockedUntil = 0;
         let geminiTTSCooldownUntil = 0;
         let sharedAudioDecodeCtx = null;
-        // Trạng thái Chế độ Phát Trực Tiếp Không CORS (dự phòng bất bại cho máy tính khi mạng/AdBlock chặn proxy)
-        let directTTSPlaylistState = {
-            active: false,
-            urls: [],
-            index: 0,
-            voiceInfo: null,
-            langCode: 'vi',
-            rawText: '',
-            speed: 1.0,
-            isRecording: false
-        };
+        let transformersModulePromise = null;
+        const localWasmTTSPipelines = {};
         let lastTTSDiagnosticNote = '';
 
         function openTTSStudio() {
@@ -4379,33 +4368,11 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                 playUrlNow(url);
             } catch (err) {
                 if (myReqId !== previewRequestCounter) return;
-                // Dự phòng phát mẫu trực tiếp qua Google TTS (không bị CORS trên máy tính)
-                const directSampleUrl = buildDirectGoogleTTSUrl(sampleText, langCode);
-                try {
-                    previewLoadingVoiceId = null;
-                    previewPlayingVoiceId = voiceId;
-                    renderTTSVoiceCards();
-                    ttsPreviewAudioEl.referrerPolicy = 'no-referrer';
-                    ttsPreviewAudioEl.src = directSampleUrl;
-                    ttsPreviewAudioEl.playbackRate = Math.max(0.85, Math.min(1.2, voiceInfo.baseRate || 1.0));
-                    ttsPreviewAudioEl.onended = () => {
-                        if (previewPlayingVoiceId === voiceId) {
-                            previewPlayingVoiceId = null;
-                            renderTTSVoiceCards();
-                        }
-                    };
-                    ttsPreviewAudioEl.onerror = () => {
-                        playBrowserSpeechFallback(sampleText, voiceInfo, langCode, myReqId);
-                    };
-                    ttsPreviewAudioEl.play().catch(() => {
-                        playBrowserSpeechFallback(sampleText, voiceInfo, langCode, myReqId);
-                    });
-                } catch (e2) {
-                    playBrowserSpeechFallback(sampleText, voiceInfo, langCode, myReqId);
-                }
+                playBrowserSpeechFallback(sampleText, voiceInfo, langCode, myReqId);
             }
         }
-        async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+
+        async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
             const ctrl = new AbortController();
             const timer = setTimeout(() => ctrl.abort(), timeoutMs);
             try {
@@ -4418,65 +4385,6 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             }
         }
 
-        function buildDirectGoogleTTSUrl(chunkText, langCode) {
-            const tl = langCode || 'vi';
-            return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=${encodeURIComponent(tl)}&q=${encodeURIComponent(chunkText)}`;
-        }
-
-        async function fetchSoundOfTextChunk(chunkText, langCode) {
-            const voiceMap = {
-                vi: 'vi-VN', en: 'en-US', fr: 'fr-FR', ja: 'ja-JP',
-                ko: 'ko-KR', 'zh-CN': 'zh-CN', de: 'de-DE', es: 'es-ES', ru: 'ru-RU'
-            };
-            const sotVoice = voiceMap[langCode] || 'vi-VN';
-            const postRes = await fetchWithTimeout('https://api.soundoftext.com/sounds', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ engine: 'Google', data: { text: chunkText, voice: sotVoice } })
-            }, 8500);
-            if (!postRes.ok) throw new Error('SOT_POST_FAIL');
-            const postData = await postRes.json();
-            if (!postData?.id) throw new Error('SOT_NO_ID');
-
-            for (let attempt = 0; attempt < 18; attempt++) {
-                const pollRes = await fetchWithTimeout(`https://api.soundoftext.com/sounds/${encodeURIComponent(postData.id)}`, {}, 6000);
-                if (pollRes.ok) {
-                    const pollData = await pollRes.json();
-                    if (pollData?.status === 'Done' && pollData.location) {
-                        const mp3Res = await fetchWithTimeout(pollData.location, {}, 9000);
-                        if (mp3Res.ok) {
-                            const buf = await mp3Res.arrayBuffer();
-                            if (isValidAudioBuffer(buf)) return new Uint8Array(buf);
-                        }
-                    } else if (pollData?.status === 'Error') {
-                        throw new Error('SOT_STATUS_ERR');
-                    }
-                }
-                await new Promise(r => setTimeout(r, 340));
-            }
-            throw new Error('SOT_TIMEOUT');
-        }
-
-        async function fetchAllOriginsRawMp3(targetUrl) {
-            const res = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`, {}, 8500);
-            if (!res.ok) throw new Error('AO_RAW_FAIL');
-            const buf = await res.arrayBuffer();
-            if (!isValidAudioBuffer(buf)) throw new Error('AO_RAW_BAD');
-            return new Uint8Array(buf);
-        }
-
-        async function fetchAllOriginsJsonMp3(targetUrl) {
-            const res = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, {}, 8500);
-            if (!res.ok) throw new Error('AO_JSON_FAIL');
-            const data = await res.json();
-            if (!data || typeof data.contents !== 'string' || !data.contents.includes('base64,')) {
-                throw new Error('AO_JSON_NOT_BASE64');
-            }
-            const bytes = base64ToUint8Array(data.contents);
-            if (!isValidAudioBuffer(bytes.buffer)) throw new Error('AO_JSON_BAD_AUDIO');
-            return bytes;
-        }
-
         async function fetchStreamElementsChunk(chunkText, seVoiceName) {
             const url = `https://api.streamelements.com/kappa/v2/speech?voice=${encodeURIComponent(seVoiceName)}&text=${encodeURIComponent(chunkText)}`;
             const res = await fetchWithTimeout(url, { method: 'GET' }, 7000);
@@ -4486,78 +4394,228 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             return new Uint8Array(buf);
         }
 
-        async function fetchSingleFastTTSChunk(chunkText, langCode, voiceInfo) {
-            const baseLang = (langCode || 'vi').split('-')[0];
-            const seVoice = voiceInfo?.seVoices?.[baseLang];
-            const useNativeSE = Boolean(seVoice && baseLang !== 'vi');
+        // =========================================================================
+        // CHUẨN HÓA SỐ & KÝ HIỆU TIẾNG VIỆT CHO ĐỘNG CƠ AI CỤC BỘ (MMS-TTS-VIE)
+        // =========================================================================
+        function vietnameseNumberToWords(num) {
+            const n = Math.floor(Math.abs(Number(num)));
+            if (!isFinite(n)) return '';
+            const digits = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+            if (n < 10) return digits[n];
 
-            const cacheKey = useNativeSE
-                ? `se|${seVoice}|${chunkText}`
-                : `gt|${langCode}|${chunkText}`;
+            const readTwoDigits = (val, full) => {
+                const tens = Math.floor(val / 10);
+                const ones = val % 10;
+                if (tens === 0) return full ? `lẻ ${digits[ones]}` : digits[ones];
+                if (tens === 1) {
+                    if (ones === 0) return 'mười';
+                    if (ones === 5) return 'mười lăm';
+                    return `mười ${digits[ones]}`;
+                }
+                let s = `${digits[tens]} mươi`;
+                if (ones === 1) s += ' mốt';
+                else if (ones === 4) s += ' tư';
+                else if (ones === 5) s += ' lăm';
+                else if (ones > 0) s += ` ${digits[ones]}`;
+                return s;
+            };
 
-            if (fastRawChunkCache.has(cacheKey)) {
-                return { bytes: fastRawChunkCache.get(cacheKey), isNativeVoice: useNativeSE };
+            const readThreeDigits = (val, full) => {
+                const hundreds = Math.floor(val / 100);
+                const rem = val % 100;
+                if (hundreds === 0 && !full) return readTwoDigits(rem, false);
+                let s = `${digits[hundreds]} trăm`;
+                if (rem > 0) s += ' ' + readTwoDigits(rem, true);
+                return s;
+            };
+
+            if (n >= 1000000000000) {
+                return String(n).split('').map(d => digits[Number(d)]).join(' ');
             }
 
-            if (useNativeSE) {
-                try {
-                    const seBytes = await fetchStreamElementsChunk(chunkText, seVoice);
-                    fastRawChunkCache.set(cacheKey, seBytes);
-                    return { bytes: seBytes, isNativeVoice: true };
-                } catch (e) {}
+            const units = ['', 'nghìn', 'triệu', 'tỷ'];
+            const groups = [];
+            let temp = n;
+            while (temp > 0) {
+                groups.push(temp % 1000);
+                temp = Math.floor(temp / 1000);
+            }
+            const parts = [];
+            for (let i = groups.length - 1; i >= 0; i--) {
+                const g = groups[i];
+                if (g === 0) continue;
+                const needFull = i < groups.length - 1;
+                const word = readThreeDigits(g, needFull);
+                parts.push(units[i] ? `${word} ${units[i]}` : word);
+            }
+            return parts.join(' ').trim();
+        }
+
+        function normalizeTextForLocalWasmTTS(rawText, langCode) {
+            let s = String(rawText || '').trim();
+            if ((langCode || 'vi').startsWith('vi')) {
+                s = s
+                    .replace(/%/g, ' phần trăm ')
+                    .replace(/°C/gi, ' độ xê ')
+                    .replace(/°/g, ' độ ')
+                    .replace(/&/g, ' và ')
+                    .replace(/\+/g, ' cộng ')
+                    .replace(/=/g, ' bằng ')
+                    .replace(/(\d+)[.,](\d+)/g, (_, a, b) => {
+                        if (b.length === 3 && a.length <= 3) {
+                            return ` ${vietnameseNumberToWords(a + b)} `;
+                        }
+                        return ` ${vietnameseNumberToWords(a)} phẩy ${vietnameseNumberToWords(b)} `;
+                    })
+                    .replace(/\d+/g, (m) => ` ${vietnameseNumberToWords(m)} `)
+                    .replace(/[“”"'()\[\]{}<>*#_~`|\\\/]/g, ' ')
+                    .replace(/[;:–—-]/g, ', ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            } else {
+                s = s.replace(/[*#_~`|\\]/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+            return s;
+        }
+
+        function getLocalWasmModelIdForLang(langCode) {
+            const base = (langCode || 'vi').split('-')[0].toLowerCase();
+            const map = {
+                vi: 'Xenova/mms-tts-vie',
+                en: 'Xenova/mms-tts-eng',
+                fr: 'Xenova/mms-tts-fra',
+                de: 'Xenova/mms-tts-deu',
+                es: 'Xenova/mms-tts-spa',
+                ko: 'Xenova/mms-tts-kor',
+                ru: 'Xenova/mms-tts-rus'
+            };
+            return map[base] || 'Xenova/mms-tts-vie';
+        }
+
+        async function loadTransformersLibrary() {
+            if (!transformersModulePromise) {
+                transformersModulePromise = (async () => {
+                    const cdnUrls = [
+                        'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1',
+                        'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1'
+                    ];
+                    let lastErr = null;
+                    for (const url of cdnUrls) {
+                        try {
+                            const mod = await import(url);
+                            if (mod && typeof mod.pipeline === 'function') {
+                                if (mod.env) {
+                                    mod.env.allowLocalModels = false;
+                                    mod.env.useBrowserCache = true;
+                                    if (mod.env.backends?.onnx?.wasm) {
+                                        mod.env.backends.onnx.wasm.numThreads = 1;
+                                    }
+                                }
+                                return mod;
+                            }
+                        } catch (e) {
+                            lastErr = e;
+                        }
+                    }
+                    transformersModulePromise = null;
+                    throw lastErr || new Error('Không thể tải thư viện AI âm thanh cục bộ.');
+                })();
+            }
+            return transformersModulePromise;
+        }
+
+        async function getLocalWasmTTSPipeline(langCode, onProgress) {
+            const modelId = getLocalWasmModelIdForLang(langCode);
+            if (localWasmTTSPipelines[modelId]) {
+                return localWasmTTSPipelines[modelId];
             }
 
-            const tl = langCode || 'vi';
-            const gtxUrl = buildDirectGoogleTTSUrl(chunkText, tl);
-            const twobUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(tl)}&q=${encodeURIComponent(chunkText)}`;
+            if (typeof onProgress === 'function') {
+                onProgress(24, 'Đang khởi động bộ máy giọng đọc ngay trên máy (0 giới hạn)...');
+            }
 
-            // Tập hợp các cổng còn hoạt động ổn định nhất năm 2026 (đã loại bỏ các proxy cũ đã ngừng dịch vụ)
-            const gatewayRunners = [
-                async () => fetchSoundOfTextChunk(chunkText, tl),
-                async () => {
-                    const res = await fetchWithTimeout(`https://proxy.corsfix.com/?${encodeURIComponent(gtxUrl)}`, {}, 8000);
-                    if (!res.ok) throw new Error('GW_CORSFIX');
-                    const buf = await res.arrayBuffer();
-                    if (!isValidAudioBuffer(buf)) throw new Error('GW_CORSFIX_BAD');
-                    return new Uint8Array(buf);
-                },
-                async () => fetchAllOriginsRawMp3(gtxUrl),
-                async () => fetchAllOriginsJsonMp3(gtxUrl),
-                async () => {
-                    const res = await fetchWithTimeout(`https://corsproxy.org/?${encodeURIComponent(gtxUrl)}`, {}, 8000);
-                    if (!res.ok) throw new Error('GW_CPORG');
-                    const buf = await res.arrayBuffer();
-                    if (!isValidAudioBuffer(buf)) throw new Error('GW_CPORG_BAD');
-                    return new Uint8Array(buf);
-                },
-                async () => {
-                    const res = await fetchWithTimeout(`https://thingproxy.freeboard.io/fetch/${gtxUrl}`, {}, 8000);
-                    if (!res.ok) throw new Error('GW_THING');
-                    const buf = await res.arrayBuffer();
-                    if (!isValidAudioBuffer(buf)) throw new Error('GW_THING_BAD');
-                    return new Uint8Array(buf);
-                },
-                async () => fetchAllOriginsRawMp3(twobUrl)
-            ];
+            const tf = await loadTransformersLibrary();
+            const pipePromise = tf.pipeline('text-to-speech', modelId, {
+                dtype: 'q8',
+                device: 'wasm',
+                progress_callback: (info) => {
+                    if (typeof onProgress === 'function' && info && info.status === 'progress' && typeof info.progress === 'number') {
+                        const pct = Math.max(25, Math.min(72, Math.round(25 + (info.progress / 100) * 47)));
+                        onProgress(pct, `Đang tải gói giọng đọc về máy lần đầu (${Math.round(info.progress)}%) — tự lưu vĩnh viễn...`);
+                    }
+                }
+            });
 
-            if (fastestTTSGatewayIndex >= 0 && fastestTTSGatewayIndex < gatewayRunners.length) {
-                try {
-                    const bytes = await gatewayRunners[fastestTTSGatewayIndex]();
-                    fastRawChunkCache.set(cacheKey, bytes);
-                    return { bytes, isNativeVoice: false };
-                } catch (e) {
-                    fastestTTSGatewayIndex = -1;
+            try {
+                const pipe = await pipePromise;
+                localWasmTTSPipelines[modelId] = pipe;
+                return pipe;
+            } catch (err) {
+                delete localWasmTTSPipelines[modelId];
+                throw err;
+            }
+        }
+
+        async function synthesizeWithLocalWasmTTS(rawText, voiceInfo, langCode, speedMultiplier = 1.0, onProgress) {
+            const pipe = await getLocalWasmTTSPipeline(langCode, onProgress);
+            const normalizedFull = normalizeTextForLocalWasmTTS(rawText, langCode);
+            const chunks = splitTextForFastTTS(normalizedFull, 190);
+            if (chunks.length === 0) throw new Error('Văn bản rỗng.');
+
+            const tStart = performance.now();
+            const floatSegments = [];
+            let sampleRate = 16000;
+
+            for (let i = 0; i < chunks.length; i++) {
+                if (typeof onProgress === 'function') {
+                    const pct = Math.min(88, 72 + Math.round(((i + 0.3) / chunks.length) * 16));
+                    onProgress(pct, `Đang tạo giọng ${voiceInfo.name} trên máy (${i + 1}/${chunks.length} đoạn)...`);
+                }
+                const out = await pipe(chunks[i]);
+                if (out?.audio && out.audio.length > 0) {
+                    sampleRate = out.sampling_rate || 16000;
+                    floatSegments.push(out.audio instanceof Float32Array ? out.audio : new Float32Array(out.audio));
                 }
             }
 
-            const raced = await Promise.any(
-                gatewayRunners.map((runner, idx) =>
-                    runner().then(bytes => ({ bytes, idx }))
-                )
-            );
-            fastestTTSGatewayIndex = raced.idx;
-            fastRawChunkCache.set(cacheKey, raced.bytes);
-            return { bytes: raced.bytes, isNativeVoice: false };
+            if (floatSegments.length === 0) throw new Error('Không tạo được dữ liệu âm thanh cục bộ.');
+
+            const gapSamples = Math.round(sampleRate * 0.22);
+            let totalLen = 0;
+            floatSegments.forEach((seg, idx) => {
+                totalLen += seg.length + (idx < floatSegments.length - 1 ? gapSamples : 0);
+            });
+            let mergedFloat = new Float32Array(totalLen);
+            let offset = 0;
+            floatSegments.forEach((seg, idx) => {
+                mergedFloat.set(seg, offset);
+                offset += seg.length + (idx < floatSegments.length - 1 ? gapSamples : 0);
+            });
+
+            if (typeof onProgress === 'function') {
+                onProgress(92, `Đang tinh chỉnh chất giọng ${voiceInfo.name} & đóng gói file .WAV...`);
+            }
+
+            const effectivePitch = voiceInfo.pitch || 1.0;
+            const effectiveSpeed = Math.max(0.72, Math.min(1.55, (speedMultiplier || 1.0) * (voiceInfo.baseRate || 1.0)));
+            if (Math.abs(effectivePitch - 1.0) > 0.015 || Math.abs(effectiveSpeed - 1.0) > 0.02) {
+                const stretched = timeStretchWSOLA(mergedFloat, sampleRate, effectivePitch / effectiveSpeed);
+                mergedFloat = resampleLinearFloat32(stretched, effectivePitch);
+            }
+
+            const pcm16 = await applyStudioVoiceEQAndNormalize(mergedFloat, sampleRate, voiceInfo.eqType || 'none');
+            const wavBlob = pcmInt16ToWavBlob(pcm16, sampleRate, 1);
+            const durSec = Math.max(1, Math.round(pcm16.length / sampleRate));
+            const elapsedSec = ((performance.now() - tStart) / 1000).toFixed(1);
+
+            return {
+                blob: wavBlob,
+                ext: 'wav',
+                pcm16,
+                sampleRate,
+                isLocalWasm: true,
+                meta: `${voiceInfo.name} (${voiceInfo.badge}) • ${durSec}s • Chạy trên máy ${elapsedSec}s • WAV (0 giới hạn)`
+            };
         }
 
         function isValidAudioBuffer(buf) {
@@ -5094,9 +5152,14 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             if (Date.now() < geminiTTSCooldownUntil) {
                 throw new Error('HTTP 429 Cooldown');
             }
-            const ttsModels = ['gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts'];
+            const ttsModels = [
+                'gemini-2.5-flash-preview-tts',
+                'gemini-3.1-flash-tts-preview',
+                'gemini-2.5-pro-preview-tts'
+            ];
             const keys = getCandidateApiKeys();
             let lastErr = 'TTS Error';
+            const guidedPrompt = `Hãy đọc to, rõ ràng, tự nhiên nguyên văn đoạn văn bản sau (chỉ đọc đúng nội dung, không thêm lời bình):\n\n${chunkText}`;
 
             for (const keyVal of keys) {
                 for (const modelName of ttsModels) {
@@ -5106,7 +5169,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                contents: [{ parts: [{ text: chunkText }] }],
+                                contents: [{ parts: [{ text: guidedPrompt }] }],
                                 generationConfig: {
                                     responseModalities: ['AUDIO'],
                                     speechConfig: {
@@ -5116,7 +5179,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                                     }
                                 }
                             })
-                        }, 18000);
+                        }, 16000);
 
                         if (res.ok) {
                             const data = await res.json();
@@ -5129,7 +5192,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                         } else {
                             lastErr = `HTTP ${res.status}`;
                             if (res.status === 429) {
-                                geminiTTSCooldownUntil = Date.now() + 35000;
+                                geminiTTSCooldownUntil = Date.now() + 60000;
                             }
                         }
                     } catch (e) {
@@ -5145,13 +5208,26 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             const pcmChunks = [];
             for (let i = 0; i < chunks.length; i++) {
                 if (typeof onProgress === 'function') {
-                    const pct = Math.min(88, 42 + Math.round(((i + 0.5) / chunks.length) * 44));
-                    onProgress(pct, `Đang tạo giọng AI ${voiceInfo.name} (${i + 1}/${chunks.length} phần)...`);
+                    const pct = Math.min(82, 24 + Math.round(((i + 0.5) / chunks.length) * 55));
+                    onProgress(pct, `Đang tạo giọng AI Studio ${voiceInfo.name} (${i + 1}/${chunks.length} phần)...`);
                 }
                 const res = await callGeminiTTSChunk(chunks[i], voiceInfo.geminiVoice || 'Zephyr');
                 pcmChunks.push(res.pcm16);
             }
-            const mergedPcm = mergeInt16ArraysWithSilence(pcmChunks, 24000, 260);
+            let mergedPcm = mergeInt16ArraysWithSilence(pcmChunks, 24000, 260);
+
+            // Áp dụng tốc độ đọc nếu người dùng chỉnh khác 1.0x
+            const speedVal = Math.max(0.75, Math.min(1.45, speedMultiplier || 1.0));
+            if (Math.abs(speedVal - 1.0) > 0.02 && mergedPcm.length > 2048) {
+                if (typeof onProgress === 'function') {
+                    onProgress(90, `Đang chỉnh tốc độ ${speedVal.toFixed(2)}x & xuất file .WAV...`);
+                }
+                const floatIn = new Float32Array(mergedPcm.length);
+                for (let i = 0; i < mergedPcm.length; i++) floatIn[i] = mergedPcm[i] / 32768;
+                const stretched = timeStretchWSOLA(floatIn, 24000, 1.0 / speedVal);
+                mergedPcm = await applyStudioVoiceEQAndNormalize(stretched, 24000, 'none');
+            }
+
             const wavBlob = pcmInt16ToWavBlob(mergedPcm, 24000, 1);
             const durSec = Math.max(1, Math.round(mergedPcm.length / 24000));
             return {
@@ -5159,116 +5235,63 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                 ext: 'wav',
                 pcm16: mergedPcm,
                 sampleRate: 24000,
-                meta: `${voiceInfo.name} (${voiceInfo.badge}) • ${durSec}s • AI Neural WAV`
+                meta: `${voiceInfo.name} (${voiceInfo.badge}) • ${durSec}s • AI Studio WAV`
             };
         }
 
         async function synthesizeTextUltraFast(rawText, voiceInfo, langCodeOverride, speedMultiplier = 1.0, onProgress) {
             const langKey = document.getElementById('ttsLanguageSelect')?.value || 'auto';
             const langCode = langCodeOverride || detectTextLanguageCode(rawText, langKey);
-            const chunks = splitTextForFastTTS(rawText, 185);
-            if (chunks.length === 0) throw new Error("Văn bản rỗng.");
-
-            const tStart = performance.now();
-            let fetchedItems = null;
+            const baseLang = (langCode || 'vi').split('-')[0].toLowerCase();
             lastTTSDiagnosticNote = '';
 
-            if (Date.now() > fastCloudGatewaysBlockedUntil) {
+            // 1. Với ngoại ngữ (Anh/Pháp/Nhật/Hàn/Đức/TBN/Nga): ưu tiên StreamElements (CORS gốc, <0.5s, 0 giới hạn)
+            const seVoice = voiceInfo?.seVoices?.[baseLang];
+            if (seVoice && baseLang !== 'vi') {
                 try {
-                    let doneChunks = 0;
-                    fetchedItems = await runTasksWithConcurrency(chunks, 5, async (chunkText) => {
-                        const result = await fetchSingleFastTTSChunk(chunkText, langCode, voiceInfo);
-                        doneChunks++;
+                    const chunks = splitTextForFastTTS(rawText, 185);
+                    let doneCnt = 0;
+                    const mp3Parts = await runTasksWithConcurrency(chunks, 4, async (c) => {
+                        const bytes = await fetchStreamElementsChunk(c, seVoice);
+                        doneCnt++;
                         if (typeof onProgress === 'function') {
-                            const pct = Math.min(82, Math.round((doneChunks / chunks.length) * 80));
-                            onProgress(pct, `Đang tổng hợp siêu tốc (${doneChunks}/${chunks.length} đoạn)...`);
+                            onProgress(Math.min(88, 25 + Math.round((doneCnt / chunks.length) * 60)), `Đang tạo giọng ngoại ngữ (${doneCnt}/${chunks.length})...`);
                         }
-                        return result;
+                        return bytes;
                     });
-                } catch (cloudErr) {
-                    fastCloudGatewaysBlockedUntil = Date.now() + 20000;
-                    lastTTSDiagnosticNote = 'Proxy tạm bận';
-                    fetchedItems = null;
-                }
+                    const mp3Blob = new Blob(mp3Parts, { type: 'audio/mpeg' });
+                    return {
+                        blob: mp3Blob,
+                        ext: 'mp3',
+                        meta: `${voiceInfo.name} (${baseLang.toUpperCase()}) • Siêu tốc • MP3`
+                    };
+                } catch (e) {}
             }
 
-            if (!fetchedItems) {
-                if (typeof onProgress === 'function') {
-                    onProgress(40, `Đang chuyển sang giọng AI ${voiceInfo.name} chất lượng cao...`);
-                }
+            // 2. Nếu bộ máy AI Cục Bộ (WASM) cho ngôn ngữ này đã nạp sẵn trên máy & Gemini đang trong thời gian hồi -> chạy thẳng cục bộ <1s!
+            const localModelId = getLocalWasmModelIdForLang(langCode);
+            const localReadyNow = Boolean(localWasmTTSPipelines[localModelId]);
+
+            // 3. Tầng 1: Google Gemini Neural TTS (CORS gốc Google — chạy mượt cả iPhone & Máy tính, giọng studio cực tự nhiên)
+            if (!localReadyNow && Date.now() >= geminiTTSCooldownUntil) {
                 try {
                     return await synthesizeWithGeminiNeuralTTS(rawText, voiceInfo, langCode, speedMultiplier, onProgress);
                 } catch (geminiErr) {
-                    lastTTSDiagnosticNote = `${lastTTSDiagnosticNote ? lastTTSDiagnosticNote + ' • ' : ''}AI ${geminiErr.message || 'bận'}`;
-                    throw geminiErr;
+                    lastTTSDiagnosticNote = `AI Cloud bận (${geminiErr.message || 'giới hạn'})`;
                 }
             }
 
-            const allNative = fetchedItems.every(it => it.isNativeVoice);
-            const effectivePitch = allNative ? 1.0 : (voiceInfo.pitch || 1.0);
-            const effectiveSpeed = Math.max(0.7, Math.min(1.6, (speedMultiplier || 1.0) * (voiceInfo.baseRate || 1.0)));
-            const needsDSP = Math.abs(effectivePitch - 1.0) > 0.015 || Math.abs(effectiveSpeed - 1.0) > 0.02 || (!allNative && voiceInfo.eqType && voiceInfo.eqType !== 'none');
-
-            // Nếu là giọng gốc tự nhiên và tốc độ chuẩn -> ghép thẳng MP3 cực nhanh (<0.1s)
-            if (!needsDSP) {
-                const mp3Blob = new Blob(fetchedItems.map(it => it.bytes), { type: 'audio/mpeg' });
-                const elapsedSec = ((performance.now() - tStart) / 1000).toFixed(1);
-                return {
-                    blob: mp3Blob,
-                    ext: 'mp3',
-                    meta: `${voiceInfo.name} (${voiceInfo.badge}) • Siêu tốc ${elapsedSec}s • MP3`
-                };
-            }
-
-            // Áp dụng xử lý chất giọng Nam/Nữ + Tốc độ đọc (WSOLA + Studio EQ) ra WAV chuẩn
-            if (typeof onProgress === 'function') {
-                onProgress(88, `Đang tinh chỉnh chất giọng ${voiceInfo.name}...`);
-            }
+            // 4. Tầng 2 (Bất bại trên cả iPhone & Máy tính): Bộ máy AI Cục Bộ chạy trực tiếp trên trình duyệt (Xenova/mms-tts-vie WASM)
+            // Không dùng proxy, không bao giờ lỗi CORS, không giới hạn lượt/ngày, xuất file .WAV thật 100%!
             try {
-                const ctx = getSharedAudioContext();
-                const decodedArrays = [];
-                let sampleRate = 24000;
-                for (const it of fetchedItems) {
-                    const abCopy = it.bytes.buffer.slice(it.bytes.byteOffset, it.bytes.byteOffset + it.bytes.byteLength);
-                    const audioBuf = await decodeAudioDataSafe(ctx, abCopy);
-                    sampleRate = audioBuf.sampleRate || 24000;
-                    decodedArrays.push(audioBuf.getChannelData(0));
+                return await synthesizeWithLocalWasmTTS(rawText, voiceInfo, langCode, speedMultiplier, onProgress);
+            } catch (localErr) {
+                lastTTSDiagnosticNote = `${lastTTSDiagnosticNote ? lastTTSDiagnosticNote + ' • ' : ''}WASM: ${localErr.message || 'lỗi'}`;
+                // Thử lại Gemini 1 lần nữa nếu ban nãy bỏ qua do localReadyNow
+                if (localReadyNow && Date.now() >= geminiTTSCooldownUntil) {
+                    return await synthesizeWithGeminiNeuralTTS(rawText, voiceInfo, langCode, speedMultiplier, onProgress);
                 }
-
-                const gapLen = Math.round(sampleRate * 0.16);
-                let totalLen = 0;
-                decodedArrays.forEach((a, i) => { totalLen += a.length + (i < decodedArrays.length - 1 ? gapLen : 0); });
-                let mergedFloat = new Float32Array(totalLen);
-                let off = 0;
-                decodedArrays.forEach((a, i) => {
-                    mergedFloat.set(a, off);
-                    off += a.length + (i < decodedArrays.length - 1 ? gapLen : 0);
-                });
-
-                if (Math.abs(effectivePitch - 1.0) > 0.015 || Math.abs(effectiveSpeed - 1.0) > 0.02) {
-                    const stretched = timeStretchWSOLA(mergedFloat, sampleRate, effectivePitch / effectiveSpeed);
-                    mergedFloat = resampleLinearFloat32(stretched, effectivePitch);
-                }
-
-                const pcm16 = await applyStudioVoiceEQAndNormalize(mergedFloat, sampleRate, allNative ? 'none' : (voiceInfo.eqType || 'none'));
-                const wavBlob = pcmInt16ToWavBlob(pcm16, sampleRate, 1);
-                const elapsedSec = ((performance.now() - tStart) / 1000).toFixed(1);
-                return {
-                    blob: wavBlob,
-                    ext: 'wav',
-                    pcm16,
-                    sampleRate,
-                    meta: `${voiceInfo.name} (${voiceInfo.badge}) • Xong trong ${elapsedSec}s • WAV`
-                };
-            } catch (dspErr) {
-                // Nếu iOS/trình duyệt không giải mã được MP3 -> trả thẳng file MP3 ghép sẵn
-                const mp3Blob = new Blob(fetchedItems.map(it => it.bytes), { type: 'audio/mpeg' });
-                const elapsedSec = ((performance.now() - tStart) / 1000).toFixed(1);
-                return {
-                    blob: mp3Blob,
-                    ext: 'mp3',
-                    meta: `${voiceInfo.name} • Siêu tốc ${elapsedSec}s • MP3`
-                };
+                throw localErr;
             }
         }
 
@@ -5384,12 +5407,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
 
         function replayCurrentTTSAudio() {
             const player = document.getElementById('ttsAudioPlayer');
-            if (!player) return;
-            if (directTTSPlaylistState.active && directTTSPlaylistState.urls.length > 0) {
-                playDirectTTSChunkAt(0, true);
-                return;
-            }
-            if (!currentTTSAudioBlobUrl) return;
+            if (!player || !currentTTSAudioBlobUrl) return;
             try {
                 player.currentTime = 0;
                 player.play().catch(() => {});
@@ -5397,285 +5415,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
         }
 
         function handleMainTTSDownloadClick() {
-            if (directTTSPlaylistState.active) {
-                recordDirectStreamToWavOnDesktop();
-            } else {
-                downloadCurrentTTSAudio();
-            }
-        }
-
-        function playDirectTTSChunkAt(idx, autoPlay = true) {
-            const player = document.getElementById('ttsAudioPlayer');
-            if (!player || !directTTSPlaylistState.active) return;
-            const urls = directTTSPlaylistState.urls;
-            if (idx < 0 || idx >= urls.length) return;
-
-            directTTSPlaylistState.index = idx;
-            player.referrerPolicy = 'no-referrer';
-            player.src = urls[idx];
-            const speedSel = document.getElementById('ttsPlaybackSpeed');
-            player.playbackRate = parseFloat(speedSel?.value || String(directTTSPlaylistState.speed || 1.0)) || 1.0;
-
-            player.onended = () => {
-                if (directTTSPlaylistState.active && directTTSPlaylistState.index + 1 < directTTSPlaylistState.urls.length) {
-                    playDirectTTSChunkAt(directTTSPlaylistState.index + 1, true);
-                }
-            };
-            player.onerror = () => {
-                if (directTTSPlaylistState.active && directTTSPlaylistState.index + 1 < directTTSPlaylistState.urls.length) {
-                    playDirectTTSChunkAt(directTTSPlaylistState.index + 1, true);
-                }
-            };
-
-            if (autoPlay) {
-                try {
-                    player.load();
-                    player.play().catch(() => {});
-                } catch (e) {}
-            }
-        }
-
-        function presentDirectStreamResult(rawText, voiceInfo, langCode, speedMultiplier) {
-            const chunks = splitTextForFastTTS(rawText, 185);
-            const urls = chunks.map(c => buildDirectGoogleTTSUrl(c, langCode));
-
-            directTTSPlaylistState = {
-                active: true,
-                urls,
-                index: 0,
-                voiceInfo,
-                langCode,
-                rawText,
-                speed: speedMultiplier || 1.0,
-                isRecording: false
-            };
-
-            const card = document.getElementById('ttsResultCard');
-            const heading = document.getElementById('ttsResultHeading');
-            const metaEl = document.getElementById('ttsResultMeta');
-            const notice = document.getElementById('ttsDirectModeNotice');
-            const hintText = document.getElementById('ttsDirectModeHintText');
-            const chunkLinks = document.getElementById('ttsDirectChunkLinks');
-            const btnIcon = document.getElementById('ttsDownloadBtnIcon');
-            const btnLbl = document.getElementById('ttsDownloadBtnLabel');
-            const speedSel = document.getElementById('ttsPlaybackSpeed');
-
-            const canDesktopCapture = Boolean(navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === 'function');
-
-            if (heading) heading.textContent = '✅ Sẵn sàng nghe ngay (Chế độ Trực Tiếp Máy Tính):';
-            if (metaEl) metaEl.textContent = `${voiceInfo.name} • ${urls.length} đoạn • Không bị chặn mạng${lastTTSDiagnosticNote ? ' (' + lastTTSDiagnosticNote + ')' : ''}`;
-            if (speedSel) {
-                const nearest = [0.75, 1, 1.25, 1.5].reduce((a, b) => Math.abs(b - (speedMultiplier || 1)) < Math.abs(a - (speedMultiplier || 1)) ? b : a);
-                speedSel.value = String(nearest);
-            }
-
-            if (notice) notice.classList.remove('hidden');
-            if (hintText) {
-                hintText.innerHTML = canDesktopCapture
-                    ? `Mạng máy tính đang tạm chặn tải proxy — hệ thống đã tự mở <strong>Phát Trực Tiếp Không Chặn</strong>. Bấm nút xanh bên dưới để <strong>Ghi &amp; Tải file (.WAV) sạch về máy tính</strong> (nhớ bật <em>"Chia sẻ âm thanh thẻ"</em> khi trình duyệt hỏi)!`
-                    : `Mạng hiện tại đang tạm chặn proxy — bạn có thể nghe trực tiếp ngay phía trên hoặc bấm link tải từng đoạn MP3 bên dưới.`;
-            }
-
-            if (chunkLinks) {
-                if (urls.length <= 5) {
-                    chunkLinks.classList.remove('hidden');
-                    chunkLinks.classList.add('flex');
-                    chunkLinks.innerHTML = urls.map((u, i) => `
-                        <a href="${u}" target="_blank" rel="noreferrer noopener" class="px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold transition">
-                            <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>Mở/Lưu MP3 đoạn ${i + 1}
-                        </a>
-                    `).join('');
-                } else {
-                    chunkLinks.classList.add('hidden');
-                    chunkLinks.classList.remove('flex');
-                    chunkLinks.innerHTML = '';
-                }
-            }
-
-            if (btnIcon) btnIcon.className = canDesktopCapture ? 'fa-solid fa-record-vinyl text-base' : 'fa-solid fa-download text-base';
-            if (btnLbl) {
-                btnLbl.textContent = canDesktopCapture
-                    ? `Ghi & Tải File (.WAV) Về Máy Tính — Giọng ${voiceInfo.name}`
-                    : 'Mở File MP3 Trực Tiếp Để Lưu Về Máy';
-            }
-
-            if (card) card.classList.remove('hidden');
-            playDirectTTSChunkAt(0, true);
-            scrollToTTSResultCard();
-        }
-
-        async function recordDirectStreamToWavOnDesktop() {
-            if (!directTTSPlaylistState.active || directTTSPlaylistState.urls.length === 0) return;
-
-            if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
-                window.open(directTTSPlaylistState.urls[0], '_blank', 'noopener,noreferrer');
-                showToast('Đã mở link âm thanh trực tiếp — bấm dấu 3 chấm trên trình phát để Lưu về máy!');
-                return;
-            }
-
-            if (directTTSPlaylistState.isRecording) return;
-
-            const btn = document.getElementById('btnDownloadTTSMain');
-            const player = document.getElementById('ttsAudioPlayer');
-            const voiceInfo = directTTSPlaylistState.voiceInfo || TTS_VOICE_CATALOG[0];
-            const urls = directTTSPlaylistState.urls.slice();
-
-            if (player && !player.paused) player.pause();
-            stopTTSVoicePreview();
-
-            let captureStream = null;
-            let recCtx = null;
-
-            try {
-                captureStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: true,
-                    audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false
-                    },
-                    preferCurrentTab: true,
-                    selfBrowserSurface: 'include',
-                    systemAudio: 'include'
-                });
-
-                const audioTracks = captureStream.getAudioTracks();
-                if (!audioTracks || audioTracks.length === 0) {
-                    captureStream.getTracks().forEach(t => t.stop());
-                    showTTSErrorMessage('Bạn chưa bật mục "Chia sẻ âm thanh thẻ" (Share tab audio) ở hộp thoại trình duyệt. Hãy bấm lại nút Ghi & Tải và bật công tắc chia sẻ âm thanh nhé!');
-                    return;
-                }
-
-                hideTTSErrorMessage();
-                directTTSPlaylistState.isRecording = true;
-                if (btn) btn.disabled = true;
-
-                updateTTSProgressUI(15, `Đang ghi âm thanh sạch (0/${urls.length} đoạn)...`, 'Hệ thống đang tự đọc & đóng gói thành file .WAV — vui lòng giữ thẻ mở vài giây!');
-                scrollToTTSProgressBox();
-
-                const Ctx = window.AudioContext || window.webkitAudioContext;
-                recCtx = new Ctx();
-                if (recCtx.state === 'suspended') await recCtx.resume();
-                const sampleRate = recCtx.sampleRate || 44100;
-
-                const source = recCtx.createMediaStreamSource(new MediaStream(audioTracks));
-                const processor = recCtx.createScriptProcessor(4096, 1, 1);
-                const silentGain = recCtx.createGain();
-                silentGain.gain.value = 0;
-
-                const recordedChunks = [];
-                let totalSamples = 0;
-                processor.onaudioprocess = (ev) => {
-                    const chData = ev.inputBuffer.getChannelData(0);
-                    const copy = new Float32Array(chData.length);
-                    copy.set(chData);
-                    recordedChunks.push(copy);
-                    totalSamples += copy.length;
-                };
-
-                source.connect(processor);
-                processor.connect(silentGain);
-                silentGain.connect(recCtx.destination);
-
-                const playEl = new Audio();
-                playEl.referrerPolicy = 'no-referrer';
-                playEl.playsInline = true;
-
-                await new Promise(r => setTimeout(r, 150));
-
-                for (let i = 0; i < urls.length; i++) {
-                    const pct = Math.min(86, 18 + Math.round((i / urls.length) * 68));
-                    updateTTSProgressUI(pct, `Đang ghi đoạn ${i + 1}/${urls.length}...`, 'Đang thu âm thanh trực tiếp chất lượng cao...');
-
-                    await new Promise((resolve) => {
-                        let settled = false;
-                        const finish = () => {
-                            if (settled) return;
-                            settled = true;
-                            clearTimeout(safetyTimer);
-                            resolve();
-                        };
-                        const safetyTimer = setTimeout(finish, 35000);
-                        playEl.src = urls[i];
-                        playEl.playbackRate = 1.0;
-                        playEl.onended = finish;
-                        playEl.onerror = finish;
-                        playEl.play().catch(finish);
-                    });
-                    await new Promise(r => setTimeout(r, 140));
-                }
-
-                await new Promise(r => setTimeout(r, 220));
-
-                processor.disconnect();
-                source.disconnect();
-                silentGain.disconnect();
-                captureStream.getTracks().forEach(t => t.stop());
-                captureStream = null;
-                await recCtx.close().catch(() => {});
-                recCtx = null;
-
-                updateTTSProgressUI(92, `Đang xử lý chất giọng ${voiceInfo.name} & tạo file .WAV...`, 'Gần xong rồi! Đang hoàn thiện file tải về máy tính...');
-
-                const rawMono = new Float32Array(totalSamples);
-                let writeOff = 0;
-                for (const c of recordedChunks) {
-                    rawMono.set(c, writeOff);
-                    writeOff += c.length;
-                }
-
-                let startIdx = 0;
-                let endIdx = rawMono.length - 1;
-                const thresh = 0.004;
-                while (startIdx < endIdx && Math.abs(rawMono[startIdx]) < thresh) startIdx++;
-                while (endIdx > startIdx && Math.abs(rawMono[endIdx]) < thresh) endIdx--;
-                startIdx = Math.max(0, startIdx - Math.round(sampleRate * 0.08));
-                endIdx = Math.min(rawMono.length, endIdx + Math.round(sampleRate * 0.15));
-
-                let trimmed = endIdx > startIdx + 1024 ? rawMono.subarray(startIdx, endIdx) : rawMono;
-
-                const effectivePitch = voiceInfo.pitch || 1.0;
-                const effectiveSpeed = Math.max(0.7, Math.min(1.6, (directTTSPlaylistState.speed || 1.0) * (voiceInfo.baseRate || 1.0)));
-                const needsDSP = Math.abs(effectivePitch - 1.0) > 0.015 || Math.abs(effectiveSpeed - 1.0) > 0.02;
-
-                if (needsDSP && trimmed.length > 2048) {
-                    const stretched = timeStretchWSOLA(trimmed, sampleRate, effectivePitch / effectiveSpeed);
-                    trimmed = resampleLinearFloat32(stretched, effectivePitch);
-                }
-
-                const pcm16 = await applyStudioVoiceEQAndNormalize(trimmed, sampleRate, voiceInfo.eqType || 'none');
-                const wavBlob = pcmInt16ToWavBlob(pcm16, sampleRate, 1);
-                const blobUrl = URL.createObjectURL(wavBlob);
-                const slug = getSafeFilenameSlug(directTTSPlaylistState.rawText.slice(0, 36), 'am_thanh');
-                const fileName = `${slug}_${getSafeFilenameSlug(voiceInfo.name, 'ai')}.wav`;
-                const durSec = Math.max(1, Math.round(pcm16.length / sampleRate));
-
-                updateTTSProgressUI(100, 'Đã tạo xong file .WAV sạch 100%!', 'Đang tự động tải file về máy tính của bạn...');
-                setTimeout(() => hideTTSProgressBox(), 700);
-
-                presentGeneratedAudioUrlResult(
-                    blobUrl,
-                    fileName,
-                    `${voiceInfo.name} (${voiceInfo.badge}) • ${durSec}s • WAV Ghi trực tiếp`,
-                    directTTSPlaylistState.rawText,
-                    true
-                );
-                downloadCurrentTTSAudio(blobUrl, fileName);
-            } catch (err) {
-                hideTTSProgressBox();
-                if (err && err.name !== 'NotAllowedError') {
-                    showTTSErrorMessage('Chưa ghi được âm thanh thẻ. Bạn có thể bấm lại nút xanh và chọn thẻ hiện tại kèm "Chia sẻ âm thanh thẻ"!');
-                }
-            } finally {
-                if (captureStream) {
-                    try { captureStream.getTracks().forEach(t => t.stop()); } catch (e) {}
-                }
-                if (recCtx) {
-                    try { recCtx.close(); } catch (e) {}
-                }
-                directTTSPlaylistState.isRecording = false;
-                if (btn) btn.disabled = false;
-            }
+            downloadCurrentTTSAudio();
         }
 
         function downloadCurrentTTSAudio(customUrl, customFileName) {
@@ -5746,8 +5486,9 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
 
         function presentGeneratedAudioUrlResult(audioUrl, fileName, metaText, sourceSnippet, saveToHistory = true) {
             directTTSPlaylistState.active = false;
+        function presentGeneratedAudioUrlResult(audioUrl, fileName, metaText, sourceSnippet, saveToHistory = true, isLocalWasm = false) {
             currentTTSAudioBlobUrl = audioUrl;
-            currentTTSFileName = fileName || 'am_thanh.mp3';
+            currentTTSFileName = fileName || 'am_thanh.wav';
 
             const card = document.getElementById('ttsResultCard');
             const heading = document.getElementById('ttsResultHeading');
@@ -5758,7 +5499,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             const btnLbl = document.getElementById('ttsDownloadBtnLabel');
             const speedSel = document.getElementById('ttsPlaybackSpeed');
 
-            if (notice) notice.classList.add('hidden');
+            if (notice) notice.classList.toggle('hidden', !isLocalWasm);
             if (heading) heading.textContent = '✅ Đã tạo âm thanh xong — Nghe thử ngay:';
             if (metaEl) metaEl.textContent = metaText || 'Đã sẵn sàng phát & tải về máy';
             if (btnIcon) btnIcon.className = 'fa-solid fa-download text-base';
@@ -5800,7 +5541,6 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
         }
 
         async function handlePrimaryTTSAction() {
-            fastCloudGatewaysBlockedUntil = 0;
             if (ttsInputMode === 'batch') {
                 await generateBatchTTSAudio();
             } else {
@@ -5838,7 +5578,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                         const displayPct = Math.max(20, Math.min(96, pct));
                         const hint = displayPct >= 80
                             ? 'Gần xong rồi! Đang hoàn thiện file để nghe thử & tải về...'
-                            : 'Đang tổng hợp giọng đọc đa luồng siêu tốc...';
+                            : 'Đang tổng hợp giọng nói chất lượng cao...';
                         updateTTSProgressUI(displayPct, msg, hint);
                     }
                 );
@@ -5846,16 +5586,15 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                 updateTTSProgressUI(100, 'Hoàn tất 100%! Đang mở khung nghe thử...', 'Xong rồi! Kéo xuống nghe thử và bấm Tải Về Máy.');
                 const blobUrl = URL.createObjectURL(res.blob);
                 const slug = getSafeFilenameSlug(rawText.slice(0, 36), 'am_thanh');
-                const fileName = `${slug}_${getSafeFilenameSlug(voiceInfo.name, 'ai')}.${res.ext || 'mp3'}`;
+                const fileName = `${slug}_${getSafeFilenameSlug(voiceInfo.name, 'ai')}.${res.ext || 'wav'}`;
 
                 setTimeout(() => hideTTSProgressBox(), 650);
-                presentGeneratedAudioUrlResult(blobUrl, fileName, res.meta, rawText, true);
+                presentGeneratedAudioUrlResult(blobUrl, fileName, res.meta, rawText, true, Boolean(res.isLocalWasm));
                 showToast('Đã tạo âm thanh xong! Hãy nghe thử và bấm tải về máy.');
             } catch (err) {
-                updateTTSProgressUI(100, 'Đã bật Chế độ Phát Trực Tiếp (Vượt chặn mạng máy tính)!', 'Đang kéo xuống khung nghe thử & lưu file .WAV...');
-                setTimeout(() => hideTTSProgressBox(), 700);
-                presentDirectStreamResult(rawText, voiceInfo, langCode, currentTTSSpeed);
-                showToast('Đã chuyển sang Chế độ Trực Tiếp Không Chặn — nghe ngay và bấm Ghi & Tải (.WAV)!');
+                hideTTSProgressBox();
+                playBrowserSpeechFallback(rawText, voiceInfo, langCode, ++previewRequestCounter);
+                showTTSErrorMessage(`Không thể tải file âm thanh lúc này (${lastTTSDiagnosticNote || err.message}). Hệ thống đã đọc trực tiếp bằng giọng thiết bị cho bạn nghe — hãy kiểm tra kết nối mạng và bấm thử lại!`);
             } finally {
                 if (btn) btn.disabled = false;
             }
@@ -5882,14 +5621,15 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             const shouldMerge = Boolean(document.getElementById('chkBatchMergeOneFile')?.checked);
 
             if (btn) btn.disabled = true;
-            updateTTSProgressUI(15, `Đang xử lý hàng loạt 0/${ttsBatchItems.length} đoạn...`, 'Chạy song song 3 luồng để hoàn thành nhanh nhất...');
+            updateTTSProgressUI(15, `Đang xử lý hàng loạt 0/${ttsBatchItems.length} đoạn...`, 'Đang xử lý tuần tự ổn định trên mọi thiết bị...');
             scrollToTTSProgressBox();
 
             let completed = 0;
             const successResults = new Array(ttsBatchItems.length).fill(null);
 
             try {
-                await runTasksWithConcurrency(ttsBatchItems, 3, async (item, idx) => {
+                // Chạy 1-2 luồng để tương thích mượt cả khi dùng WASM cục bộ trên iPhone
+                await runTasksWithConcurrency(ttsBatchItems, 2, async (item, idx) => {
                     const txt = String(item.text || '').trim();
                     if (!txt) return;
                     item.status = 'processing';
@@ -5902,7 +5642,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                         const slug = getSafeFilenameSlug(txt.slice(0, 28), `doan_${idx + 1}`);
                         item.url = url;
                         item.blob = res.blob;
-                        item.fileName = `${String(idx + 1).padStart(2, '0')}_${slug}.${res.ext || 'mp3'}`;
+                        item.fileName = `${String(idx + 1).padStart(2, '0')}_${slug}.${res.ext || 'wav'}`;
                         item.status = 'done';
                         successResults[idx] = res;
                     } catch (e) {
@@ -5913,7 +5653,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                         updateTTSProgressUI(
                             pct,
                             `Đã xong ${completed}/${ttsBatchItems.length} đoạn...`,
-                            pct >= 80 ? 'Gần xong toàn bộ danh sách rồi!' : 'Đang xử lý đa luồng siêu tốc...'
+                            pct >= 80 ? 'Gần xong toàn bộ danh sách rồi!' : 'Đang tạo file âm thanh chất lượng cao...'
                         );
                         renderTTSBatchQueue();
                     }
@@ -5922,9 +5662,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                 const validResults = successResults.filter(Boolean);
                 if (validResults.length === 0) {
                     hideTTSProgressBox();
-                    const combinedText = ttsBatchItems.map(i => i.text).filter(Boolean).join('. ');
-                    presentDirectStreamResult(combinedText, voiceInfo, detectTextLanguageCode(combinedText, langKey), currentTTSSpeed);
-                    showToast('Đã chuyển sang Chế độ Trực Tiếp Không Chặn cho toàn bộ danh sách!');
+                    showTTSErrorMessage(`Chưa tạo được file nào trong hàng đợi (${lastTTSDiagnosticNote || 'kiểm tra kết nối mạng'}). Bạn hãy thử bấm lại!`);
                     return;
                 }
 
@@ -5934,7 +5672,7 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                 if (shouldMerge && validResults.length > 1) {
                     const allWavPcm = validResults.every(r => r.pcm16 instanceof Int16Array);
                     let mergedBlob;
-                    let mergedExt = 'mp3';
+                    let mergedExt = 'wav';
                     if (allWavPcm) {
                         const rate = validResults[0].sampleRate || 24000;
                         const mergedPcm = mergeInt16ArraysWithSilence(validResults.map(r => r.pcm16), rate, 420);
@@ -5951,7 +5689,8 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                         mergedName,
                         `Đã gộp ${validResults.length} đoạn • ${voiceInfo.name} • ${mergedExt.toUpperCase()}`,
                         `Gộp ${validResults.length} đoạn văn bản`,
-                        true
+                        true,
+                        Boolean(validResults[0].isLocalWasm)
                     );
                 } else {
                     const firstDone = ttsBatchItems.find(it => it.status === 'done' && it.url);
@@ -5961,7 +5700,8 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                             firstDone.fileName,
                             `Đã xong ${validResults.length}/${ttsBatchItems.length} đoạn (Bấm "Tải hết" ở danh sách hoặc tải đoạn này)`,
                             firstDone.text,
-                            true
+                            true,
+                            Boolean(validResults[0].isLocalWasm)
                         );
                     }
                 }
