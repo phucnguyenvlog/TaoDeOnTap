@@ -1263,7 +1263,6 @@
                                 </select>
                             </div>
 
-                            <audio id="ttsAudioPlayer" controls playsinline referrerpolicy="no-referrer" class="w-full h-11 rounded-xl"></audio>
                             <audio id="ttsAudioPlayer" controls playsinline class="w-full h-11 rounded-xl"></audio>
 
                             <!-- Hộp ghi chú bổ sung (nếu cần) -->
@@ -5484,8 +5483,6 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             downloadCurrentTTSAudio(item.url, item.fileName);
         }
 
-        function presentGeneratedAudioUrlResult(audioUrl, fileName, metaText, sourceSnippet, saveToHistory = true) {
-            directTTSPlaylistState.active = false;
         function presentGeneratedAudioUrlResult(audioUrl, fileName, metaText, sourceSnippet, saveToHistory = true, isLocalWasm = false) {
             currentTTSAudioBlobUrl = audioUrl;
             currentTTSFileName = fileName || 'am_thanh.wav';
