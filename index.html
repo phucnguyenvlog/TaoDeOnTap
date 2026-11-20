@@ -33,10 +33,24 @@
     <!-- QRious vẽ Mã QR trực tiếp ngay trên trình duyệt (không bao giờ bị lỗi ảnh QR) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
             color: #1e293b;
+        }
+        /* Hiệu ứng vệt sáng chạy mượt trên thanh tiến trình xử lý âm thanh */
+        @keyframes progressShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .progress-bar-animated {
+            background-image: linear-gradient(90deg, #0891b2 0%, #2563eb 45%, #38bdf8 55%, #0891b2 100%);
+            background-size: 200% 100%;
+            animation: progressShimmer 1.6s linear infinite;
         }
         /* Định dạng nội dung trả lời của AI (Toán, Hóa, Lý, Bảng biểu, Tiêu đề, Code) */
         .ai-rich-content h1, .ai-rich-content h2, .ai-rich-content h3, .ai-rich-content h4 {
@@ -145,16 +159,24 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
+    <!-- Thanh thoát chế độ xem thử giao diện Học sinh (Chỉ hiện khi giáo viên bấm Xem thử) -->
+    <div id="studentPreviewExitBanner" class="hidden bg-indigo-950 text-white px-3 py-2 text-xs font-bold items-center justify-center gap-3 z-40">
+        <span><i class="fa-solid fa-eye text-amber-300 mr-1.5"></i>Đang xem thử giao diện Học sinh làm bài</span>
+        <button type="button" onclick="exitStudentPreviewMode()" class="px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold transition">
+            Quay lại chế độ Giáo viên
+        </button>
+    </div>
+
     <!-- =================================================================== -->
     <!-- THANH TIÊU ĐỀ CHÍNH (HEADER)                                        -->
     <!-- =================================================================== -->
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
-        <div class="max-w-7xl mx-auto px-3 sm:px-5 py-2.5 space-y-2.5">
-            <!-- Hàng 1: Logo + Tên Đề + 3 Bước chuyển đổi -->
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
-                <div class="flex items-center gap-3 min-w-0">
+    <header class="sticky top-0 z-30 w-full max-w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
+        <div class="max-w-7xl w-full mx-auto px-3 sm:px-5 py-2.5 space-y-2.5">
+            <!-- Hàng 1: Logo + Tên Đề + 3 Bước chuyển đổi (Tối ưu gọn đẹp 100% không tràn viền mobile) -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 min-w-0">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     <!-- Logo Giáo Viên -->
-                    <div id="teacherBrandLogoBox" class="w-11 h-11 rounded-2xl overflow-hidden border border-slate-200 bg-emerald-50 flex items-center justify-center shrink-0 shadow-2xs">
+                    <div id="teacherBrandLogoBox" class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl overflow-hidden border border-slate-200 bg-emerald-50 flex items-center justify-center shrink-0 shadow-2xs">
                         <img
                             src="Icon.png"
                             alt="Logo"
@@ -162,12 +184,12 @@
                             class="w-full h-full object-cover">
                     </div>
                     <!-- Huy hiệu Ký hiệu Môn học (Chế độ Học sinh làm bài) -->
-                    <div id="studentSubjectBadgeBox" class="hidden w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white items-center justify-center font-black text-lg tracking-tight shrink-0 shadow">
+                    <div id="studentSubjectBadgeBox" class="hidden w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white items-center justify-center font-black text-base sm:text-lg tracking-tight shrink-0 shadow">
                         <span id="studentSubjectCodeText">ÔN</span>
                     </div>
 
                     <div class="min-w-0 flex-1">
-                        <div id="headerToolSubtitle" class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wide text-blue-700 truncate">
+                        <div id="headerToolSubtitle" class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wide text-blue-700 truncate">
                             CÔNG CỤ TẠO SOẠN SỬA ĐỀ ÔN TẬP
                         </div>
                         <h1 id="headerExamTitle" class="text-xs sm:text-sm font-extrabold text-slate-800 truncate">
@@ -176,49 +198,49 @@
                     </div>
                 </div>
 
-                <!-- Thanh chuyển 3 bước làm việc -->
-                <nav id="headerStepNav" class="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 gap-1 w-full lg:w-auto">
-                    <button type="button" id="navTabScanner" onclick="switchMainWorkspace('scanner')" class="flex-1 sm:flex-initial px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-blue-600 text-white shadow-2xs">
-                        <span class="w-5 h-5 rounded-full bg-white/20 text-[11px] flex items-center justify-center font-extrabold">1</span>
-                        <span class="truncate">Tạo Đề (Ảnh/Word/PDF)</span>
-                        <span id="badgeImageCount" class="hidden px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black">0</span>
+                <!-- Thanh chuyển 3 bước làm việc: Chia lưới 3 cột đều tăm tắp trên điện thoại, không tràn khung -->
+                <nav id="headerStepNav" class="grid grid-cols-3 lg:flex lg:items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 gap-1 w-full lg:w-auto max-w-full overflow-hidden">
+                    <button type="button" id="navTabScanner" onclick="switchMainWorkspace('scanner')" class="min-w-0 px-2 sm:px-3 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 sm:gap-1.5 bg-blue-600 text-white shadow-2xs">
+                        <span id="navBadgeScanner" class="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white/20 text-[10px] sm:text-[11px] flex items-center justify-center font-extrabold shrink-0">1</span>
+                        <span class="truncate">Tạo Đề<span class="hidden md:inline"> (Ảnh/Word/PDF)</span></span>
+                        <span id="badgeImageCount" class="hidden px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black shrink-0">0</span>
                     </button>
-                    <button type="button" id="navTabStudy" onclick="switchMainWorkspace('study')" class="flex-1 sm:flex-initial px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
-                        <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[11px] flex items-center justify-center font-extrabold">2</span>
+                    <button type="button" id="navTabStudy" onclick="switchMainWorkspace('study')" class="min-w-0 px-2 sm:px-3 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 sm:gap-1.5 text-slate-600 hover:text-slate-900">
+                        <span id="navBadgeStudy" class="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-slate-200 text-slate-700 text-[10px] sm:text-[11px] flex items-center justify-center font-extrabold shrink-0">2</span>
                         <span class="truncate">Web Ôn Tập</span>
                     </button>
-                    <button type="button" id="navTabEditor" onclick="switchMainWorkspace('editor')" class="flex-1 sm:flex-initial px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
-                        <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[11px] flex items-center justify-center font-extrabold">3</span>
-                        <span class="truncate">Sửa Thủ Công</span>
+                    <button type="button" id="navTabEditor" onclick="switchMainWorkspace('editor')" class="min-w-0 px-2 sm:px-3 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 sm:gap-1.5 text-slate-600 hover:text-slate-900">
+                        <span id="navBadgeEditor" class="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-slate-200 text-slate-700 text-[10px] sm:text-[11px] flex items-center justify-center font-extrabold shrink-0">3</span>
+                        <span class="truncate">Sửa<span class="hidden sm:inline"> Thủ Công</span></span>
                     </button>
                 </nav>
             </div>
 
-            <!-- Hàng 2: Thanh công cụ nhanh (Âm thanh • Siêu AI • Chia sẻ Link • Xuất Word/PDF • Tải Web) -->
-            <div class="flex flex-wrap items-center justify-start lg:justify-end gap-1.5 sm:gap-2">
-                <button type="button" id="btnHeaderTTSStudio" onclick="openTTSStudio()" class="px-3 py-1.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 text-xs font-extrabold transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-volume-high text-cyan-600"></i>
-                    <span>Văn Bản → Âm Thanh</span>
+            <!-- Hàng 2: Thanh công cụ nhanh (Lưới 2 cột cân đối trên điện thoại, hàng ngang trên máy tính) -->
+            <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-start lg:justify-end gap-1.5 sm:gap-2">
+                <button type="button" id="btnHeaderTTSStudio" onclick="openTTSStudio()" class="min-w-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 text-[11px] sm:text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-volume-high text-cyan-600 shrink-0"></i>
+                    <span class="truncate">Văn Bản → Âm Thanh</span>
                 </button>
-                <button type="button" id="btnHeaderSuperAI" onclick="openAssistantWithBot('tutor')" class="px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-extrabold transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-robot text-teal-600"></i>
-                    <span>Siêu AI (Hỏi/Hình/Video)</span>
+                <button type="button" id="btnHeaderSuperAI" onclick="openAssistantWithBot('tutor')" class="min-w-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-[11px] sm:text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-robot text-teal-600 shrink-0"></i>
+                    <span class="truncate">Siêu AI<span class="hidden sm:inline"> (Hỏi/Hình/Video)</span></span>
                 </button>
-                <button type="button" id="btnHeaderAIBuilder" onclick="openAssistantWithBot('builder')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-extrabold transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-wand-magic-sparkles text-amber-600"></i>
-                    <span>AI Soạn/Sửa Đề</span>
+                <button type="button" id="btnHeaderAIBuilder" onclick="openAssistantWithBot('builder')" class="min-w-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] sm:text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-600 shrink-0"></i>
+                    <span class="truncate">AI Soạn/Sửa Đề</span>
                 </button>
-                <button type="button" id="btnHeaderShareLink" onclick="openShareLinkModal()" class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold transition flex items-center gap-1.5 shadow-2xs">
-                    <i class="fa-solid fa-link"></i>
-                    <span>Chia Sẻ Link</span>
+                <button type="button" id="btnHeaderShareLink" onclick="openShareLinkModal()" class="min-w-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-[11px] sm:text-xs font-extrabold transition flex items-center justify-center gap-1.5 shadow-2xs">
+                    <i class="fa-solid fa-link shrink-0"></i>
+                    <span class="truncate">Chia Sẻ Link</span>
                 </button>
-                <button type="button" id="btnHeaderExportDoc" onclick="openWordExportModal()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold transition flex items-center gap-1.5 shadow-2xs">
-                    <i class="fa-solid fa-file-word"></i>
-                    <span>Xuất Word / PDF</span>
+                <button type="button" id="btnHeaderExportDoc" onclick="openWordExportModal()" class="min-w-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] sm:text-xs font-extrabold transition flex items-center justify-center gap-1.5 shadow-2xs">
+                    <i class="fa-solid fa-file-word shrink-0"></i>
+                    <span class="truncate">Xuất Word / PDF</span>
                 </button>
-                <button type="button" id="btnHeaderExportWeb" onclick="exportStandaloneWebApp(false)" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition flex items-center gap-1.5 shadow-2xs">
-                    <i class="fa-solid fa-download"></i>
-                    <span>Tải Web (.html)</span>
+                <button type="button" id="btnHeaderExportWeb" onclick="exportStandaloneWebApp(false)" class="min-w-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] sm:text-xs font-extrabold transition flex items-center justify-center gap-1.5 shadow-2xs">
+                    <i class="fa-solid fa-download shrink-0"></i>
+                    <span class="truncate">Tải Web (.html)</span>
                 </button>
                 <button type="button" id="btnHeaderApiKey" onclick="openApiKeyModal()" class="hidden"></button>
             </div>
@@ -228,14 +250,14 @@
     <!-- =================================================================== -->
     <!-- KHU VỰC NỘI DUNG CHÍNH (MAIN)                                       -->
     <!-- =================================================================== -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-5 py-5 sm:py-6">
+    <main class="flex-1 max-w-7xl w-full max-w-full mx-auto px-3 sm:px-5 py-4 sm:py-6 overflow-x-hidden">
 
         <!-- =============================================================== -->
-        <!-- BƯỚC 1: QUÉT ẢNH / FILE WORD / FILE PDF TẠO WEB ÔN TẬP         -->
+        <!-- BƯỚC 1: TẢI ẢNH / FILE WORD / PDF ĐỂ AI DỰNG WEB ÔN TẬP         -->
         <!-- =============================================================== -->
-        <section id="workspaceScanner" class="max-w-4xl mx-auto space-y-5 animate-fade-in">
-            <div class="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-7 space-y-5">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <section id="workspaceScanner" class="max-w-4xl mx-auto animate-fade-in">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-xs p-4 sm:p-7 space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div>
                         <h2 class="text-lg sm:text-xl font-black text-slate-900">
                             Bước 1: Đưa Ảnh, File Word (.docx) Hoặc PDF (.pdf) Lên Để Tạo Web Ôn Tập
@@ -1017,11 +1039,11 @@
             </div>
 
             <!-- Không gian làm việc 2 cột rộng rãi (Full Màn Hình) -->
-            <div id="ttsStudioScrollArea" class="flex-1 overflow-y-auto scroll-smooth p-4 sm:p-6">
-                <div class="max-w-[1600px] mx-auto h-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+            <div id="ttsStudioScrollArea" class="flex-1 overflow-y-auto scroll-smooth p-3 sm:p-6">
+                <div class="max-w-[1600px] mx-auto h-full grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-stretch">
                     
                     <!-- CỘT TRÁI (7/12): KHUNG NHẬP ĐƠN LẺ HOẶC HÀNG LOẠT NHIỀU VĂN BẢN -->
-                    <div class="lg:col-span-7 xl:col-span-8 bg-white rounded-3xl border border-slate-200 shadow-xs p-4 sm:p-5 flex flex-col min-h-[460px]">
+                    <div class="lg:col-span-7 xl:col-span-8 bg-white rounded-3xl border border-slate-200 shadow-xs p-3.5 sm:p-5 flex flex-col min-h-[340px] sm:min-h-[460px]">
                         
                         <!-- Chuyển đổi giữa Đơn lẻ (1 văn bản) và Hàng loạt (Nhiều văn bản cùng lúc) -->
                         <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
@@ -1063,7 +1085,7 @@
                                 id="ttsInputText"
                                 oninput="onTTSInputChange()"
                                 placeholder="Nhập hoặc dán đoạn văn bản Tiếng Việt (hoặc Tiếng Anh, Pháp, Nhật, Hàn, Trung...) vào đây rồi bấm 'Tạo Âm Thanh Siêu Tốc Ngay' để nghe và tải file về máy chỉ trong khoảng 1 giây!"
-                                class="flex-1 w-full rounded-2xl border border-slate-200 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-500/20 p-4 sm:p-5 text-sm sm:text-base leading-relaxed text-slate-800 outline-none resize-none bg-slate-50/40 focus:bg-white min-h-[300px]"></textarea>
+                                class="flex-1 w-full rounded-2xl border border-slate-200 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-500/20 p-3.5 sm:p-5 text-sm sm:text-base leading-relaxed text-slate-800 outline-none resize-none bg-slate-50/40 focus:bg-white min-h-[200px] sm:min-h-[300px]"></textarea>
 
                             <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                                 <div class="flex items-center gap-3 flex-wrap">
@@ -1103,20 +1125,17 @@
 
                             <!-- Thanh điều khiển hàng đợi -->
                             <div class="flex flex-wrap items-center justify-between gap-2 px-1">
-                                <div class="flex items-center gap-3 flex-wrap">
-                                    <span id="ttsBatchProgressSummary" class="text-xs font-extrabold text-slate-700">Hàng đợi: 0 văn bản</span>
-                                    <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer select-none">
+                                <span id="ttsBatchProgressSummary" class="text-xs font-extrabold text-slate-700">Hàng đợi: 0 văn bản • Đã xong: 0/0</span>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label class="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer select-none">
                                         <input type="checkbox" id="chkBatchMergeOneFile" class="w-3.5 h-3.5 rounded text-cyan-600">
-                                        <span>Gộp tất cả thành 1 file duy nhất</span>
+                                        <span>Gộp thành 1 file</span>
                                     </label>
-                                </div>
-                                <div class="flex flex-wrap items-center gap-1.5">
-                                    <button type="button" id="btnDownloadAllBatchTTS" onclick="downloadAllBatchTTSFiles()" class="hidden px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition flex items-center gap-1.5">
-                                        <i class="fa-solid fa-download"></i>
-                                        <span>Tải hết file đã tạo</span>
+                                    <button type="button" id="btnDownloadAllBatchTTS" onclick="downloadAllBatchTTSFiles()" class="hidden px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition">
+                                        <i class="fa-solid fa-download mr-1"></i>Tải hết
                                     </button>
-                                    <button type="button" onclick="clearAllBatchItems()" class="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition">
-                                        Xoá hàng đợi
+                                    <button type="button" onclick="clearAllBatchItems()" class="px-2.5 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition">
+                                        Xoá hết
                                     </button>
                                 </div>
                             </div>
@@ -1202,17 +1221,21 @@
                                 <span id="btnGenerateTTSLabel">Tạo Âm Thanh Siêu Tốc Ngay</span>
                             </button>
 
-                            <!-- Thanh Tiến Trình -->
-                            <div id="ttsProgressBox" class="hidden p-3.5 rounded-2xl bg-cyan-50 border border-cyan-200 space-y-2 animate-fade-in">
-                                <div class="flex items-center justify-between text-xs font-bold text-cyan-900">
-                                    <span id="ttsProgressLabel" class="flex items-center gap-2">
-                                        <i class="fa-solid fa-spinner fa-spin text-cyan-600"></i>
-                                        <span>Đang xử lý siêu tốc...</span>
+                            <!-- Thanh Tiến Trình (Tự động kéo mượt xuống đây khi bắt đầu xử lý để theo dõi % rõ ràng) -->
+                            <div id="ttsProgressBox" class="hidden scroll-mt-4 p-4 rounded-2xl bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-300 space-y-2.5 shadow-xs animate-fade-in">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span id="ttsProgressLabel" class="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-cyan-950 min-w-0">
+                                        <i class="fa-solid fa-spinner fa-spin text-cyan-600 shrink-0"></i>
+                                        <span class="truncate">Đang xử lý siêu tốc...</span>
                                     </span>
-                                    <span id="ttsProgressPercent">30%</span>
+                                    <span id="ttsProgressPercent" class="px-2.5 py-0.5 rounded-full bg-cyan-600 text-white text-xs font-black font-mono shrink-0">20%</span>
                                 </div>
-                                <div class="w-full h-2 bg-cyan-200 rounded-full overflow-hidden">
-                                    <div id="ttsProgressBar" class="h-full bg-cyan-600 transition-all duration-200" style="width: 30%"></div>
+                                <div class="w-full h-3 bg-cyan-200/80 rounded-full overflow-hidden shadow-inner">
+                                    <div id="ttsProgressBar" class="h-full progress-bar-animated rounded-full transition-all duration-300 ease-out" style="width: 20%"></div>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px] font-semibold text-cyan-800">
+                                    <span id="ttsProgressStageHint">Đang kết nối & bắt đầu xử lý âm thanh...</span>
+                                    <span class="text-cyan-600 font-bold">Tự mở khung nghe khi xong</span>
                                 </div>
                             </div>
 
@@ -1295,7 +1318,7 @@
     </div>
 
     <!-- FOOTER -->
-    <footer class="bg-white border-t border-slate-200 mt-12 py-5 text-center text-xs text-slate-500">
+    <footer class="bg-white border-t border-slate-200 mt-10 pt-5 pb-20 sm:pb-6 text-center text-xs text-slate-500">
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
             <p id="footerMainTitle" class="font-semibold text-slate-700">Công Cụ Tạo Soạn Sửa Đề Ôn Tập & Siêu Trợ Lý AI Đa Năng</p>
             <p>Đề gốc & Đề đã đảo • Luyện tập từng câu & Làm hết mới nộp bài</p>
@@ -1688,15 +1711,26 @@
                 study: document.getElementById('navTabStudy'),
                 editor: document.getElementById('navTabEditor')
             };
+            const navBadges = {
+                scanner: document.getElementById('navBadgeScanner'),
+                study: document.getElementById('navBadgeStudy'),
+                editor: document.getElementById('navBadgeEditor')
+            };
 
             Object.keys(views).forEach(k => {
                 if (views[k]) views[k].classList.toggle('hidden', k !== tab);
                 const btn = navBtns[k];
+                const badge = navBadges[k];
+                const isActive = k === tab;
                 if (btn) {
-                    const isActive = k === tab;
                     btn.className = isActive
-                        ? "flex-1 sm:flex-initial px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-blue-600 text-white shadow-2xs"
-                        : "flex-1 sm:flex-initial px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900";
+                        ? "min-w-0 px-2 sm:px-3 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 sm:gap-1.5 bg-blue-600 text-white shadow-2xs"
+                        : "min-w-0 px-2 sm:px-3 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 sm:gap-1.5 text-slate-600 hover:text-slate-900";
+                }
+                if (badge) {
+                    badge.className = isActive
+                        ? "w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white/25 text-white text-[10px] sm:text-[11px] flex items-center justify-center font-extrabold shrink-0"
+                        : "w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-slate-200 text-slate-700 text-[10px] sm:text-[11px] flex items-center justify-center font-extrabold shrink-0";
                 }
             });
 
@@ -2928,6 +2962,164 @@ Quy tắc:
             return null;
         }
 
+        function wrapCanvasLines(ctx, text, maxWidth) {
+            const words = String(text || '').split(/\s+/);
+            const lines = [];
+            let cur = '';
+            for (const w of words) {
+                const test = cur ? cur + ' ' + w : w;
+                if (ctx.measureText(test).width > maxWidth && cur) {
+                    lines.push(cur);
+                    cur = w;
+                } else {
+                    cur = test;
+                }
+            }
+            if (cur) lines.push(cur);
+            return lines;
+        }
+
+        async function generateAIVideoForChat(promptText) {
+            // 1. Nhờ AI soạn kịch bản 4 cảnh sinh động
+            let scriptData = {
+                title: promptText.replace(/^tạo\s*video\s*:?\s*/i, '').trim() || 'Video Minh Họa Học Tập',
+                slides: [
+                    { heading: 'Giới thiệu chủ đề', body: 'Tổng quan nội dung trọng tâm ngắn gọn, dễ nhớ.', accent: '#0284c7' },
+                    { heading: 'Kiến thức cốt lõi', body: 'Phân tích các khái niệm và quy luật quan trọng.', accent: '#4f46e5' },
+                    { heading: 'Ví dụ & Ứng dụng', body: 'Liên hệ thực tế giúp ghi nhớ bài nhanh chóng.', accent: '#059669' },
+                    { heading: 'Tổng kết ôn tập', body: 'Chúc bạn học tốt và đạt điểm thật cao!', accent: '#d97706' }
+                ]
+            };
+
+            try {
+                const aiRes = await fetchGeminiWithBackoff({
+                    contents: [{
+                        role: 'user',
+                        parts: [{
+                            text: `Hãy tạo kịch bản video giáo dục ngắn 4 cảnh bằng Tiếng Việt cho yêu cầu: "${promptText}".
+Trả về DUY NHẤT JSON:
+{ "title": "Tiêu đề video ngắn gọn", "slides": [ { "heading": "Tiêu đề cảnh (<=8 từ)", "body": "Nội dung chính (<=25 từ)", "accent": "#2563eb" } ] }`
+                        }]
+                    }],
+                    generationConfig: { responseMimeType: 'application/json' }
+                });
+                const parsed = parseJsonSafelyFromAI(extractTextFromGeminiResult(aiRes));
+                if (parsed?.slides?.length) scriptData = parsed;
+            } catch (e) {}
+
+            // 2. Kết xuất video MP4/WebM trực tiếp bằng Canvas + MediaRecorder
+            const canvas = document.createElement('canvas');
+            canvas.width = 960;
+            canvas.height = 540;
+            const ctx = canvas.getContext('2d');
+
+            const canRecord = typeof MediaRecorder !== 'undefined' && typeof canvas.captureStream === 'function';
+            let mimeType = '';
+            if (canRecord) {
+                const candidates = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
+                mimeType = candidates.find(m => MediaRecorder.isTypeSupported(m)) || '';
+            }
+
+            if (!canRecord || !mimeType) {
+                return { scriptData, videoUrl: null, ext: '' };
+            }
+
+            const stream = canvas.captureStream(24);
+            const recorder = new MediaRecorder(stream, { mimeType });
+            const chunks = [];
+            recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+            const donePromise = new Promise(resolve => {
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: mimeType });
+                    resolve({
+                        scriptData,
+                        videoUrl: URL.createObjectURL(blob),
+                        ext: mimeType.includes('mp4') ? 'mp4' : 'webm'
+                    });
+                };
+            });
+
+            recorder.start();
+            const slides = scriptData.slides.slice(0, 5);
+            const fps = 24;
+            const secPerSlide = 2.6;
+            const totalFramesPerSlide = Math.round(fps * secPerSlide);
+
+            for (let sIdx = 0; sIdx < slides.length; sIdx++) {
+                const sl = slides[sIdx];
+                const accent = /^#[0-9a-f]{3,6}$/i.test(sl.accent || '') ? sl.accent : '#2563eb';
+                for (let f = 0; f < totalFramesPerSlide; f++) {
+                    const p = f / totalFramesPerSlide;
+                    const fade = Math.min(1, p * 5);
+
+                    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                    grad.addColorStop(0, '#0f172a');
+                    grad.addColorStop(1, '#1e293b');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Vòng tròn trang trí chuyển động mượt
+                    ctx.save();
+                    ctx.globalAlpha = 0.22;
+                    ctx.fillStyle = accent;
+                    ctx.beginPath();
+                    ctx.arc(820 - p * 45, 110 + p * 25, 140, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(130 + p * 35, 450 - p * 20, 110, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    ctx.save();
+                    ctx.globalAlpha = fade;
+                    // Thanh tiêu đề video
+                    ctx.fillStyle = accent;
+                    ctx.fillRect(64, 58, 12, 42);
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.font = 'bold 22px Inter, Arial, sans-serif';
+                    ctx.fillText(String(scriptData.title || '').toUpperCase().slice(0, 58), 92, 87);
+
+                    // Huy hiệu số cảnh
+                    ctx.fillStyle = accent;
+                    ctx.font = 'bold 20px Inter, Arial, sans-serif';
+                    ctx.fillText(`CẢNH ${sIdx + 1} / ${slides.length}`, 64, 160);
+
+                    // Tiêu đề cảnh
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '900 42px Inter, Arial, sans-serif';
+                    const headLines = wrapCanvasLines(ctx, sl.heading || '', 820);
+                    let y = 218;
+                    headLines.slice(0, 2).forEach(line => {
+                        ctx.fillText(line, 64, y);
+                        y += 52;
+                    });
+
+                    // Nội dung cảnh
+                    ctx.fillStyle = '#e2e8f0';
+                    ctx.font = '500 28px Inter, Arial, sans-serif';
+                    const bodyLines = wrapCanvasLines(ctx, sl.body || '', 820);
+                    y += 18;
+                    bodyLines.slice(0, 4).forEach(line => {
+                        ctx.fillText(line, 64, y);
+                        y += 40;
+                    });
+
+                    // Thanh tiến trình dưới cùng
+                    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+                    ctx.fillRect(64, 488, 832, 10);
+                    ctx.fillStyle = accent;
+                    ctx.fillRect(64, 488, 832 * ((sIdx + p) / slides.length), 10);
+                    ctx.restore();
+
+                    await new Promise(r => setTimeout(r, 1000 / fps));
+                }
+            }
+
+            recorder.stop();
+            return await donePromise;
+        }
+
         async function sendAIChatMessage() {
             const input = document.getElementById('aiChatInput');
             const btn = document.getElementById('btnSendAIChat');
@@ -2969,9 +3161,45 @@ Quy tắc:
                     return;
                 }
 
+                if (botKey === 'tutor' && /^tạo\s*video|^dựng\s*video/i.test(userText)) {
+                    const vidRes = await generateAIVideoForChat(userText);
+                    if (loadingEl) loadingEl.remove();
+                    const summaryPlain = `${vidRes.scriptData.title}. ` + (vidRes.scriptData.slides || []).map((s, i) => `Cảnh ${i + 1}: ${s.heading}. ${s.body}`).join(' ');
+                    if (vidRes.videoUrl) {
+                        const safeName = getSafeFilenameSlug(vidRes.scriptData.title || 'video_ai', 'video_ai') + '.' + (vidRes.ext || 'webm');
+                        appendChatMessage(botKey, 'model', `
+                            <div class="space-y-2.5">
+                                <div class="font-extrabold text-rose-700">🎬 Video AI "${escapeHtml(vidRes.scriptData.title)}" đã dựng xong:</div>
+                                <video src="${vidRes.videoUrl}" controls playsinline class="w-full rounded-xl border border-slate-200 bg-slate-950 shadow-xs"></video>
+                                <a href="${vidRes.videoUrl}" download="${safeName}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold transition">
+                                    <i class="fa-solid fa-download"></i> Tải Video về máy (.${escapeHtml(vidRes.ext || 'webm')})
+                                </a>
+                            </div>
+                        `, summaryPlain);
+                    } else {
+                        const cardsHtml = (vidRes.scriptData.slides || []).map((s, i) => `
+                            <div class="p-2.5 rounded-xl bg-slate-900 text-white text-xs space-y-1">
+                                <div class="text-amber-300 font-bold">Cảnh ${i + 1}: ${escapeHtml(s.heading)}</div>
+                                <div class="text-slate-200">${escapeHtml(s.body)}</div>
+                            </div>
+                        `).join('');
+                        appendChatMessage(botKey, 'model', `<div class="space-y-2"><div class="font-extrabold text-rose-700">🎬 Kịch bản Video "${escapeHtml(vidRes.scriptData.title)}":</div>${cardsHtml}</div>`, summaryPlain);
+                    }
+                    return;
+                }
+
                 const userParts = [{ text: userText || 'Hãy phân tích tệp đính kèm này.' }];
                 if (attached?.kind === 'image') {
                     userParts.push({ inlineData: { mimeType: attached.mimeType, data: attached.base64 } });
+                } else if (attached?.kind === 'pdf') {
+                    if (attached.text) {
+                        userParts[0].text += `\n\n[Nội dung tệp PDF ${attached.name}]:\n${attached.text.slice(0, 25000)}`;
+                    }
+                    if (Array.isArray(attached.pageImages)) {
+                        attached.pageImages.forEach(img => {
+                            userParts.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } });
+                        });
+                    }
                 } else if (attached?.text) {
                     userParts[0].text += `\n\n[Nội dung tệp ${attached.name}]:\n${attached.text.slice(0, 25000)}`;
                 }
@@ -3003,6 +3231,10 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                     const builderParts = [{ text: promptBuilder }];
                     if (attached?.kind === 'image') {
                         builderParts.push({ inlineData: { mimeType: attached.mimeType, data: attached.base64 } });
+                    } else if (attached?.kind === 'pdf' && Array.isArray(attached.pageImages)) {
+                        attached.pageImages.forEach(img => {
+                            builderParts.push({ inlineData: { mimeType: img.mimeType, data: img.base64 } });
+                        });
                     }
                     const res = await fetchGeminiWithBackoff({
                         contents: [{ role: 'user', parts: builderParts }],
@@ -3257,6 +3489,21 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                 return;
             }
             const docClone = document.documentElement.cloneNode(true);
+            // Dọn sạch các hộp thoại/trạng thái tạm trước khi xuất file .html để file gọn và sạch 100%
+            ['ttsStudioModal', 'wordExportModal', 'shareLinkModal', 'customModal', 'pdfCaptureModalOverlay', 'toastNotification', 'studentPreviewExitBanner', 'aiChatBackdrop'].forEach(id => {
+                const el = docClone.querySelector('#' + id);
+                if (el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+            const chatDrawerClone = docClone.querySelector('#aiChatDrawer');
+            if (chatDrawerClone) chatDrawerClone.classList.add('translate-x-full');
+            ['questionsContainer', 'uploadedImagesGrid', 'editorQuestionsList', 'hiddenPdfRenderZone'].forEach(id => {
+                const el = docClone.querySelector('#' + id);
+                if (el) el.innerHTML = '';
+            });
+
             let htmlText = '<!DOCTYPE html>\n' + docClone.outerHTML;
 
             // Thay dữ liệu đề an toàn bằng callback để không lỗi ký tự $ (Excel $E$5)
@@ -3468,7 +3715,35 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             closeShareLinkModal();
             IS_STANDALONE_STUDENT_APP = true;
             applyStudentStandaloneModeUI();
+            const exitBanner = document.getElementById('studentPreviewExitBanner');
+            if (exitBanner) {
+                exitBanner.classList.remove('hidden');
+                exitBanner.classList.add('flex');
+            }
             showToast('Đang xem thử giao diện Học sinh làm bài!');
+        }
+
+        function exitStudentPreviewMode() {
+            IS_STANDALONE_STUDENT_APP = false;
+            const exitBanner = document.getElementById('studentPreviewExitBanner');
+            if (exitBanner) {
+                exitBanner.classList.add('hidden');
+                exitBanner.classList.remove('flex');
+            }
+            const showIds = [
+                'btnHeaderAIBuilder', 'btnHeaderShareLink', 'btnHeaderExportDoc',
+                'btnHeaderExportWeb', 'btnFloatingAIBuilder', 'headerStepNav',
+                'studyTopQuickBanner', 'sidebarTeacherExportBtns'
+            ];
+            showIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('hidden');
+            });
+            applyStudentStandaloneModeUI();
+            const titleEl = document.getElementById('headerExamTitle');
+            if (titleEl) titleEl.className = "text-xs sm:text-sm font-extrabold text-slate-800 truncate";
+            document.title = 'Công Cụ Tạo Soạn Sửa Đề Ôn Tập & Siêu Trợ Lý AI Đa Năng';
+            showToast('Đã quay lại chế độ Giáo viên đầy đủ!');
         }
 
         async function tryLoadSharedExamFromUrl() {
@@ -4875,18 +5150,22 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             const file = fileList[0];
             const name = (file.name || '').toLowerCase();
             try {
-                showToast(`Đang trích xuất chữ từ tệp ${file.name}...`);
                 let extracted = '';
                 if (name.endsWith('.txt')) {
                     extracted = await file.text();
                 } else if (name.endsWith('.docx') || name.endsWith('.doc')) {
-                    const wData = await extractWordDocxContent(file);
-                    extracted = (wData.extractedText || '').replace(/<[^>]+>/g, ' ').trim();
+                    const w = await extractWordDocxContent(file);
+                    extracted = w.extractedText;
                 } else if (name.endsWith('.pdf')) {
-                    const pData = await extractPdfContentAndImages(file, 0);
-                    extracted = (pData.extractedText || '').trim();
+                    const p = await extractPdfContentAndImages(file, 0);
+                    extracted = p.extractedText;
                 } else {
-                    showToast("Vui lòng chọn file .txt, .docx, .doc hoặc .pdf!");
+                    extracted = await file.text();
+                }
+
+                extracted = String(extracted || '').trim();
+                if (!extracted) {
+                    showToast('Không tìm thấy nội dung chữ trong tệp này!');
                     return;
                 }
 
@@ -4897,19 +5176,80 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
                         addBatchItemsFromPaste();
                     }
                 } else {
-                    const ta = document.getElementById('ttsInputText');
-                    if (ta) {
-                        ta.value = extracted;
+                    const input = document.getElementById('ttsInputText');
+                    if (input) {
+                        input.value = extracted;
                         onTTSInputChange();
                     }
-                    showToast(`Đã nạp nội dung từ ${file.name} vào ô văn bản!`);
                 }
+                showToast(`Đã nạp văn bản từ file "${file.name}"!`);
             } catch (err) {
-                showToast(`Không thể đọc tệp ${file.name}: ${err.message}`);
+                showToast(`Không thể đọc file "${file.name}": ${err.message}`);
             } finally {
-                const inp = document.getElementById('ttsDocFileInput');
-                if (inp) inp.value = '';
+                const fi = document.getElementById('ttsDocFileInput');
+                if (fi) fi.value = '';
             }
+        }
+
+        function scrollToTTSProgressBox() {
+            const box = document.getElementById('ttsProgressBox');
+            if (!box) return;
+            setTimeout(() => {
+                try {
+                    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } catch (e) {}
+            }, 60);
+        }
+
+        function updateTTSProgressUI(percent, labelText, stageHint) {
+            const box = document.getElementById('ttsProgressBox');
+            const bar = document.getElementById('ttsProgressBar');
+            const pctEl = document.getElementById('ttsProgressPercent');
+            const lblEl = document.getElementById('ttsProgressLabel');
+            const hintEl = document.getElementById('ttsProgressStageHint');
+            const clamped = Math.max(5, Math.min(100, Math.round(percent || 0)));
+
+            if (box) box.classList.remove('hidden');
+            if (bar) bar.style.width = `${clamped}%`;
+            if (pctEl) pctEl.textContent = `${clamped}%`;
+            if (lblEl && labelText) {
+                lblEl.innerHTML = clamped >= 100
+                    ? `<i class="fa-solid fa-circle-check text-emerald-600 shrink-0"></i><span class="truncate">${escapeHtml(labelText)}</span>`
+                    : `<i class="fa-solid fa-spinner fa-spin text-cyan-600 shrink-0"></i><span class="truncate">${escapeHtml(labelText)}</span>`;
+            }
+            if (hintEl) {
+                if (stageHint) {
+                    hintEl.textContent = stageHint;
+                } else if (clamped < 40) {
+                    hintEl.textContent = 'Đang khởi chạy đa luồng siêu tốc...';
+                } else if (clamped < 75) {
+                    hintEl.textContent = 'Đang xử lý giọng đọc & ghép âm thanh...';
+                } else if (clamped < 100) {
+                    hintEl.textContent = 'Sắp hoàn tất rồi! Đang hoàn thiện file tải về...';
+                } else {
+                    hintEl.textContent = 'Đã hoàn tất 100%! Đang mở khung nghe thử bên dưới.';
+                }
+            }
+        }
+
+        function hideTTSProgressBox() {
+            const box = document.getElementById('ttsProgressBox');
+            if (box) box.classList.add('hidden');
+        }
+
+        function showTTSErrorMessage(msg) {
+            const box = document.getElementById('ttsErrorBox');
+            const txt = document.getElementById('ttsErrorText');
+            if (txt) txt.textContent = msg || 'Có lỗi xảy ra khi tạo âm thanh.';
+            if (box) {
+                box.classList.remove('hidden');
+                try { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+            }
+        }
+
+        function hideTTSErrorMessage() {
+            const box = document.getElementById('ttsErrorBox');
+            if (box) box.classList.add('hidden');
         }
 
         function scrollToTTSResultCard() {
@@ -4918,257 +5258,97 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             setTimeout(() => {
                 try {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } catch (e) {
-                    const scroller = document.getElementById('ttsStudioScrollArea');
-                    if (scroller) scroller.scrollTop = scroller.scrollHeight;
-                }
-                card.classList.add('ring-4', 'ring-emerald-400/70');
-                setTimeout(() => {
-                    card.classList.remove('ring-4', 'ring-emerald-400/70');
-                }, 1800);
+                    card.classList.add('ring-4', 'ring-emerald-400/50');
+                    setTimeout(() => card.classList.remove('ring-4', 'ring-emerald-400/50'), 1400);
+                } catch (e) {}
             }, 90);
+        }
+
+        function scrollBackToTTSEditor() {
+            const target = ttsInputMode === 'batch'
+                ? document.getElementById('ttsBatchRawPaste')
+                : document.getElementById('ttsInputText');
+            if (!target) return;
+            try {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => target.focus(), 250);
+            } catch (e) {}
+        }
+
+        function setTTSPlaybackRate(rateVal) {
+            const player = document.getElementById('ttsAudioPlayer');
+            if (player) {
+                player.playbackRate = parseFloat(rateVal) || 1.0;
+            }
         }
 
         function replayCurrentTTSAudio() {
             const player = document.getElementById('ttsAudioPlayer');
-            if (!player || !player.src) return;
-            player.currentTime = 0;
-            player.play().catch(() => {});
-        }
-
-        function scrollBackToTTSEditor() {
-            const scroller = document.getElementById('ttsStudioScrollArea');
-            if (scroller) {
-                scroller.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
-
-        function presentGeneratedAudioResult(blob, fileName, metaText, snippetText) {
-            const url = URL.createObjectURL(blob);
-            presentGeneratedAudioUrlResult(url, fileName, metaText, snippetText);
-        }
-
-        function presentGeneratedAudioUrlResult(audioUrl, fileName, metaText, snippetText) {
-            currentTTSAudioBlobUrl = audioUrl;
-            currentTTSFileName = fileName;
-
-            const player = document.getElementById('ttsAudioPlayer');
-            const resultCard = document.getElementById('ttsResultCard');
-            const resultMeta = document.getElementById('ttsResultMeta');
-            const downloadBtnLabel = document.getElementById('ttsDownloadBtnLabel');
-            const errBox = document.getElementById('ttsErrorBox');
-            const ext = (fileName.split('.').pop() || 'mp3').toLowerCase();
-
-            if (errBox) errBox.classList.add('hidden');
-
-            if (player) {
-                player.src = audioUrl;
-                const speedSelect = document.getElementById('ttsPlaybackSpeed');
-                player.playbackRate = parseFloat(speedSelect?.value || '1');
-                player.load();
+            if (!player || !currentTTSAudioBlobUrl) return;
+            try {
+                player.currentTime = 0;
                 player.play().catch(() => {});
-            }
-            if (resultMeta) resultMeta.textContent = metaText;
-            if (downloadBtnLabel) downloadBtnLabel.textContent = `OK — Tải Âm Thanh Này Về Máy (.${ext})`;
-            if (resultCard) resultCard.classList.remove('hidden');
-
-            ttsGeneratedHistory.unshift({
-                id: Date.now(),
-                url: audioUrl,
-                fileName,
-                voiceName: metaText.split('•')[0].trim(),
-                snippet: (snippetText || fileName).substring(0, 55) + ((snippetText || '').length > 55 ? '...' : '')
-            });
-            if (ttsGeneratedHistory.length > 15) ttsGeneratedHistory.pop();
-            renderTTSHistoryList();
-            scrollToTTSResultCard();
+            } catch (e) {}
         }
 
-        async function handlePrimaryTTSAction() {
-            unlockMainTTSPlayerOnGesture();
-            if (ttsInputMode === 'batch') {
-                await generateBatchSpeechUltraFast();
-            } else {
-                await generateSingleSpeechUltraFast();
-            }
-        }
-
-        async function generateSingleSpeechUltraFast() {
-            stopTTSVoicePreview();
-            const input = document.getElementById('ttsInputText');
-            const rawText = (input?.value || '').trim();
-            const errBox = document.getElementById('ttsErrorBox');
-            const errText = document.getElementById('ttsErrorText');
-            const progBox = document.getElementById('ttsProgressBox');
-            const progLabel = document.getElementById('ttsProgressLabel');
-            const progPct = document.getElementById('ttsProgressPercent');
-            const progBar = document.getElementById('ttsProgressBar');
-            const btn = document.getElementById('btnGenerateTTSAudio');
-
-            if (errBox) errBox.classList.add('hidden');
-            if (!rawText) {
-                if (errBox && errText) {
-                    errText.textContent = "Bạn hãy nhập hoặc dán văn bản vào ô bên trái trước nhé!";
-                    errBox.classList.remove('hidden');
-                }
-                input?.focus();
+        function downloadCurrentTTSAudio(customUrl, customFileName) {
+            const url = customUrl || currentTTSAudioBlobUrl;
+            const fileName = customFileName || currentTTSFileName || 'am_thanh.mp3';
+            if (!url) {
+                showToast('Chưa có file âm thanh nào để tải!');
                 return;
             }
-
-            const voiceInfo = TTS_VOICE_CATALOG.find(v => v.id === selectedTTSVoiceId) || TTS_VOICE_CATALOG[0];
-            if (btn) btn.disabled = true;
-            if (progBox) progBox.classList.remove('hidden');
-            if (progLabel) progLabel.innerHTML = `<i class="fa-solid fa-bolt fa-beat text-cyan-600"></i> <span>Đang tạo âm thanh siêu tốc...</span>`;
-            if (progPct) progPct.textContent = '20%';
-            if (progBar) progBar.style.width = '20%';
-
             try {
-                const res = await synthesizeTextUltraFast(rawText, voiceInfo, null, currentTTSSpeed, (pct, msg) => {
-                    if (progLabel) progLabel.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-cyan-600"></i> <span>${escapeHtml(msg)}</span>`;
-                    if (progPct) progPct.textContent = `${pct}%`;
-                    if (progBar) progBar.style.width = `${pct}%`;
-                });
-
-                if (progPct) progPct.textContent = '100%';
-                if (progBar) progBar.style.width = '100%';
-
-                const slugPrefix = getSafeFilenameSlug(rawText.substring(0, 32), 'am_thanh');
-                const fileName = `${slugPrefix}_${voiceInfo.id}.${res.ext}`;
-                presentGeneratedAudioResult(res.blob, fileName, res.meta, rawText);
-                showToast(`Đã tạo xong! Kéo xuống nghe thử và bấm Tải về máy nhé.`);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    if (a.parentNode) a.parentNode.removeChild(a);
+                }, 150);
+                showToast(`Đang tải file "${fileName}" về máy!`);
             } catch (err) {
-                const langCode = detectTextLanguageCode(rawText, document.getElementById('ttsLanguageSelect')?.value || 'auto');
-                const shortSnippet = rawText.substring(0, 190);
-                const directStreamUrl = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=${encodeURIComponent(langCode)}&q=${encodeURIComponent(shortSnippet)}`;
-                const slugPrefix = getSafeFilenameSlug(rawText.substring(0, 32), 'am_thanh');
-                presentGeneratedAudioUrlResult(
-                    directStreamUrl,
-                    `${slugPrefix}.mp3`,
-                    `${voiceInfo.name} • Luồng phát trực tiếp (MP3)`,
-                    rawText
-                );
-                showToast("Đã kích hoạt luồng phát trực tiếp! Bạn có thể nghe thử và tải về ngay.");
-            } finally {
-                if (btn) btn.disabled = false;
-                if (progBox) progBox.classList.add('hidden');
+                window.open(url, '_blank');
             }
         }
 
-        async function generateBatchSpeechUltraFast() {
-            stopTTSVoicePreview();
-            if (ttsBatchItems.length === 0) {
-                showToast("Chưa có văn bản nào trong hàng đợi!");
+        function renderTTSHistoryList() {
+            const sec = document.getElementById('ttsHistorySection');
+            const listEl = document.getElementById('ttsHistoryList');
+            const countEl = document.getElementById('ttsHistoryCount');
+            if (!sec || !listEl) return;
+
+            if (ttsGeneratedHistory.length === 0) {
+                sec.classList.add('hidden');
                 return;
             }
+            sec.classList.remove('hidden');
+            if (countEl) countEl.textContent = `${ttsGeneratedHistory.length} file`;
 
-            const errBox = document.getElementById('ttsErrorBox');
-            const errText = document.getElementById('ttsErrorText');
-            const progBox = document.getElementById('ttsProgressBox');
-            const progLabel = document.getElementById('ttsProgressLabel');
-            const progPct = document.getElementById('ttsProgressPercent');
-            const progBar = document.getElementById('ttsProgressBar');
-            const btn = document.getElementById('btnGenerateTTSAudio');
-
-            const voiceInfo = TTS_VOICE_CATALOG.find(v => v.id === selectedTTSVoiceId) || TTS_VOICE_CATALOG[0];
-            const mergeOne = document.getElementById('chkBatchMergeOneFile')?.checked ?? false;
-
-            if (errBox) errBox.classList.add('hidden');
-            if (btn) btn.disabled = true;
-            if (progBox) progBox.classList.remove('hidden');
-
-            try {
-                if (mergeOne) {
-                    const combinedText = ttsBatchItems.map(it => it.text.trim()).filter(Boolean).join('\n');
-                    const res = await synthesizeTextUltraFast(combinedText, voiceInfo, null, currentTTSSpeed, (pct, msg) => {
-                        if (progLabel) progLabel.innerHTML = `<i class="fa-solid fa-bolt fa-beat text-cyan-600"></i> <span>${escapeHtml(msg)}</span>`;
-                        if (progPct) progPct.textContent = `${pct}%`;
-                        if (progBar) progBar.style.width = `${pct}%`;
-                    });
-                    const fileName = `gop_${ttsBatchItems.length}_doan_${voiceInfo.id}.${res.ext}`;
-                    presentGeneratedAudioResult(res.blob, fileName, `Gộp ${ttsBatchItems.length} đoạn • ${res.meta}`, `Gộp ${ttsBatchItems.length} đoạn văn bản`);
-                    showToast(`Đã gộp & xuất siêu tốc ${ttsBatchItems.length} đoạn thành 1 file (.${res.ext})!`);
-                    return;
-                }
-
-                let completed = 0;
-                const total = ttsBatchItems.length;
-
-                await runTasksWithConcurrency(ttsBatchItems, 3, async (item, idx) => {
-                    item.status = 'processing';
-                    renderTTSBatchQueue();
-                    try {
-                        const res = await synthesizeTextUltraFast(item.text, voiceInfo, null, currentTTSSpeed);
-                        if (item.url) { try { URL.revokeObjectURL(item.url); } catch (e) {} }
-                        item.url = URL.createObjectURL(res.blob);
-                        item.blob = res.blob;
-                        item.fileName = `doan_${String(idx + 1).padStart(2, '0')}_${getSafeFilenameSlug(item.text.substring(0, 22), 'audio')}.${res.ext}`;
-                        item.status = 'done';
-                    } catch (e) {
-                        item.status = 'error';
-                    }
-                    completed++;
-                    const pct = Math.min(98, Math.round((completed / total) * 100));
-                    if (progLabel) progLabel.innerHTML = `<i class="fa-solid fa-bolt fa-beat text-cyan-600"></i> <span>Đang xử lý hàng loạt siêu tốc: ${completed}/${total} đoạn...</span>`;
-                    if (progPct) progPct.textContent = `${pct}%`;
-                    if (progBar) progBar.style.width = `${pct}%`;
-                    renderTTSBatchQueue();
-                });
-
-                const doneList = ttsBatchItems.filter(x => x.status === 'done');
-                if (doneList.length > 0) {
-                    const lastItem = doneList[doneList.length - 1];
-                    presentGeneratedAudioUrlResult(lastItem.url, lastItem.fileName, `${voiceInfo.name} • Hoàn tất ${doneList.length}/${total} file`, lastItem.text);
-                    showToast(`Đã tạo siêu tốc xong ${doneList.length}/${total} file âm thanh!`);
-                } else if (errBox && errText) {
-                    errText.textContent = "Không thể kết nối máy chủ âm thanh lúc này. Vui lòng thử lại sau vài giây!";
-                    errBox.classList.remove('hidden');
-                }
-            } finally {
-                if (btn) btn.disabled = false;
-                if (progBox) progBox.classList.add('hidden');
-            }
-        }
-
-        function setTTSPlaybackRate(rate) {
-            const player = document.getElementById('ttsAudioPlayer');
-            if (player) player.playbackRate = parseFloat(rate) || 1;
-        }
-
-        function downloadCurrentTTSAudio(customUrl, customName) {
-            const urlToSave = customUrl || currentTTSAudioBlobUrl;
-            const fileName = customName || currentTTSFileName || `am_thanh_${Date.now()}.mp3`;
-            if (!urlToSave) {
-                showToast("Chưa có file âm thanh nào để tải về!");
-                return;
-            }
-            const a = document.createElement('a');
-            a.href = urlToSave;
-            a.download = fileName;
-            if (/^https?:\/\//i.test(urlToSave)) {
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-            }
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            showToast(`Đã tải file âm thanh (${fileName}) về máy!`);
+            listEl.innerHTML = ttsGeneratedHistory.map((item, idx) => `
+                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="text-xs font-extrabold text-slate-800 truncate">${escapeHtml(item.title)}</div>
+                        <div class="text-[10px] text-slate-500 truncate">${escapeHtml(item.meta)}</div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button type="button" onclick="playHistoryTTSItem(${idx})" class="px-2 py-1 rounded-lg bg-cyan-100 hover:bg-cyan-200 text-cyan-900 text-[11px] font-bold" title="Nghe lại">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button type="button" onclick="downloadHistoryTTSItem(${idx})" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold" title="Tải về máy">
+                            <i class="fa-solid fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function playHistoryTTSItem(idx) {
             const item = ttsGeneratedHistory[idx];
             if (!item) return;
-            currentTTSAudioBlobUrl = item.url;
-            currentTTSFileName = item.fileName;
-            const player = document.getElementById('ttsAudioPlayer');
-            const resultCard = document.getElementById('ttsResultCard');
-            const resultMeta = document.getElementById('ttsResultMeta');
-            if (resultCard) resultCard.classList.remove('hidden');
-            if (resultMeta) resultMeta.textContent = `${item.voiceName} • Đang phát từ lịch sử`;
-            if (player) {
-                player.src = item.url;
-                player.play().catch(() => {});
-            }
-            scrollToTTSResultCard();
+            presentGeneratedAudioUrlResult(item.url, item.fileName, item.meta, item.title, false);
         }
 
         function downloadHistoryTTSItem(idx) {
@@ -5177,104 +5357,315 @@ Hãy trả về JSON ĐẦY ĐỦ của đề ôn tập sau khi đã cập nhậ
             downloadCurrentTTSAudio(item.url, item.fileName);
         }
 
-        function renderTTSHistoryList() {
-            const sec = document.getElementById('ttsHistorySection');
-            const list = document.getElementById('ttsHistoryList');
-            const count = document.getElementById('ttsHistoryCount');
-            if (!sec || !list) return;
-            if (ttsGeneratedHistory.length === 0) {
-                sec.classList.add('hidden');
+        function presentGeneratedAudioUrlResult(audioUrl, fileName, metaText, sourceSnippet, saveToHistory = true) {
+            currentTTSAudioBlobUrl = audioUrl;
+            currentTTSFileName = fileName || 'am_thanh.mp3';
+
+            const card = document.getElementById('ttsResultCard');
+            const player = document.getElementById('ttsAudioPlayer');
+            const metaEl = document.getElementById('ttsResultMeta');
+            const btnLbl = document.getElementById('ttsDownloadBtnLabel');
+            const speedSel = document.getElementById('ttsPlaybackSpeed');
+
+            if (metaEl) metaEl.textContent = metaText || 'Đã sẵn sàng phát & tải về máy';
+            if (btnLbl) {
+                const extLabel = currentTTSFileName.toLowerCase().endsWith('.wav') ? '.WAV' : '.MP3';
+                btnLbl.textContent = `OK — Tải Âm Thanh Này Về Máy (${extLabel})`;
+            }
+            if (card) card.classList.remove('hidden');
+
+            if (player) {
+                player.src = audioUrl;
+                player.playbackRate = parseFloat(speedSel?.value || '1') || 1.0;
+                try {
+                    player.load();
+                    player.play().catch(() => {});
+                } catch (e) {}
+            }
+
+            if (saveToHistory) {
+                const shortTitle = String(sourceSnippet || fileName || 'Âm thanh AI').replace(/\s+/g, ' ').trim().slice(0, 48);
+                ttsGeneratedHistory.unshift({
+                    url: audioUrl,
+                    fileName: currentTTSFileName,
+                    meta: metaText || '',
+                    title: shortTitle || currentTTSFileName
+                });
+                if (ttsGeneratedHistory.length > 10) {
+                    const removed = ttsGeneratedHistory.pop();
+                    if (removed && removed.url && removed.url !== currentTTSAudioBlobUrl) {
+                        try { URL.revokeObjectURL(removed.url); } catch (e) {}
+                    }
+                }
+                renderTTSHistoryList();
+            }
+
+            scrollToTTSResultCard();
+        }
+
+        async function handlePrimaryTTSAction() {
+            if (ttsInputMode === 'batch') {
+                await generateBatchTTSAudio();
+            } else {
+                await generateSingleTTSAudio();
+            }
+        }
+
+        async function generateSingleTTSAudio() {
+            const rawText = (document.getElementById('ttsInputText')?.value || '').trim();
+            if (!rawText) {
+                showTTSErrorMessage('Bạn hãy nhập hoặc dán nội dung văn bản vào khung trước khi tạo âm thanh nhé!');
                 return;
             }
-            sec.classList.remove('hidden');
-            if (count) count.textContent = `${ttsGeneratedHistory.length} file`;
 
-            list.innerHTML = ttsGeneratedHistory.map((item, idx) => `
-                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
-                    <div class="min-w-0 flex-1">
-                        <div class="text-xs font-bold text-slate-800 truncate">${escapeHtml(item.snippet)}</div>
-                        <div class="text-[10px] text-cyan-700 font-semibold">${escapeHtml(item.voiceName)}</div>
-                    </div>
-                    <div class="flex items-center gap-1 shrink-0">
-                        <button type="button" onclick="playHistoryTTSItem(${idx})" class="w-7 h-7 rounded-lg bg-cyan-100 hover:bg-cyan-200 text-cyan-800 flex items-center justify-center text-xs" title="Nghe lại">
-                            <i class="fa-solid fa-play"></i>
-                        </button>
-                        <button type="button" onclick="downloadHistoryTTSItem(${idx})" class="w-7 h-7 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs" title="Tải về">
-                            <i class="fa-solid fa-download"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+            stopTTSVoicePreview();
+            unlockMainTTSPlayerOnGesture();
+            hideTTSErrorMessage();
+
+            const btn = document.getElementById('btnGenerateTTSAudio');
+            const voiceInfo = TTS_VOICE_CATALOG.find(v => v.id === selectedTTSVoiceId) || TTS_VOICE_CATALOG[0];
+            const langKey = document.getElementById('ttsLanguageSelect')?.value || 'auto';
+            const langCode = detectTextLanguageCode(rawText, langKey);
+
+            if (btn) btn.disabled = true;
+            updateTTSProgressUI(20, `Đang khởi tạo giọng ${voiceInfo.name}...`, 'Đang kết nối & bắt đầu xử lý âm thanh (20%)...');
+            scrollToTTSProgressBox();
+
+            try {
+                const res = await synthesizeTextUltraFast(
+                    rawText,
+                    voiceInfo,
+                    langCode,
+                    currentTTSSpeed,
+                    (pct, msg) => {
+                        const displayPct = Math.max(20, Math.min(96, pct));
+                        const hint = displayPct >= 80
+                            ? 'Gần xong rồi! Đang hoàn thiện file để nghe thử & tải về...'
+                            : 'Đang tổng hợp giọng đọc đa luồng siêu tốc...';
+                        updateTTSProgressUI(displayPct, msg, hint);
+                    }
+                );
+
+                updateTTSProgressUI(100, 'Hoàn tất 100%! Đang mở khung nghe thử...', 'Xong rồi! Kéo xuống nghe thử và bấm Tải Về Máy.');
+                const blobUrl = URL.createObjectURL(res.blob);
+                const slug = getSafeFilenameSlug(rawText.slice(0, 36), 'am_thanh');
+                const fileName = `${slug}_${getSafeFilenameSlug(voiceInfo.name, 'ai')}.${res.ext || 'mp3'}`;
+
+                setTimeout(() => hideTTSProgressBox(), 650);
+                presentGeneratedAudioUrlResult(blobUrl, fileName, res.meta, rawText, true);
+                showToast('Đã tạo âm thanh xong! Hãy nghe thử và bấm tải về máy.');
+            } catch (err) {
+                hideTTSProgressBox();
+                showTTSErrorMessage('Mạng hiện tại đang tạm chặn kết nối tải file âm thanh (hệ thống đã tự phát bằng giọng thiết bị). Bạn hãy thử bấm lại sau vài giây!');
+                playBrowserSpeechFallback(rawText.slice(0, 500), voiceInfo, langCode, ++previewRequestCounter);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function generateBatchTTSAudio() {
+            // Nếu người dùng vừa dán vào ô raw mà chưa bấm "Đưa vào Hàng Đợi" thì tự động đưa vào luôn
+            const pasteBox = document.getElementById('ttsBatchRawPaste');
+            if (ttsBatchItems.length === 0 && pasteBox && pasteBox.value.trim()) {
+                addBatchItemsFromPaste();
+            }
+
+            if (ttsBatchItems.length === 0) {
+                showTTSErrorMessage('Hàng đợi đang trống! Hãy dán nhiều đoạn văn bản rồi bấm "Đưa vào Hàng Đợi".');
+                return;
+            }
+
+            stopTTSVoicePreview();
+            unlockMainTTSPlayerOnGesture();
+            hideTTSErrorMessage();
+
+            const btn = document.getElementById('btnGenerateTTSAudio');
+            const voiceInfo = TTS_VOICE_CATALOG.find(v => v.id === selectedTTSVoiceId) || TTS_VOICE_CATALOG[0];
+            const langKey = document.getElementById('ttsLanguageSelect')?.value || 'auto';
+            const shouldMerge = Boolean(document.getElementById('chkBatchMergeOneFile')?.checked);
+
+            if (btn) btn.disabled = true;
+            updateTTSProgressUI(15, `Đang xử lý hàng loạt 0/${ttsBatchItems.length} đoạn...`, 'Chạy song song 3 luồng để hoàn thành nhanh nhất...');
+            scrollToTTSProgressBox();
+
+            let completed = 0;
+            const successResults = new Array(ttsBatchItems.length).fill(null);
+
+            try {
+                await runTasksWithConcurrency(ttsBatchItems, 3, async (item, idx) => {
+                    const txt = String(item.text || '').trim();
+                    if (!txt) return;
+                    item.status = 'processing';
+                    renderTTSBatchQueue();
+                    try {
+                        const langCode = detectTextLanguageCode(txt, langKey);
+                        const res = await synthesizeTextUltraFast(txt, voiceInfo, langCode, currentTTSSpeed);
+                        if (item.url) { try { URL.revokeObjectURL(item.url); } catch (e) {} }
+                        const url = URL.createObjectURL(res.blob);
+                        const slug = getSafeFilenameSlug(txt.slice(0, 28), `doan_${idx + 1}`);
+                        item.url = url;
+                        item.blob = res.blob;
+                        item.fileName = `${String(idx + 1).padStart(2, '0')}_${slug}.${res.ext || 'mp3'}`;
+                        item.status = 'done';
+                        successResults[idx] = res;
+                    } catch (e) {
+                        item.status = 'error';
+                    } finally {
+                        completed++;
+                        const pct = Math.max(20, Math.min(95, Math.round((completed / ttsBatchItems.length) * 92)));
+                        updateTTSProgressUI(
+                            pct,
+                            `Đã xong ${completed}/${ttsBatchItems.length} đoạn...`,
+                            pct >= 80 ? 'Gần xong toàn bộ danh sách rồi!' : 'Đang xử lý đa luồng siêu tốc...'
+                        );
+                        renderTTSBatchQueue();
+                    }
+                });
+
+                const validResults = successResults.filter(Boolean);
+                if (validResults.length === 0) {
+                    hideTTSProgressBox();
+                    showTTSErrorMessage('Không thể kết nối máy chủ âm thanh cho danh sách này. Hãy kiểm tra mạng và thử lại!');
+                    return;
+                }
+
+                updateTTSProgressUI(100, `Hoàn tất ${validResults.length}/${ttsBatchItems.length} đoạn!`, 'Đang mở khung nghe thử & tải về bên dưới.');
+                setTimeout(() => hideTTSProgressBox(), 700);
+
+                if (shouldMerge && validResults.length > 1) {
+                    // Gộp toàn bộ các file thành 1 file âm thanh liền mạch
+                    const allWavPcm = validResults.every(r => r.pcm16 instanceof Int16Array);
+                    let mergedBlob;
+                    let mergedExt = 'mp3';
+                    if (allWavPcm) {
+                        const rate = validResults[0].sampleRate || 24000;
+                        const mergedPcm = mergeInt16ArraysWithSilence(validResults.map(r => r.pcm16), rate, 420);
+                        mergedBlob = pcmInt16ToWavBlob(mergedPcm, rate, 1);
+                        mergedExt = 'wav';
+                    } else {
+                        mergedBlob = new Blob(validResults.map(r => r.blob), { type: validResults[0].blob.type || 'audio/mpeg' });
+                        mergedExt = validResults[0].ext || 'mp3';
+                    }
+                    const mergedUrl = URL.createObjectURL(mergedBlob);
+                    const mergedName = `gop_${validResults.length}_doan_${getSafeFilenameSlug(voiceInfo.name, 'ai')}.${mergedExt}`;
+                    presentGeneratedAudioUrlResult(
+                        mergedUrl,
+                        mergedName,
+                        `Đã gộp ${validResults.length} đoạn • ${voiceInfo.name} • ${mergedExt.toUpperCase()}`,
+                        `Gộp ${validResults.length} đoạn văn bản`,
+                        true
+                    );
+                } else {
+                    const firstDone = ttsBatchItems.find(it => it.status === 'done' && it.url);
+                    if (firstDone) {
+                        presentGeneratedAudioUrlResult(
+                            firstDone.url,
+                            firstDone.fileName,
+                            `Đã xong ${validResults.length}/${ttsBatchItems.length} đoạn (Bấm "Tải hết" ở danh sách hoặc tải đoạn này)`,
+                            firstDone.text,
+                            true
+                        );
+                    }
+                }
+                showToast(`Đã tạo xong ${validResults.length}/${ttsBatchItems.length} đoạn âm thanh!`);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         }
 
         // =========================================================================
-        // 13. KHỞI TẠO ỨNG DỤNG, KÉO-THẢ, DÁN CTRL+V & VUỐT CẢM ỨNG
+        // 13. KHỞI TẠO ỨNG DỤNG, KÉO THẢ FILE, DÁN CTRL+V & CẢM ỨNG VUỐT
         // =========================================================================
-        function setupInteractiveGestures() {
-            const dz = document.getElementById('imageDropzone');
-            if (dz) {
-                ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => {
-                    e.preventDefault();
-                    dz.classList.add('dropzone-active');
-                }));
-                ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => {
-                    e.preventDefault();
-                    dz.classList.remove('dropzone-active');
-                }));
-                dz.addEventListener('drop', e => {
-                    if (e.dataTransfer?.files?.length) handleImageFilesSelected(e.dataTransfer.files);
+        function setupGlobalInteractionListeners() {
+            // Kéo thả file vào Bước 1
+            const dropzone = document.getElementById('imageDropzone');
+            if (dropzone) {
+                ['dragenter', 'dragover'].forEach(evtName => {
+                    dropzone.addEventListener(evtName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropzone.classList.add('dropzone-active');
+                    });
+                });
+                ['dragleave', 'drop'].forEach(evtName => {
+                    dropzone.addEventListener(evtName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropzone.classList.remove('dropzone-active');
+                    });
+                });
+                dropzone.addEventListener('drop', (e) => {
+                    const files = e.dataTransfer?.files;
+                    if (files && files.length > 0) handleImageFilesSelected(files);
                 });
             }
 
-            window.addEventListener('paste', e => {
-                if (appState.workspace !== 'scanner' || IS_STANDALONE_STUDENT_APP) return;
+            // Dán ảnh trực tiếp bằng Ctrl + V
+            document.addEventListener('paste', (e) => {
                 const items = e.clipboardData?.items;
                 if (!items) return;
-                const files = [];
-                for (const it of items) {
-                    if (it.kind === 'file') {
-                        const f = it.getAsFile();
-                        if (f) files.push(f);
+                const pastedFiles = [];
+                for (const item of items) {
+                    if (item.kind === 'file') {
+                        const f = item.getAsFile();
+                        if (f) pastedFiles.push(f);
                     }
                 }
-                if (files.length > 0) {
-                    handleImageFilesSelected(files);
-                    showToast(`Đã dán ${files.length} tệp ảnh từ bộ nhớ tạm!`);
+                if (pastedFiles.length === 0) return;
+
+                const chatDrawer = document.getElementById('aiChatDrawer');
+                const isChatOpen = chatDrawer && !chatDrawer.classList.contains('translate-x-full');
+                if (isChatOpen) {
+                    handleChatImageSelected(pastedFiles);
+                } else if (appState.workspace === 'scanner') {
+                    handleImageFilesSelected(pastedFiles);
                 }
             });
 
-            // Hỗ trợ vuốt trái/phải chuyển câu trên màn hình cảm ứng khi ở chế độ "Từng câu một"
-            let touchStartX = 0;
-            const qBox = document.getElementById('questionsContainer');
-            if (qBox) {
-                qBox.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0]?.clientX || 0; }, { passive: true });
-                qBox.addEventListener('touchend', e => {
-                    if (appState.viewMode !== 'single') return;
-                    const dx = (e.changedTouches[0]?.clientX || 0) - touchStartX;
-                    if (dx > 75) navigateSingleQuestion(-1);
-                    else if (dx < -75) navigateSingleQuestion(1);
+            // Vuốt trái / phải chuyển câu trên điện thoại khi ở chế độ "Làm từng câu một"
+            const qContainer = document.getElementById('questionsContainer');
+            if (qContainer) {
+                let touchStartX = 0;
+                let touchStartY = 0;
+                qContainer.addEventListener('touchstart', (e) => {
+                    if (appState.viewMode !== 'single' || !e.touches || e.touches.length !== 1) return;
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }, { passive: true });
+                qContainer.addEventListener('touchend', (e) => {
+                    if (appState.viewMode !== 'single' || !e.changedTouches || e.changedTouches.length !== 1) return;
+                    const dx = e.changedTouches[0].clientX - touchStartX;
+                    const dy = e.changedTouches[0].clientY - touchStartY;
+                    if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                        navigateSingleQuestion(dx < 0 ? 1 : -1);
+                    }
                 }, { passive: true });
             }
         }
 
-        window.addEventListener('DOMContentLoaded', async () => {
+        async function initApp() {
+            setupGlobalInteractionListeners();
             updateApiKeyHeaderBadge();
-            setupInteractiveGestures();
-            buildActiveExamList();
-            updateHeaderExamTitles();
-            renderTTSVoiceCards();
-            switchActiveAIBot('tutor');
             startExamTimer();
 
-            const loadedShared = await tryLoadSharedExamFromUrl();
-            if (!loadedShared) {
-                if (IS_STANDALONE_STUDENT_APP) {
-                    applyStudentStandaloneModeUI();
+            const loadedFromLink = await tryLoadSharedExamFromUrl();
+            if (!loadedFromLink) {
+                buildActiveExamList();
+                updateHeaderExamTitles();
+                applyStudentStandaloneModeUI();
+                if (IS_STANDALONE_STUDENT_APP || hasAnyQuestions()) {
+                    switchMainWorkspace('study');
                 } else {
-                    switchMainWorkspace(hasAnyQuestions() ? 'study' : 'scanner');
+                    switchMainWorkspace('scanner');
                 }
             }
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>
