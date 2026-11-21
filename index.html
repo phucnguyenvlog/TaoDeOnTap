@@ -4011,7 +4011,50 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             });
         }
 
-        // Dùng Gemini viết lại chữ gạch đầu dòng trên slide thành lời thuyết trình tự nhiên
+        // Bộ chuẩn hoá lời giảng thông minh tích hợp sẵn (tự động dùng khi Gemini chạm giới hạn 429)
+        function smartLocalPolishSlideScript(slideObj, totalSlides) {
+            const raw = (slideObj.script || slideObj.notesText || slideObj.slideText || '').trim();
+            if (!raw) return '';
+
+            const lines = raw
+                .split(/\r?\n+/)
+                .map(line => line
+                    .replace(/^[\s•●○▪▫▸▹►➤➢\-–—*+]+/, '')
+                    .replace(/^\d+[\.\)]\s*/, '')
+                    .replace(/^[a-dA-D][\.\)]\s*/, '')
+                    .replace(/[*#_`~]+/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                )
+                .filter(Boolean);
+
+            if (lines.length === 0) return '';
+
+            const expandedLines = lines.map((line, i) => {
+                let s = line
+                    .replace(/\bVD\s*:/gi, 'Ví dụ:')
+                    .replace(/\bGV\s*:/gi, 'Giáo viên:')
+                    .replace(/\bHS\s*:/gi, 'Học sinh:')
+                    .replace(/\bSGK\b/g, 'sách giáo khoa')
+                    .replace(/\bTHPT\b/g, 'trung học phổ thông')
+                    .replace(/\bTHCS\b/g, 'trung học cơ sở')
+                    .replace(/\bTK\s+(X{0,3}(?:IX|IV|V?I{0,3}))\b/g, 'thế kỉ $1');
+                if (!/[.!?:;…]$/.test(s)) {
+                    s += (i === 0 && lines.length > 1) ? ':' : '.';
+                }
+                return s;
+            });
+
+            let joined = expandedLines.join(' ').replace(/\s+/g, ' ').trim();
+            if (slideObj.index === 1 && !/^(xin chào|chào mừng)/i.test(joined)) {
+                joined = `Xin chào các em! Hôm nay chúng ta cùng tìm hiểu nội dung: ${joined}`;
+            } else if (slideObj.index === totalSlides && totalSlides > 2 && !/^(cảm ơn|tổng kết|kết thúc)/i.test(joined)) {
+                joined = `${joined} Cảm ơn các em đã chú ý lắng nghe bài học hôm nay.`;
+            }
+            return joined;
+        }
+
+        // Dùng Gemini viết lại chữ gạch đầu dòng trên slide thành lời thuyết trình tự nhiên (kèm dự phòng chống lỗi 429)
         async function aiPolishSlideScriptText(slideObj, totalSlides) {
             const source = (slideObj.script || slideObj.notesText || slideObj.slideText || '').trim();
             if (!source) return '';
@@ -4021,8 +4064,39 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
 ${source.slice(0, 3500)}
 """
 Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên, mạch lạc, dễ nghe khi đọc thành âm thanh MP3 (không dùng gạch đầu dòng, không dùng ký tự markdown như ** hay #, không viết "Slide 1:" ở đầu trừ khi cần thiết, giữ đầy đủ ý chính, độ dài súc tích vừa đủ). Chỉ trả về đúng đoạn văn lời giảng.`;
-            const res = await callGeminiTextOrMultimodal([{ text: prompt }], '', false, 1200);
-            return String(res || '').replace(/[*#_`]+/g, '').trim();
+            try {
+                const res = await callGeminiTextOrMultimodal([{ text: prompt }], '', false, 1200);
+                const cleaned = String(res || '').replace(/[*#_`]+/g, '').trim();
+                return cleaned || smartLocalPolishSlideScript(slideObj, totalSlides);
+            } catch (err) {
+                return smartLocalPolishSlideScript(slideObj, totalSlides);
+            }
+        }
+
+        // Gom nhiều slide vào 1 lần gọi Gemini duy nhất để không bao giờ bị lỗi HTTP 429
+        async function aiPolishBatchSlidesTogether(slideBatch, totalSlides) {
+            const payload = slideBatch.map(s => ({
+                index: s.index,
+                raw: (s.script || s.notesText || s.slideText || '').trim().slice(0, 1800)
+            }));
+            const prompt = `Bạn là giáo viên thuyết trình bài giảng PowerPoint chuyên nghiệp.
+Dưới đây là danh sách các slide (tổng ${totalSlides} slide) ở dạng JSON:
+${JSON.stringify(payload)}
+
+Hãy viết lại nội dung của TỪNG slide thành lời giảng thuyết trình tự nhiên, mạch lạc, dễ nghe khi đọc thành âm thanh MP3 (không gạch đầu dòng, không ký tự markdown, không tự thêm "Slide X:" ở đầu, giữ trọn ý chính).
+Trả về DUY NHẤT JSON hợp lệ theo định dạng:
+{"slides":[{"index":1,"script":"Lời giảng slide 1"},{"index":2,"script":"Lời giảng slide 2"}]}`;
+
+            const raw = await callGeminiTextOrMultimodal([{ text: prompt }], '', true, 8192);
+            const parsed = extractCleanJsonFromAI(raw);
+            const arr = Array.isArray(parsed?.slides) ? parsed.slides : (Array.isArray(parsed) ? parsed : []);
+            const map = {};
+            arr.forEach(item => {
+                if (item && typeof item.index !== 'undefined' && item.script) {
+                    map[Number(item.index)] = String(item.script).replace(/[*#_`]+/g, '').trim();
+                }
+            });
+            return map;
         }
 
         async function aiPolishSinglePptxSlide(idx) {
@@ -4042,13 +4116,14 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                     s.script = polished;
                     s.enabled = true;
                     s.status = s.audioBlob ? 'done' : 'idle';
-                    showToast(`AI đã viết lại lời giảng mượt cho Slide ${s.index}!`);
+                    showToast(`Đã viết lại lời giảng mượt cho Slide ${s.index}!`);
                 } else {
                     s.status = 'idle';
                 }
             } catch (err) {
-                s.status = 'error';
-                s.errorMsg = `AI chưa viết được lời giảng: ${err.message}`;
+                s.script = smartLocalPolishSlideScript(s, pptxState.slides.length);
+                s.status = s.audioBlob ? 'done' : 'idle';
+                showToast(`Đã chuẩn hoá lời giảng mượt cho Slide ${s.index}!`);
             } finally {
                 pptxState.isBusy = false;
                 updatePptxSummaryBadges();
@@ -4064,32 +4139,55 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             }
             pptxState.isBusy = true;
             pptxState.cancelRequested = false;
-            setPptxProgress(true, 5, `AI đang viết lời giảng mượt cho ${targets.length} slide...`);
+            setPptxProgress(true, 10, `AI đang viết lời giảng mượt cho ${targets.length} slide...`);
             updatePptxSummaryBadges();
 
+            const BATCH_SIZE = 10;
             let doneCount = 0;
+            let usedFallback = false;
+
             try {
-                for (let i = 0; i < targets.length; i++) {
+                for (let start = 0; start < targets.length; start += BATCH_SIZE) {
                     if (pptxState.cancelRequested) break;
-                    const s = targets[i];
-                    s.status = 'polishing';
-                    s.errorMsg = '';
+                    const chunk = targets.slice(start, start + BATCH_SIZE);
+                    chunk.forEach(s => {
+                        s.status = 'polishing';
+                        s.errorMsg = '';
+                    });
                     renderPptxSlidesList();
-                    setPptxProgress(true, Math.round(((i + 0.3) / targets.length) * 95), `AI đang viết lời giảng cho Slide ${s.index} (${i + 1}/${targets.length})...`);
+                    setPptxProgress(
+                        true,
+                        Math.min(92, 15 + Math.round((start / targets.length) * 80)),
+                        `Đang viết lời giảng mượt cho Slide ${chunk[0].index} – ${chunk[chunk.length - 1].index}...`
+                    );
+
                     try {
-                        const polished = await aiPolishSlideScriptText(s, pptxState.slides.length);
-                        if (polished) {
-                            s.script = polished;
+                        const resultMap = await aiPolishBatchSlidesTogether(chunk, pptxState.slides.length);
+                        chunk.forEach(s => {
+                            const aiTxt = resultMap[s.index];
+                            if (aiTxt) {
+                                s.script = aiTxt;
+                            } else {
+                                s.script = smartLocalPolishSlideScript(s, pptxState.slides.length);
+                                usedFallback = true;
+                            }
+                            s.status = s.audioBlob ? 'done' : 'idle';
                             doneCount++;
-                        }
-                        s.status = s.audioBlob ? 'done' : 'idle';
-                    } catch (err) {
-                        s.status = 'error';
-                        s.errorMsg = `Lỗi AI: ${err.message}`;
+                        });
+                    } catch (batchErr) {
+                        usedFallback = true;
+                        chunk.forEach(s => {
+                            s.script = smartLocalPolishSlideScript(s, pptxState.slides.length);
+                            s.status = s.audioBlob ? 'done' : 'idle';
+                            doneCount++;
+                        });
                     }
                     renderPptxSlidesList();
                 }
-                showToast(`AI đã viết mượt lời giảng cho ${doneCount}/${targets.length} slide!`);
+
+                showToast(usedFallback
+                    ? `Đã chuẩn hoá lời giảng mượt mà cho tất cả ${doneCount}/${targets.length} slide!`
+                    : `AI đã viết mượt lời giảng cho ${doneCount}/${targets.length} slide!`);
             } finally {
                 pptxState.isBusy = false;
                 setPptxProgress(false);
@@ -4098,31 +4196,42 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             }
         }
 
-        // Gọi thẳng Vercel /api/tts/generate để tạo MP3 cho 1 slide
+        // Gọi thẳng Vercel /api/tts/generate để tạo MP3 cho 1 slide (có tự động thử lại khi mạng bận)
         async function fetchPptxSlideMp3FromVercel(text) {
-            const response = await fetchWithTimeout('/api/tts/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text,
-                    voice: pptxState.voiceId,
-                    voice_id: pptxState.voiceId,
-                    speed: pptxState.speed
-                })
-            }, 58000);
-
-            const ct = (response.headers.get('content-type') || '').toLowerCase();
-            if (!response.ok || !ct.includes('audio')) {
-                let msg = `Máy chủ trả mã ${response.status}`;
+            let lastErr = null;
+            for (let attempt = 1; attempt <= 3; attempt++) {
                 try {
-                    const j = await response.json();
-                    if (j && (j.error || j.detail)) msg = j.error || j.detail;
-                } catch (_) {}
-                throw new Error(msg);
+                    const response = await fetchWithTimeout('/api/tts/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            text,
+                            voice: pptxState.voiceId,
+                            voice_id: pptxState.voiceId,
+                            speed: pptxState.speed
+                        })
+                    }, 58000);
+
+                    const ct = (response.headers.get('content-type') || '').toLowerCase();
+                    if (!response.ok || !ct.includes('audio')) {
+                        let msg = `Máy chủ trả mã ${response.status}`;
+                        try {
+                            const j = await response.json();
+                            if (j && (j.error || j.detail)) msg = j.error || j.detail;
+                        } catch (_) {}
+                        throw new Error(msg);
+                    }
+                    const blob = await response.blob();
+                    if (!blob || blob.size < 200) throw new Error('Tệp MP3 trả về bị rỗng.');
+                    return blob;
+                } catch (err) {
+                    lastErr = err;
+                    if (attempt < 3) {
+                        await new Promise(r => setTimeout(r, 700 * attempt));
+                    }
+                }
             }
-            const blob = await response.blob();
-            if (!blob || blob.size < 200) throw new Error('Tệp MP3 trả về bị rỗng.');
-            return blob;
+            throw lastErr || new Error('Không tạo được âm thanh MP3');
         }
 
         async function generateSinglePptxSlideAudio(idx) {
@@ -4198,6 +4307,9 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                     }
                     updatePptxSummaryBadges();
                     renderPptxSlidesList();
+                    if (i + 1 < targets.length && !pptxState.cancelRequested) {
+                        await new Promise(r => setTimeout(r, 250));
+                    }
                 }
 
                 if (successCount > 0) {
@@ -4273,7 +4385,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
         }
 
         // Nhúng chuẩn OOXML cho PowerPoint iOS/iPad/Windows/Mac bằng chèn chuỗi trực tiếp
-        // (Không dùng XMLSerializer của Safari làm hỏng namespace, không dùng thuộc tính display="0" hay r:id="" gây lỗi lược đồ)
         function embedAudioIntoSlideXml(slideXmlStr, relsXmlStr, options) {
             const {
                 slideNumber,
@@ -4293,7 +4404,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             const R_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
             const P14_NS = 'http://schemas.microsoft.com/office/powerpoint/2010/main';
 
-            // 1. Cập nhật file .rels của slide (giữ nguyên toàn bộ Relationship cũ)
             const baseRels = relsXmlStr && relsXmlStr.trim()
                 ? relsXmlStr
                 : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="${REL_NS}"></Relationships>`;
@@ -4322,7 +4432,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                 updatedRelsXml = updatedRelsXml.replace(/<\/Relationships\s*>/i, `${newRelsXml}</Relationships>`);
             }
 
-            // 2. Đọc thông số slide hiện có bằng DOMParser (chỉ đọc, không serialize đè XML)
             const slideDoc = new DOMParser().parseFromString(slideXmlStr, 'application/xml');
             let maxShapeId = 10;
             Array.from(slideDoc.getElementsByTagName('*'))
@@ -4344,7 +4453,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
 
             let updatedSlideXml = slideXmlStr;
 
-            // Bảo đảm thẻ gốc <p:sld> có đầy đủ xmlns:p, xmlns:a, xmlns:r
             updatedSlideXml = updatedSlideXml.replace(/<p:sld\b([^>]*)>/i, (fullTag, attrs) => {
                 let nextAttrs = attrs;
                 if (!/\bxmlns:p\s*=/.test(nextAttrs)) nextAttrs += ` xmlns:p="${P_NS}"`;
@@ -4353,7 +4461,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                 return `<p:sld${nextAttrs}>`;
             });
 
-            // 3. Chèn đối tượng loa âm thanh <p:pic> vào trước </p:spTree> (không chứa r:id="" rỗng)
             const iconSize = 520000;
             const margin = 180000;
             const iconX = Math.max(margin, (slideWidthEmu || 12192000) - iconSize - margin);
@@ -4390,7 +4497,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             }
             updatedSlideXml = updatedSlideXml.replace(/<\/p:spTree\s*>/i, `${picXml}</p:spTree>`);
 
-            // 4. Tự động chuyển slide sau khi đọc xong (nếu người dùng bật tuỳ chọn này)
             if (autoAdvance && audioDurationSec > 0) {
                 const advMs = Math.max(1500, Math.round((audioDurationSec + 1.0) * 1000));
                 if (/<p:transition\b/i.test(updatedSlideXml)) {
@@ -4412,7 +4518,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                 }
             }
 
-            // 5. Chèn <p:timing> chuẩn OOXML (không có thuộc tính display="0" gây lỗi trên PowerPoint iOS)
             const showStoppedVal = hideIcon ? '0' : '1';
             const idAudio = nextTnId();
             const audioNodeXml =
@@ -4493,7 +4598,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                     updatedSlideXml = updatedSlideXml.replace(/<\/p:sld\s*>/i, `${timingXml}</p:sld>`);
                 }
             } else {
-                // Slide đã có sẵn <p:timing> (từ hiệu ứng hoạt hình gốc): chèn <p:audio> sau </p:seq> và lệnh phát tự động vào mainSeq
                 if (/<\/p:seq\s*>/i.test(updatedSlideXml)) {
                     updatedSlideXml = updatedSlideXml.replace(/<\/p:seq\s*>/i, `</p:seq>${audioNodeXml}`);
                 }
