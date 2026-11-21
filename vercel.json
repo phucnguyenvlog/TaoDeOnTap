@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "api/tts.py": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    { "source": "/health", "destination": "/api/tts?action=health" },
+    { "source": "/voices", "destination": "/api/tts?action=voices" },
+    { "source": "/api/tts/generate", "destination": "/api/tts?action=generate" }
+  ]
+}
