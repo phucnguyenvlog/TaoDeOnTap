@@ -941,7 +941,7 @@
                     </div>
                     <div class="min-w-0">
                         <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Lồng Tiếng PowerPoint Tự Động (.PPTX)</h3>
-                        <p class="text-[11px] sm:text-xs text-slate-500 truncate">Phân tích từng slide • AI viết lời giảng mượt • Nhúng MP3 trực tiếp &amp; tải file .pptx hoàn chỉnh</p>
+                        <p class="text-[11px] sm:text-xs text-slate-500 truncate">Phân tích từng slide • AI viết lời giảng truyền cảm • Nhúng MP3 trực tiếp &amp; tải file .pptx hoàn chỉnh</p>
                     </div>
                 </div>
                 <button type="button" onclick="closePptxAudioStudio()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
@@ -988,14 +988,39 @@
                     </div>
                 </div>
 
-                <!-- BƯỚC 2: CẤU HÌNH GIỌNG ĐỌC & ĐIỀU KHIỂN HÀNG LOẠT -->
+                <!-- BƯỚC 2: CẤU HÌNH GIỌNG ĐỌC, PHONG CÁCH LỜI GIẢNG & ĐIỀU KHIỂN HÀNG LOẠT -->
                 <div id="pptxControlsSection" class="hidden bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3.5">
-                    <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
-                        <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">2</span>
-                        <span>Cấu hình giọng đọc &amp; lồng tiếng từng slide</span>
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">2</span>
+                            <span>Cấu hình lời giảng, giọng đọc &amp; lồng tiếng từng slide</span>
+                        </div>
+                        <button type="button" onclick="togglePptxApiKeyBox()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 text-[11px] font-bold transition">
+                            <i class="fa-solid fa-key text-amber-600 mr-1"></i>Khóa AI riêng
+                        </button>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Ô nhập Gemini API Key miễn phí riêng (tự mở khi hết lượt AI chung hoặc khi bấm Khóa AI riêng) -->
+                    <div id="pptxCustomApiKeyBox" class="hidden p-3 rounded-xl bg-amber-50/90 border border-amber-300 space-y-2 text-xs">
+                        <div class="flex flex-wrap items-center justify-between gap-1.5">
+                            <span class="font-extrabold text-amber-950"><i class="fa-solid fa-sparkles text-amber-600 mr-1"></i>Dán Gemini API Key miễn phí của bạn để AI viết lời giảng không bao giờ hết lượt:</span>
+                            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline font-extrabold">Lấy khóa miễn phí ↗</a>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="password" id="pptxGeminiKeyInput" placeholder="Dán mã khóa bắt đầu bằng AIzaSy..." class="flex-1 px-3 py-2 rounded-lg bg-white border border-amber-300 text-xs font-mono text-slate-900 outline-none focus:border-amber-600">
+                            <button type="button" onclick="savePptxCustomGeminiKey()" class="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold shrink-0 transition">Lưu khóa</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Phong cách AI viết lời giảng</label>
+                            <select id="pptxNarrationStyleSelect" onchange="pptxState.narrationStyle = this.value" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-bold text-slate-800 outline-none focus:border-orange-500">
+                                <option value="teacher" selected>Giáo viên giảng bài truyền cảm</option>
+                                <option value="presenter">Thuyết trình chuyên nghiệp / MC</option>
+                                <option value="story">Kể chuyện sinh động (THCS / Tiểu học)</option>
+                            </select>
+                        </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 mb-1">Giọng đọc (Vercel Neural TTS)</label>
                             <select id="pptxVoiceSelect" onchange="pptxState.voiceId = this.value" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-bold text-slate-800 outline-none focus:border-orange-500"></select>
@@ -1029,7 +1054,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <button type="button" id="btnPptxAiPolishAll" onclick="aiPolishAllPptxSlides()" class="py-2.5 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold transition flex items-center justify-center gap-1.5 disabled:opacity-50">
                             <i class="fa-solid fa-wand-magic-sparkles text-amber-600"></i>
-                            <span>AI Viết Lời Giảng Tất Cả</span>
+                            <span>AI Viết Lời Giảng Hay Tất Cả</span>
                         </button>
                         <button type="button" id="btnPptxGenerateAll" onclick="generateAllPptxSlidesAudio()" class="py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white text-xs font-extrabold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50">
                             <i class="fa-solid fa-volume-high"></i>
@@ -1346,16 +1371,17 @@
             const models = [
                 'gemini-2.5-flash',
                 'gemini-2.5-flash-lite',
-                'gemini-3-flash-preview',
+                'gemini-2.0-flash',
                 'gemini-flash-latest'
             ];
             const keys = getCandidateApiKeys();
             let lastError = 'Không thể kết nối máy chủ AI';
+            let sawQuota429 = false;
 
             const body = {
                 contents: [{ role: 'user', parts }],
                 generationConfig: {
-                    temperature: expectJson ? 0.2 : 0.65,
+                    temperature: expectJson ? 0.35 : 0.75,
                     maxOutputTokens
                 }
             };
@@ -1377,8 +1403,13 @@
                         }, 45000);
 
                         if (!res.ok) {
-                            const errText = await res.text().catch(() => '');
-                            lastError = `HTTP ${res.status}: ${errText.slice(0, 140)}`;
+                            if (res.status === 429) {
+                                sawQuota429 = true;
+                                lastError = 'Hết lượt AI miễn phí chung (HTTP 429). Hãy dán Gemini API Key cá nhân miễn phí để dùng không giới hạn.';
+                            } else {
+                                const errText = await res.text().catch(() => '');
+                                lastError = `Lỗi AI (${res.status}): ${errText.slice(0, 100)}`;
+                            }
                             continue;
                         }
                         const data = await res.json();
@@ -1393,7 +1424,11 @@
                     }
                 }
             }
-            throw new Error(lastError);
+            const finalErr = new Error(sawQuota429
+                ? 'Tài khoản AI miễn phí chung đang tạm hết lượt (429). Hãy dán Gemini API Key miễn phí của bạn để AI viết lời giảng hay!'
+                : lastError);
+            finalErr.isQuota429 = sawQuota429;
+            throw finalErr;
         }
 
         function extractCleanJsonFromAI(rawText) {
@@ -2124,7 +2159,6 @@ ${combinedText ? `\nNỘI DUNG VĂN BẢN TRÍCH XUẤT TỪ FILE:\n${combinedTe
             const qContainer = document.getElementById('questionsContainer');
             if (emptyBox) emptyBox.classList.toggle('hidden', hasQ);
 
-            // Cập nhật trạng thái nút điều khiển 3 chế độ
             const setSeg = (idA, idB, isA, colorA) => {
                 const a = document.getElementById(idA);
                 const b = document.getElementById(idB);
@@ -2168,7 +2202,6 @@ ${combinedText ? `\nNỘI DUNG VĂN BẢN TRÍCH XUẤT TỪ FILE:\n${combinedTe
                 ? `Đúng: ${stats.correctItems}/${stats.totalItems} ý`
                 : `Đã làm: ${stats.doneItems}/${stats.totalItems} ý`;
 
-            // Render bảng số bên phải
             const palA = document.getElementById('palettePartA');
             if (palA) {
                 palA.innerHTML = appState.activeExam.partA.map((q, idx) => {
@@ -3560,10 +3593,43 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             originalArrayBuffer: null,
             slides: [],
             voiceId: 'vi-VN-HoaiMyNeural',
+            narrationStyle: 'teacher',
             speed: 1.0,
             isBusy: false,
             cancelRequested: false
         };
+
+        function togglePptxApiKeyBox(forceShow = null) {
+            const box = document.getElementById('pptxCustomApiKeyBox');
+            const inp = document.getElementById('pptxGeminiKeyInput');
+            if (!box) return;
+            const shouldShow = typeof forceShow === 'boolean' ? forceShow : box.classList.contains('hidden');
+            box.classList.toggle('hidden', !shouldShow);
+            if (shouldShow && inp) {
+                try {
+                    const saved = (localStorage.getItem(STORAGE_API_KEY_NAME) || '').trim();
+                    if (saved) inp.value = saved;
+                } catch (_) {}
+                inp.focus();
+            }
+        }
+
+        function savePptxCustomGeminiKey() {
+            const inp = document.getElementById('pptxGeminiKeyInput');
+            const val = (inp?.value || '').trim();
+            if (!val) {
+                showToast('Vui lòng dán mã Gemini API Key vào ô trống!');
+                return;
+            }
+            try {
+                localStorage.setItem(STORAGE_API_KEY_NAME, val);
+                updateApiKeyHeaderBadge();
+                showToast('Đã lưu Gemini API Key cá nhân! Bạn có thể bấm AI Viết Lời Giảng ngay.');
+                document.getElementById('pptxCustomApiKeyBox')?.classList.add('hidden');
+            } catch (e) {
+                showToast('Không thể lưu khóa vào trình duyệt.');
+            }
+        }
 
         function openPptxAudioStudio() {
             const modal = document.getElementById('pptxAudioModal');
@@ -3860,7 +3926,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 populatePptxVoiceSelect();
                 updatePptxSummaryBadges();
                 renderPptxSlidesList();
-                showToast(`Đã phân tích xong ${slides.length} slide! Bạn có thể bấm Tạo Âm Thanh hoặc dùng AI viết lời giảng mượt hơn.`);
+                showToast(`Đã phân tích xong ${slides.length} slide! Bạn có thể bấm "AI Viết Lời Giảng Hay Tất Cả" hoặc Tạo Âm Thanh.`);
             } catch (err) {
                 showToast(`Không thể mở tệp PowerPoint: ${err.message}`);
             } finally {
@@ -3887,12 +3953,12 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 if (s.status === 'generating') {
                     statusPill = `<span class="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 text-[10px] font-extrabold"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tạo MP3...</span>`;
                 } else if (s.status === 'polishing') {
-                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-extrabold"><i class="fa-solid fa-spinner fa-spin mr-1"></i>AI đang viết lời...</span>`;
+                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-extrabold"><i class="fa-solid fa-spinner fa-spin mr-1"></i>AI đang viết lời hay...</span>`;
                 } else if (s.audioBlob) {
                     const durStr = s.audioDuration > 0 ? `${s.audioDuration.toFixed(1)}s • ` : '';
                     statusPill = `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold"><i class="fa-solid fa-circle-check mr-1"></i>Đã có MP3 (${durStr}${s.audioSizeKB} KB)</span>`;
                 } else if (s.status === 'error') {
-                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-extrabold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Lỗi</span>`;
+                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-extrabold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Chưa viết được</span>`;
                 } else if (!s.script.trim()) {
                     statusPill = `<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold">Slide trống / chỉ có ảnh</span>`;
                 }
@@ -3931,7 +3997,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                             <span class="text-[11px] text-slate-400 font-semibold">${s.script.trim().length.toLocaleString('vi-VN')} ký tự</span>
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <button type="button" onclick="aiPolishSinglePptxSlide(${idx})" ${pptxState.isBusy ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-bold transition disabled:opacity-50">
-                                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI viết lời mượt
+                                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI viết lời hay
                                 </button>
                                 <button type="button" onclick="generateSinglePptxSlideAudio(${idx})" ${pptxState.isBusy ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-extrabold transition disabled:opacity-50">
                                     <i class="fa-solid fa-volume-high mr-1"></i>${s.audioBlob ? 'Tạo lại MP3' : 'Tạo MP3 slide này'}
@@ -4011,83 +4077,74 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             });
         }
 
-        // Bộ chuẩn hoá lời giảng thông minh tích hợp sẵn (tự động dùng khi Gemini chạm giới hạn 429)
-        function smartLocalPolishSlideScript(slideObj, totalSlides) {
-            const raw = (slideObj.script || slideObj.notesText || slideObj.slideText || '').trim();
-            if (!raw) return '';
-
-            const lines = raw
-                .split(/\r?\n+/)
-                .map(line => line
-                    .replace(/^[\s•●○▪▫▸▹►➤➢\-–—*+]+/, '')
-                    .replace(/^\d+[\.\)]\s*/, '')
-                    .replace(/^[a-dA-D][\.\)]\s*/, '')
-                    .replace(/[*#_`~]+/g, '')
-                    .replace(/\s+/g, ' ')
-                    .trim()
-                )
-                .filter(Boolean);
-
-            if (lines.length === 0) return '';
-
-            const expandedLines = lines.map((line, i) => {
-                let s = line
-                    .replace(/\bVD\s*:/gi, 'Ví dụ:')
-                    .replace(/\bGV\s*:/gi, 'Giáo viên:')
-                    .replace(/\bHS\s*:/gi, 'Học sinh:')
-                    .replace(/\bSGK\b/g, 'sách giáo khoa')
-                    .replace(/\bTHPT\b/g, 'trung học phổ thông')
-                    .replace(/\bTHCS\b/g, 'trung học cơ sở')
-                    .replace(/\bTK\s+(X{0,3}(?:IX|IV|V?I{0,3}))\b/g, 'thế kỉ $1');
-                if (!/[.!?:;…]$/.test(s)) {
-                    s += (i === 0 && lines.length > 1) ? ':' : '.';
-                }
-                return s;
-            });
-
-            let joined = expandedLines.join(' ').replace(/\s+/g, ' ').trim();
-            if (slideObj.index === 1 && !/^(xin chào|chào mừng)/i.test(joined)) {
-                joined = `Xin chào các em! Hôm nay chúng ta cùng tìm hiểu nội dung: ${joined}`;
-            } else if (slideObj.index === totalSlides && totalSlides > 2 && !/^(cảm ơn|tổng kết|kết thúc)/i.test(joined)) {
-                joined = `${joined} Cảm ơn các em đã chú ý lắng nghe bài học hôm nay.`;
+        function getPptxNarrationPersonaGuide() {
+            const style = pptxState.narrationStyle || 'teacher';
+            if (style === 'presenter') {
+                return 'Phong cách: Diễn giả thuyết trình chuyên nghiệp, trang trọng, rành mạch, nhấn nhá cuốn hút, giàu sức thuyết phục.';
             }
-            return joined;
+            if (style === 'story') {
+                return 'Phong cách: Giáo viên kể chuyện sinh động cho học sinh THCS/Tiểu học, giọng điệu gần gũi, tươi sáng, gợi trí tò mò, đặt câu hỏi dẫn dắt tự nhiên.';
+            }
+            return 'Phong cách: Giáo viên giàu kinh nghiệm đứng lớp giảng bài truyền cảm, ấm áp, lôi cuốn. Không bao giờ đọc vẹt chữ trên slide mà diễn giải mềm mại, đặt câu hỏi gợi mở cho học sinh suy nghĩ, và nối mạch tự nhiên từ slide trước sang slide sau.';
         }
 
-        // Dùng Gemini viết lại chữ gạch đầu dòng trên slide thành lời thuyết trình tự nhiên (kèm dự phòng chống lỗi 429)
+        // Dùng AI thật viết lời giảng hay, có mạch liên kết giữa các slide (không bao giờ dùng ghép câu máy móc)
         async function aiPolishSlideScriptText(slideObj, totalSlides) {
             const source = (slideObj.script || slideObj.notesText || slideObj.slideText || '').trim();
             if (!source) return '';
-            const prompt = `Bạn là giáo viên thuyết trình bài giảng PowerPoint chuyên nghiệp.
-Đây là nội dung thô của Slide ${slideObj.index}/${totalSlides}:
+            const prevSlide = pptxState.slides.find(x => x.index === slideObj.index - 1);
+            const nextSlide = pptxState.slides.find(x => x.index === slideObj.index + 1);
+            const lessonTitle = pptxState.slides[0]?.title || pptxState.fileName.replace(/\.pptx$/i, '');
+
+            const systemPrompt = `Bạn là bậc thầy biên soạn lời giảng thuyết trình tiếng Việt cho bài giảng PowerPoint.
+${getPptxNarrationPersonaGuide()}
+Nguyên tắc vàng để lời văn thực sự hay khi đọc bằng giọng AI:
+1. TUYỆT ĐỐI KHÔNG đọc vẹt nguyên văn từng gạch đầu dòng hay tiêu đề khô cứng (ví dụ: không đọc "Nhiệm vụ: Quan sát tranh và trả lời các câu hỏi sau 1..." mà phải chuyển thành lời thầy/cô hướng dẫn học sinh: "Bây giờ, cả lớp hãy cùng hướng mắt lên màn hình, quan sát thật kỹ bức tranh này và suy nghĩ xem...").
+2. Viết thành đoạn văn nói tự nhiên, giàu cảm xúc sư phạm, câu văn có nhịp điệu ngắt nghỉ rõ ràng bằng dấu phẩy và dấu chấm để giọng đọc lên xuống truyền cảm.
+3. Tạo sự kết nối mượt mà giữa các slide (Slide 1 mở đầu lôi cuốn giới thiệu chủ đề; các slide giữa có câu chuyển ý nhẹ nhàng; slide cuối tổng kết đọng lại kiến thức và lời chào).
+4. Mở rộng tự nhiên các từ viết tắt (SGK -> sách giáo khoa, THPT -> trung học phổ thông, TK X -> thế kỉ thứ mười...).
+5. Không dùng ký tự markdown (**, #, -), không ghi nhãn "Slide X:" ở đầu.`;
+
+            const prompt = `Tên bài giảng: "${lessonTitle}" (Tổng ${totalSlides} slide).
+${prevSlide ? `- Nội dung Slide trước (Slide ${prevSlide.index}): "${(prevSlide.script || prevSlide.title).slice(0, 220)}"` : '- Đây là Slide mở đầu bài giảng.'}
+- Nội dung thô của Slide hiện tại (Slide ${slideObj.index}/${totalSlides}):
 """
 ${source.slice(0, 3500)}
 """
-Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên, mạch lạc, dễ nghe khi đọc thành âm thanh MP3 (không dùng gạch đầu dòng, không dùng ký tự markdown như ** hay #, không viết "Slide 1:" ở đầu trừ khi cần thiết, giữ đầy đủ ý chính, độ dài súc tích vừa đủ). Chỉ trả về đúng đoạn văn lời giảng.`;
-            try {
-                const res = await callGeminiTextOrMultimodal([{ text: prompt }], '', false, 1200);
-                const cleaned = String(res || '').replace(/[*#_`]+/g, '').trim();
-                return cleaned || smartLocalPolishSlideScript(slideObj, totalSlides);
-            } catch (err) {
-                return smartLocalPolishSlideScript(slideObj, totalSlides);
-            }
+${nextSlide ? `- Tiêu đề Slide tiếp theo (Slide ${nextSlide.index}): "${nextSlide.title}"` : '- Đây là Slide kết thúc bài giảng.'}
+
+Hãy viết lời giảng hoàn chỉnh, hay và tự nhiên nhất cho Slide ${slideObj.index}. Chỉ trả về đúng đoạn lời giảng.`;
+
+            const res = await callGeminiTextOrMultimodal([{ text: prompt }], systemPrompt, false, 1500);
+            return String(res || '').replace(/[*#_`]+/g, '').trim();
         }
 
-        // Gom nhiều slide vào 1 lần gọi Gemini duy nhất để không bao giờ bị lỗi HTTP 429
+        // Gom nhóm slide theo mạch bài giảng trong 1 lần gọi AI để vừa nhanh vừa liền mạch
         async function aiPolishBatchSlidesTogether(slideBatch, totalSlides) {
+            const lessonTitle = pptxState.slides[0]?.title || pptxState.fileName.replace(/\.pptx$/i, '');
             const payload = slideBatch.map(s => ({
                 index: s.index,
-                raw: (s.script || s.notesText || s.slideText || '').trim().slice(0, 1800)
+                isFirstSlide: s.index === 1,
+                isLastSlide: s.index === totalSlides,
+                rawContent: (s.script || s.notesText || s.slideText || '').trim().slice(0, 1800)
             }));
-            const prompt = `Bạn là giáo viên thuyết trình bài giảng PowerPoint chuyên nghiệp.
-Dưới đây là danh sách các slide (tổng ${totalSlides} slide) ở dạng JSON:
+
+            const systemPrompt = `Bạn là bậc thầy biên soạn lời giảng thuyết trình tiếng Việt cho bài giảng PowerPoint.
+${getPptxNarrationPersonaGuide()}
+Nguyên tắc bắt buộc:
+- Viết thành lời nói giảng bài thực thụ, truyền cảm, giàu sức gợi mở — TUYỆT ĐỐI KHÔNG chép lại nguyên văn gạch đầu dòng khô cứng trên slide.
+- Các slide phải nối tiếp nhau thành một mạch giảng liền lạc, tự nhiên (mở đầu hấp dẫn ở Slide 1, chuyển ý mượt mà giữa các phần, giao nhiệm vụ thảo luận tự nhiên ở slide hoạt động, và tổng kết sâu lắng ở slide cuối).
+- Viết rõ các từ viết tắt để đọc chuẩn âm (VD: SGK -> sách giáo khoa, TK X -> thế kỉ thứ mười).
+- Không dùng ký tự markdown (**, #, -), không ghi "Slide X:" ở đầu.`;
+
+            const prompt = `Bài giảng: "${lessonTitle}" (Tổng ${totalSlides} slide).
+Hãy biên soạn lời giảng hay, tự nhiên và mạch lạc cho từng slide trong danh sách JSON sau:
 ${JSON.stringify(payload)}
 
-Hãy viết lại nội dung của TỪNG slide thành lời giảng thuyết trình tự nhiên, mạch lạc, dễ nghe khi đọc thành âm thanh MP3 (không gạch đầu dòng, không ký tự markdown, không tự thêm "Slide X:" ở đầu, giữ trọn ý chính).
-Trả về DUY NHẤT JSON hợp lệ theo định dạng:
-{"slides":[{"index":1,"script":"Lời giảng slide 1"},{"index":2,"script":"Lời giảng slide 2"}]}`;
+Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
+{"slides":[{"index":1,"script":"Lời giảng hay cho slide 1"},{"index":2,"script":"Lời giảng hay cho slide 2"}]}`;
 
-            const raw = await callGeminiTextOrMultimodal([{ text: prompt }], '', true, 8192);
+            const raw = await callGeminiTextOrMultimodal([{ text: prompt }], systemPrompt, true, 8192);
             const parsed = extractCleanJsonFromAI(raw);
             const arr = Array.isArray(parsed?.slides) ? parsed.slides : (Array.isArray(parsed) ? parsed : []);
             const map = {};
@@ -4116,14 +4173,16 @@ Trả về DUY NHẤT JSON hợp lệ theo định dạng:
                     s.script = polished;
                     s.enabled = true;
                     s.status = s.audioBlob ? 'done' : 'idle';
-                    showToast(`Đã viết lại lời giảng mượt cho Slide ${s.index}!`);
+                    showToast(`AI đã viết xong lời giảng hay cho Slide ${s.index}!`);
                 } else {
-                    s.status = 'idle';
+                    s.status = s.audioBlob ? 'done' : 'idle';
                 }
             } catch (err) {
-                s.script = smartLocalPolishSlideScript(s, pptxState.slides.length);
-                s.status = s.audioBlob ? 'done' : 'idle';
-                showToast(`Đã chuẩn hoá lời giảng mượt cho Slide ${s.index}!`);
+                // Giữ nguyên văn bản gốc của slide, KHÔNG làm dở lời văn
+                s.status = 'error';
+                s.errorMsg = err.message || 'AI chưa phản hồi — văn bản gốc của slide vẫn được giữ nguyên.';
+                if (err.isQuota429) togglePptxApiKeyBox(true);
+                showToast('AI miễn phí chung tạm hết lượt — hãy dán Gemini API Key cá nhân ở hộp màu vàng phía trên nhé!');
             } finally {
                 pptxState.isBusy = false;
                 updatePptxSummaryBadges();
@@ -4139,12 +4198,12 @@ Trả về DUY NHẤT JSON hợp lệ theo định dạng:
             }
             pptxState.isBusy = true;
             pptxState.cancelRequested = false;
-            setPptxProgress(true, 10, `AI đang viết lời giảng mượt cho ${targets.length} slide...`);
+            setPptxProgress(true, 10, `AI đang biên soạn lời giảng hay cho ${targets.length} slide...`);
             updatePptxSummaryBadges();
 
-            const BATCH_SIZE = 10;
+            const BATCH_SIZE = 8;
             let doneCount = 0;
-            let usedFallback = false;
+            let hitQuota = false;
 
             try {
                 for (let start = 0; start < targets.length; start += BATCH_SIZE) {
@@ -4158,7 +4217,7 @@ Trả về DUY NHẤT JSON hợp lệ theo định dạng:
                     setPptxProgress(
                         true,
                         Math.min(92, 15 + Math.round((start / targets.length) * 80)),
-                        `Đang viết lời giảng mượt cho Slide ${chunk[0].index} – ${chunk[chunk.length - 1].index}...`
+                        `AI đang viết lời giảng truyền cảm cho Slide ${chunk[0].index} – ${chunk[chunk.length - 1].index}...`
                     );
 
                     try {
@@ -4167,27 +4226,33 @@ Trả về DUY NHẤT JSON hợp lệ theo định dạng:
                             const aiTxt = resultMap[s.index];
                             if (aiTxt) {
                                 s.script = aiTxt;
+                                s.status = s.audioBlob ? 'done' : 'idle';
+                                doneCount++;
                             } else {
-                                s.script = smartLocalPolishSlideScript(s, pptxState.slides.length);
-                                usedFallback = true;
+                                s.status = s.audioBlob ? 'done' : 'idle';
                             }
-                            s.status = s.audioBlob ? 'done' : 'idle';
-                            doneCount++;
                         });
                     } catch (batchErr) {
-                        usedFallback = true;
+                        // Giữ nguyên 100% chữ gốc của các slide chưa viết được, tuyệt đối không làm dở lời văn
+                        if (batchErr.isQuota429) hitQuota = true;
                         chunk.forEach(s => {
-                            s.script = smartLocalPolishSlideScript(s, pptxState.slides.length);
-                            s.status = s.audioBlob ? 'done' : 'idle';
-                            doneCount++;
+                            s.status = 'error';
+                            s.errorMsg = batchErr.message || 'Tạm dừng vì hết lượt AI miễn phí chung (giữ nguyên chữ gốc).';
                         });
+                        renderPptxSlidesList();
+                        break;
                     }
                     renderPptxSlidesList();
                 }
 
-                showToast(usedFallback
-                    ? `Đã chuẩn hoá lời giảng mượt mà cho tất cả ${doneCount}/${targets.length} slide!`
-                    : `AI đã viết mượt lời giảng cho ${doneCount}/${targets.length} slide!`);
+                if (hitQuota) {
+                    togglePptxApiKeyBox(true);
+                    showToast(doneCount > 0
+                        ? `AI đã viết xong ${doneCount} slide đầu, sau đó hết lượt miễn phí chung. Dán Gemini API Key cá nhân ở trên để viết tiếp nhé!`
+                        : 'Lượt AI miễn phí chung tạm hết — hãy dán Gemini API Key cá nhân miễn phí vào hộp màu vàng phía trên!');
+                } else if (doneCount > 0) {
+                    showToast(`AI đã biên soạn xong lời giảng truyền cảm cho ${doneCount}/${targets.length} slide!`);
+                }
             } finally {
                 pptxState.isBusy = false;
                 setPptxProgress(false);
