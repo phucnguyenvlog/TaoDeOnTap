@@ -1153,6 +1153,14 @@
                 .replace(/'/g, '&#39;');
         }
 
+        function escapeXmlAttr(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
         function getSafeFilenameSlug(str, fallback = 'file') {
             const cleaned = String(str || '')
                 .normalize('NFD')
@@ -3027,7 +3035,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
         }
 
         // =========================================================================
-        // 9. CÔNG CỤ VĂN BẢN -> ÂM THANH GỌN NHẸ (NỐI THẲNG VERCEL /api/tts/generate)
+        // 9. CÔNG CỤ VĂN BẢN -> ÂM THANH (GỌN NHẸ • NỐI THẲNG VERCEL /api/tts/generate)
         // =========================================================================
         const DEFAULT_VERCEL_TTS_VOICES = [
             {
@@ -3147,9 +3155,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                     }
                     renderTTSVoiceCards();
                 }
-            } catch (e) {
-                // Giữ nguyên danh sách 5 giọng mặc định của Vercel nếu đang xem offline
-            }
+            } catch (e) {}
         }
 
         function filterTTSVoices(lang) {
@@ -3552,7 +3558,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
         const pptxState = {
             fileName: '',
             originalArrayBuffer: null,
-            slides: [], // [{ index, slidePath, fileName, title, slideText, notesText, script, sourceMode, enabled, status, audioBlob, audioUrl, audioDuration, audioSizeKB, errorMsg }]
+            slides: [],
             voiceId: 'vi-VN-HoaiMyNeural',
             speed: 1.0,
             isBusy: false,
@@ -3724,7 +3730,6 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 console.warn('Presentation order fallback:', e);
             }
 
-            // Dự phòng nếu không đọc được thứ tự từ presentation.xml
             if (orderedPaths.length === 0) {
                 const fallback = [];
                 zip.forEach((relativePath, fileObj) => {
@@ -3744,13 +3749,13 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             for (let i = 0; i < orderedPaths.length; i++) {
                 const slidePath = orderedPaths[i];
                 const fileName = slidePath.split('/').pop();
+                const slideDir = slidePath.substring(0, slidePath.lastIndexOf('/'));
                 const slideXml = await zip.file(slidePath).async('string');
                 const slideText = extractCleanTextFromOoxmlXml(slideXml, false);
 
-                // Đọc thêm Ghi chú thuyết trình (Speaker Notes) nếu slide có sẵn
                 let notesText = '';
                 try {
-                    const relsPath = `ppt/slides/_rels/${fileName}.rels`;
+                    const relsPath = `${slideDir}/_rels/${fileName}.rels`;
                     const relsEntry = zip.file(relsPath);
                     if (relsEntry) {
                         const relsDoc = new DOMParser().parseFromString(await relsEntry.async('string'), 'application/xml');
@@ -3759,7 +3764,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                         );
                         if (notesRel) {
                             const notesTarget = notesRel.getAttribute('Target');
-                            const notesPath = resolvePptxZipPath('ppt/slides', notesTarget);
+                            const notesPath = resolvePptxZipPath(slideDir, notesTarget);
                             const notesEntry = zip.file(notesPath);
                             if (notesEntry) {
                                 notesText = extractCleanTextFromOoxmlXml(await notesEntry.async('string'), true);
@@ -3805,7 +3810,6 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 const arrayBuffer = await file.arrayBuffer();
                 const headerBytes = new Uint8Array(arrayBuffer.slice(0, 8));
 
-                // Nhận diện tệp PowerPoint định dạng cũ (.ppt nhị phân OLE2: D0 CF 11 E0)
                 const isLegacyOlePpt = (lowerName.endsWith('.ppt') && !lowerName.endsWith('.pptx')) ||
                     (headerBytes[0] === 0xD0 && headerBytes[1] === 0xCF && headerBytes[2] === 0x11 && headerBytes[3] === 0xE0);
                 if (isLegacyOlePpt) {
@@ -3813,7 +3817,6 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                     return;
                 }
 
-                // Kiểm tra chữ ký tệp ZIP/OOXML (PK\x03\x04) — hoạt động ngay cả khi iPhone/iCloud ẩn đuôi .pptx
                 const isZipContainer = headerBytes.length >= 4 && headerBytes[0] === 0x50 && headerBytes[1] === 0x4B;
                 if (!isZipContainer) {
                     showToast('Tệp bạn chọn không phải tệp PowerPoint (.pptx) hợp lệ!');
@@ -4252,45 +4255,25 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             return new Uint8Array(await blob.arrayBuffer());
         }
 
-        // Bảo đảm [Content_Types].xml đã khai báo định dạng mp3 và png chuẩn OPC
+        // Bảo đảm [Content_Types].xml khai báo mp3 & png bằng chèn chuỗi chuẩn (không dùng XMLSerializer của Safari)
         function ensureContentTypesForAudio(xmlString) {
-            const CT_NS = 'http://schemas.openxmlformats.org/package/2006/content-types';
             const doc = new DOMParser().parseFromString(xmlString, 'application/xml');
-            const root = doc.documentElement;
-            const defaults = Array.from(root.getElementsByTagName('*')).filter(el => el.localName === 'Default');
+            const defaults = Array.from(doc.getElementsByTagName('*')).filter(el => el.localName === 'Default');
             const hasExt = (ext) => defaults.some(d => (d.getAttribute('Extension') || '').toLowerCase() === ext);
-            const firstOverride = Array.from(root.childNodes).find(n => n.nodeType === 1 && n.localName === 'Override') || null;
 
-            const addDefault = (ext, mime) => {
-                if (hasExt(ext)) return;
-                const el = doc.createElementNS(CT_NS, 'Default');
-                el.setAttribute('Extension', ext);
-                el.setAttribute('ContentType', mime);
-                root.insertBefore(el, firstOverride);
-            };
-            addDefault('mp3', 'audio/mpeg');
-            addDefault('png', 'image/png');
+            let toInsert = '';
+            if (!hasExt('mp3')) toInsert += '<Default Extension="mp3" ContentType="audio/mpeg"/>';
+            if (!hasExt('png')) toInsert += '<Default Extension="png" ContentType="image/png"/>';
+            if (!toInsert) return xmlString;
 
-            const out = new XMLSerializer().serializeToString(doc);
-            return out.startsWith('<?xml') ? out : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n${out}`;
-        }
-
-        // Chèn thẻ con trực tiếp vào <p:sld> đúng thứ tự XSD: cSld -> clrMapOvr -> transition -> timing -> extLst
-        function insertSlideChildInSchemaOrder(sldRoot, newEl, tagName) {
-            const order = ['cSld', 'clrMapOvr', 'transition', 'timing', 'extLst'];
-            const targetIdx = order.indexOf(tagName);
-            const children = Array.from(sldRoot.childNodes).filter(n => n.nodeType === 1);
-            for (const ch of children) {
-                const chIdx = order.indexOf(ch.localName);
-                if (chIdx > targetIdx) {
-                    sldRoot.insertBefore(newEl, ch);
-                    return;
-                }
+            if (/<Types\b[^>]*\/>/i.test(xmlString)) {
+                return xmlString.replace(/<Types\b([^>]*)\/>/i, `<Types$1>${toInsert}</Types>`);
             }
-            sldRoot.appendChild(newEl);
+            return xmlString.replace(/<\/Types\s*>/i, `${toInsert}</Types>`);
         }
 
-        // Nhúng chuẩn thẻ <p:pic> (audioFile + p14:media) và <p:timing> / <p:transition> vào XML của từng slide
+        // Nhúng chuẩn OOXML cho PowerPoint iOS/iPad/Windows/Mac bằng chèn chuỗi trực tiếp
+        // (Không dùng XMLSerializer của Safari làm hỏng namespace, không dùng thuộc tính display="0" hay r:id="" gây lỗi lược đồ)
         function embedAudioIntoSlideXml(slideXmlStr, relsXmlStr, options) {
             const {
                 slideNumber,
@@ -4310,14 +4293,13 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             const R_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
             const P14_NS = 'http://schemas.microsoft.com/office/powerpoint/2010/main';
 
-            // 1. Cập nhật file .rels của slide
+            // 1. Cập nhật file .rels của slide (giữ nguyên toàn bộ Relationship cũ)
             const baseRels = relsXmlStr && relsXmlStr.trim()
                 ? relsXmlStr
-                : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${REL_NS}"></Relationships>`;
+                : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="${REL_NS}"></Relationships>`;
             const relsDoc = new DOMParser().parseFromString(baseRels, 'application/xml');
-            const relsRoot = relsDoc.documentElement;
             let maxRid = 0;
-            Array.from(relsRoot.getElementsByTagName('*'))
+            Array.from(relsDoc.getElementsByTagName('*'))
                 .filter(el => el.localName === 'Relationship')
                 .forEach(el => {
                     const m = (el.getAttribute('Id') || '').match(/^rId(\d+)$/i);
@@ -4328,23 +4310,20 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             const mediaRelId = `rId${++maxRid}`;
             const iconRelId = `rId${++maxRid}`;
 
-            const appendRel = (id, type, target) => {
-                const rel = relsDoc.createElementNS(REL_NS, 'Relationship');
-                rel.setAttribute('Id', id);
-                rel.setAttribute('Type', type);
-                rel.setAttribute('Target', target);
-                relsRoot.appendChild(rel);
-            };
-            appendRel(audioRelId, 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/audio', `../media/${audioMediaFileName}`);
-            appendRel(mediaRelId, 'http://schemas.microsoft.com/office/2007/relationships/media', `../media/${audioMediaFileName}`);
-            appendRel(iconRelId, 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image', `../media/${iconMediaFileName}`);
+            const newRelsXml =
+                `<Relationship Id="${audioRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/audio" Target="../media/${escapeXmlAttr(audioMediaFileName)}"/>` +
+                `<Relationship Id="${mediaRelId}" Type="http://schemas.microsoft.com/office/2007/relationships/media" Target="../media/${escapeXmlAttr(audioMediaFileName)}"/>` +
+                `<Relationship Id="${iconRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${escapeXmlAttr(iconMediaFileName)}"/>`;
 
-            // 2. Cập nhật XML của slide
+            let updatedRelsXml = baseRels;
+            if (/<Relationships\b[^>]*\/>/i.test(updatedRelsXml)) {
+                updatedRelsXml = updatedRelsXml.replace(/<Relationships\b([^>]*)\/>/i, `<Relationships$1>${newRelsXml}</Relationships>`);
+            } else {
+                updatedRelsXml = updatedRelsXml.replace(/<\/Relationships\s*>/i, `${newRelsXml}</Relationships>`);
+            }
+
+            // 2. Đọc thông số slide hiện có bằng DOMParser (chỉ đọc, không serialize đè XML)
             const slideDoc = new DOMParser().parseFromString(slideXmlStr, 'application/xml');
-            const sldRoot = slideDoc.documentElement;
-            const spTree = Array.from(slideDoc.getElementsByTagName('*')).find(el => el.localName === 'spTree');
-            if (!spTree) throw new Error(`Cấu trúc slide ${slideNumber} không hợp lệ (thiếu spTree).`);
-
             let maxShapeId = 10;
             Array.from(slideDoc.getElementsByTagName('*'))
                 .filter(el => el.localName === 'cNvPr')
@@ -4354,54 +4333,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                 });
             const shapeId = maxShapeId + 1;
 
-            const iconSize = 520000;
-            const margin = 180000;
-            const iconX = Math.max(margin, (slideWidthEmu || 12192000) - iconSize - margin);
-            const iconY = Math.max(margin, (slideHeightEmu || 6858000) - iconSize - margin);
-
-            const picSnippet = `<p:pic xmlns:p="${P_NS}" xmlns:a="${A_NS}" xmlns:r="${R_NS}">
-                <p:nvPicPr>
-                    <p:cNvPr id="${shapeId}" name="AmThanhSlide${slideNumber}">
-                        <a:hlinkClick r:id="" action="ppaction://media"/>
-                    </p:cNvPr>
-                    <p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>
-                    <p:nvPr>
-                        <a:audioFile r:link="${audioRelId}"/>
-                        <p:extLst>
-                            <p:ext uri="{DAA4B4D4-6D71-4841-9C94-3DE7FCFB9230}">
-                                <p14:media xmlns:p14="${P14_NS}" r:embed="${mediaRelId}"/>
-                            </p:ext>
-                        </p:extLst>
-                    </p:nvPr>
-                </p:nvPicPr>
-                <p:blipFill>
-                    <a:blip r:embed="${iconRelId}"/>
-                    <a:stretch><a:fillRect/></a:stretch>
-                </p:blipFill>
-                <p:spPr>
-                    <a:xfrm>
-                        <a:off x="${iconX}" y="${iconY}"/>
-                        <a:ext cx="${iconSize}" cy="${iconSize}"/>
-                    </a:xfrm>
-                    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
-                </p:spPr>
-            </p:pic>`;
-            const picFrag = new DOMParser().parseFromString(picSnippet, 'application/xml');
-            spTree.appendChild(slideDoc.importNode(picFrag.documentElement, true));
-
-            // 3. Tự động chuyển slide sau khi đọc xong (nếu bật)
-            if (autoAdvance && audioDurationSec > 0) {
-                const advMs = Math.max(1500, Math.round((audioDurationSec + 1.0) * 1000));
-                let transEl = Array.from(sldRoot.childNodes).find(n => n.nodeType === 1 && n.localName === 'transition');
-                if (!transEl) {
-                    transEl = slideDoc.createElementNS(P_NS, 'p:transition');
-                    insertSlideChildInSchemaOrder(sldRoot, transEl, 'transition');
-                }
-                transEl.setAttribute('advClick', '1');
-                transEl.setAttribute('advTm', String(advMs));
-            }
-
-            // 4. Tạo hoặc bổ sung <p:timing> để phát tự động / ẩn biểu tượng loa đúng chuẩn PowerPoint
             let maxTnId = 1;
             Array.from(slideDoc.getElementsByTagName('*'))
                 .filter(el => el.localName === 'cTn')
@@ -4411,149 +4342,181 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                 });
             const nextTnId = () => ++maxTnId;
 
-            const showStoppedVal = hideIcon ? '0' : '1';
-            const existingTiming = Array.from(sldRoot.childNodes).find(n => n.nodeType === 1 && n.localName === 'timing');
+            let updatedSlideXml = slideXmlStr;
 
-            if (!existingTiming) {
-                const idRoot = nextTnId();
-                const idSeq = nextTnId();
+            // Bảo đảm thẻ gốc <p:sld> có đầy đủ xmlns:p, xmlns:a, xmlns:r
+            updatedSlideXml = updatedSlideXml.replace(/<p:sld\b([^>]*)>/i, (fullTag, attrs) => {
+                let nextAttrs = attrs;
+                if (!/\bxmlns:p\s*=/.test(nextAttrs)) nextAttrs += ` xmlns:p="${P_NS}"`;
+                if (!/\bxmlns:a\s*=/.test(nextAttrs)) nextAttrs += ` xmlns:a="${A_NS}"`;
+                if (!/\bxmlns:r\s*=/.test(nextAttrs)) nextAttrs += ` xmlns:r="${R_NS}"`;
+                return `<p:sld${nextAttrs}>`;
+            });
+
+            // 3. Chèn đối tượng loa âm thanh <p:pic> vào trước </p:spTree> (không chứa r:id="" rỗng)
+            const iconSize = 520000;
+            const margin = 180000;
+            const iconX = Math.max(margin, (slideWidthEmu || 12192000) - iconSize - margin);
+            const iconY = Math.max(margin, (slideHeightEmu || 6858000) - iconSize - margin);
+
+            const picXml =
+                `<p:pic>` +
+                    `<p:nvPicPr>` +
+                        `<p:cNvPr id="${shapeId}" name="AmThanhSlide${slideNumber}">` +
+                            `<a:hlinkClick action="ppaction://media"/>` +
+                        `</p:cNvPr>` +
+                        `<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>` +
+                        `<p:nvPr>` +
+                            `<a:audioFile r:link="${audioRelId}"/>` +
+                            `<p:extLst>` +
+                                `<p:ext uri="{DAA4B4D4-6D71-4841-9C94-3DE7FCFB9230}">` +
+                                    `<p14:media xmlns:p14="${P14_NS}" r:embed="${mediaRelId}"/>` +
+                                `</p:ext>` +
+                            `</p:extLst>` +
+                        `</p:nvPr>` +
+                    `</p:nvPicPr>` +
+                    `<p:blipFill>` +
+                        `<a:blip r:embed="${iconRelId}"/>` +
+                        `<a:stretch><a:fillRect/></a:stretch>` +
+                    `</p:blipFill>` +
+                    `<p:spPr>` +
+                        `<a:xfrm><a:off x="${iconX}" y="${iconY}"/><a:ext cx="${iconSize}" cy="${iconSize}"/></a:xfrm>` +
+                        `<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>` +
+                    `</p:spPr>` +
+                `</p:pic>`;
+
+            if (!/<\/p:spTree\s*>/i.test(updatedSlideXml)) {
+                throw new Error(`Cấu trúc slide ${slideNumber} thiếu thẻ đóng spTree.`);
+            }
+            updatedSlideXml = updatedSlideXml.replace(/<\/p:spTree\s*>/i, `${picXml}</p:spTree>`);
+
+            // 4. Tự động chuyển slide sau khi đọc xong (nếu người dùng bật tuỳ chọn này)
+            if (autoAdvance && audioDurationSec > 0) {
+                const advMs = Math.max(1500, Math.round((audioDurationSec + 1.0) * 1000));
+                if (/<p:transition\b/i.test(updatedSlideXml)) {
+                    updatedSlideXml = updatedSlideXml.replace(/<p:transition\b([^>]*?)(\/?)>/i, (m, attrs, selfClose) => {
+                        let cleanAttrs = attrs
+                            .replace(/\s*\badvClick\s*=\s*"[^"]*"/gi, '')
+                            .replace(/\s*\badvTm\s*=\s*"[^"]*"/gi, '');
+                        return `<p:transition${cleanAttrs} advClick="1" advTm="${advMs}"${selfClose}>`;
+                    });
+                } else {
+                    const transXml = `<p:transition advClick="1" advTm="${advMs}"/>`;
+                    if (/<p:timing\b/i.test(updatedSlideXml)) {
+                        updatedSlideXml = updatedSlideXml.replace(/<p:timing\b/i, `${transXml}<p:timing`);
+                    } else if (/<p:extLst\b/i.test(updatedSlideXml)) {
+                        updatedSlideXml = updatedSlideXml.replace(/<p:extLst\b/i, `${transXml}<p:extLst`);
+                    } else {
+                        updatedSlideXml = updatedSlideXml.replace(/<\/p:sld\s*>/i, `${transXml}</p:sld>`);
+                    }
+                }
+            }
+
+            // 5. Chèn <p:timing> chuẩn OOXML (không có thuộc tính display="0" gây lỗi trên PowerPoint iOS)
+            const showStoppedVal = hideIcon ? '0' : '1';
+            const idAudio = nextTnId();
+            const audioNodeXml =
+                `<p:audio>` +
+                    `<p:cMediaNode showWhenStopped="${showStoppedVal}">` +
+                        `<p:cTn id="${idAudio}" fill="hold">` +
+                            `<p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>` +
+                            `<p:endCondLst><p:cond evt="onStopAudio" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:endCondLst>` +
+                        `</p:cTn>` +
+                        `<p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>` +
+                    `</p:cMediaNode>` +
+                `</p:audio>`;
+
+            const buildAutoPlayParXml = () => {
                 const idP1 = nextTnId();
                 const idP2 = nextTnId();
                 const idP3 = nextTnId();
                 const idCmd = nextTnId();
-                const idAudio = nextTnId();
-
-                const autoPlaySeqChild = autoPlay ? `<p:par>
-                    <p:cTn id="${idP1}" fill="hold">
-                        <p:stCondLst><p:cond delay="0"/></p:stCondLst>
-                        <p:childTnLst>
-                            <p:par>
-                                <p:cTn id="${idP2}" fill="hold">
-                                    <p:stCondLst><p:cond delay="0"/></p:stCondLst>
-                                    <p:childTnLst>
-                                        <p:par>
-                                            <p:cTn id="${idP3}" presetID="1" presetClass="mediacall" presetSubtype="0" fill="hold" nodeType="withEffect">
-                                                <p:stCondLst><p:cond delay="0"/></p:stCondLst>
-                                                <p:childTnLst>
-                                                    <p:cmd type="call" cmd="playFrom(0.0)">
-                                                        <p:cBhvr>
-                                                            <p:cTn id="${idCmd}" dur="1" fill="never"/>
-                                                            <p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>
-                                                        </p:cBhvr>
-                                                    </p:cmd>
-                                                </p:childTnLst>
-                                            </p:cTn>
-                                        </p:par>
-                                    </p:childTnLst>
-                                </p:cTn>
-                            </p:par>
-                        </p:childTnLst>
-                    </p:cTn>
-                </p:par>` : '';
-
-                const timingSnippet = `<p:timing xmlns:p="${P_NS}">
-                    <p:tnLst>
-                        <p:par>
-                            <p:cTn id="${idRoot}" dur="indefinite" restart="never" nodeType="tmRoot">
-                                <p:childTnLst>
-                                    <p:seq concurrent="1" nextAc="seek">
-                                        <p:cTn id="${idSeq}" dur="indefinite" nodeType="mainSeq">
-                                            <p:childTnLst>${autoPlaySeqChild}</p:childTnLst>
-                                        </p:cTn>
-                                        <p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>
-                                        <p:nextCondLst><p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst>
-                                    </p:seq>
-                                    <p:audio>
-                                        <p:cMediaNode showWhenStopped="${showStoppedVal}">
-                                            <p:cTn id="${idAudio}" fill="hold" display="0">
-                                                <p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>
-                                                <p:endCondLst><p:cond evt="onStopAudio" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:endCondLst>
-                                            </p:cTn>
-                                            <p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>
-                                        </p:cMediaNode>
-                                    </p:audio>
-                                </p:childTnLst>
-                            </p:cTn>
-                        </p:par>
-                    </p:tnLst>
-                </p:timing>`;
-                const timingFrag = new DOMParser().parseFromString(timingSnippet, 'application/xml');
-                insertSlideChildInSchemaOrder(sldRoot, slideDoc.importNode(timingFrag.documentElement, true), 'timing');
-            } else {
-                const tmRootCtn = Array.from(existingTiming.getElementsByTagName('*')).find(
-                    el => el.localName === 'cTn' && el.getAttribute('nodeType') === 'tmRoot'
+                return (
+                    `<p:par>` +
+                        `<p:cTn id="${idP1}" fill="hold">` +
+                            `<p:stCondLst><p:cond delay="0"/></p:stCondLst>` +
+                            `<p:childTnLst>` +
+                                `<p:par>` +
+                                    `<p:cTn id="${idP2}" fill="hold">` +
+                                        `<p:stCondLst><p:cond delay="0"/></p:stCondLst>` +
+                                        `<p:childTnLst>` +
+                                            `<p:par>` +
+                                                `<p:cTn id="${idP3}" presetID="1" presetClass="mediacall" presetSubtype="0" fill="hold" nodeType="withEffect">` +
+                                                    `<p:stCondLst><p:cond delay="0"/></p:stCondLst>` +
+                                                    `<p:childTnLst>` +
+                                                        `<p:cmd type="call" cmd="playFrom(0.0)">` +
+                                                            `<p:cBhvr>` +
+                                                                `<p:cTn id="${idCmd}" dur="1" fill="never"/>` +
+                                                                `<p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>` +
+                                                            `</p:cBhvr>` +
+                                                        `</p:cmd>` +
+                                                    `</p:childTnLst>` +
+                                                `</p:cTn>` +
+                                            `</p:par>` +
+                                        `</p:childTnLst>` +
+                                    `</p:cTn>` +
+                                `</p:par>` +
+                            `</p:childTnLst>` +
+                        `</p:cTn>` +
+                    `</p:par>`
                 );
-                const mainSeqCtn = Array.from(existingTiming.getElementsByTagName('*')).find(
-                    el => el.localName === 'cTn' && el.getAttribute('nodeType') === 'mainSeq'
-                );
+            };
 
-                if (tmRootCtn) {
-                    let rootChildLst = Array.from(tmRootCtn.childNodes).find(n => n.nodeType === 1 && n.localName === 'childTnLst');
-                    if (!rootChildLst) {
-                        rootChildLst = slideDoc.createElementNS(P_NS, 'p:childTnLst');
-                        tmRootCtn.appendChild(rootChildLst);
-                    }
-                    const idAudio = nextTnId();
-                    const audioNodeSnippet = `<p:audio xmlns:p="${P_NS}">
-                        <p:cMediaNode showWhenStopped="${showStoppedVal}">
-                            <p:cTn id="${idAudio}" fill="hold" display="0">
-                                <p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>
-                                <p:endCondLst><p:cond evt="onStopAudio" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:endCondLst>
-                            </p:cTn>
-                            <p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>
-                        </p:cMediaNode>
-                    </p:audio>`;
-                    const audioFrag = new DOMParser().parseFromString(audioNodeSnippet, 'application/xml');
-                    rootChildLst.appendChild(slideDoc.importNode(audioFrag.documentElement, true));
+            const hasExistingTiming = /<p:timing\b/i.test(updatedSlideXml);
+            if (!hasExistingTiming) {
+                const idRoot = nextTnId();
+                const idSeq = nextTnId();
+                const autoPlayXml = autoPlay ? buildAutoPlayParXml() : '';
+                const seqChildXml = autoPlayXml ? `<p:childTnLst>${autoPlayXml}</p:childTnLst>` : '';
+
+                const timingXml =
+                    `<p:timing>` +
+                        `<p:tnLst>` +
+                            `<p:par>` +
+                                `<p:cTn id="${idRoot}" dur="indefinite" restart="never" nodeType="tmRoot">` +
+                                    `<p:childTnLst>` +
+                                        `<p:seq concurrent="1" nextAc="seek">` +
+                                            `<p:cTn id="${idSeq}" dur="indefinite" nodeType="mainSeq">${seqChildXml}</p:cTn>` +
+                                            `<p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>` +
+                                            `<p:nextCondLst><p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst>` +
+                                        `</p:seq>` +
+                                        `${audioNodeXml}` +
+                                    `</p:childTnLst>` +
+                                `</p:cTn>` +
+                            `</p:par>` +
+                        `</p:tnLst>` +
+                    `</p:timing>`;
+
+                if (/<p:extLst\b/i.test(updatedSlideXml)) {
+                    updatedSlideXml = updatedSlideXml.replace(/<p:extLst\b/i, `${timingXml}<p:extLst`);
+                } else {
+                    updatedSlideXml = updatedSlideXml.replace(/<\/p:sld\s*>/i, `${timingXml}</p:sld>`);
                 }
-
-                if (autoPlay && mainSeqCtn) {
-                    let seqChildLst = Array.from(mainSeqCtn.childNodes).find(n => n.nodeType === 1 && n.localName === 'childTnLst');
-                    if (!seqChildLst) {
-                        seqChildLst = slideDoc.createElementNS(P_NS, 'p:childTnLst');
-                        mainSeqCtn.appendChild(seqChildLst);
-                    }
-                    const idP1 = nextTnId();
-                    const idP2 = nextTnId();
-                    const idP3 = nextTnId();
-                    const idCmd = nextTnId();
-                    const playParSnippet = `<p:par xmlns:p="${P_NS}">
-                        <p:cTn id="${idP1}" fill="hold">
-                            <p:stCondLst><p:cond delay="0"/></p:stCondLst>
-                            <p:childTnLst>
-                                <p:par>
-                                    <p:cTn id="${idP2}" fill="hold">
-                                        <p:stCondLst><p:cond delay="0"/></p:stCondLst>
-                                        <p:childTnLst>
-                                            <p:par>
-                                                <p:cTn id="${idP3}" presetID="1" presetClass="mediacall" presetSubtype="0" fill="hold" nodeType="withEffect">
-                                                    <p:stCondLst><p:cond delay="0"/></p:stCondLst>
-                                                    <p:childTnLst>
-                                                        <p:cmd type="call" cmd="playFrom(0.0)">
-                                                            <p:cBhvr>
-                                                                <p:cTn id="${idCmd}" dur="1" fill="never"/>
-                                                                <p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>
-                                                            </p:cBhvr>
-                                                        </p:cmd>
-                                                    </p:childTnLst>
-                                                </p:cTn>
-                                            </p:par>
-                                        </p:childTnLst>
-                                    </p:cTn>
-                                </p:par>
-                            </p:childTnLst>
-                        </p:cTn>
-                    </p:par>`;
-                    const playFrag = new DOMParser().parseFromString(playParSnippet, 'application/xml');
-                    seqChildLst.insertBefore(slideDoc.importNode(playFrag.documentElement, true), seqChildLst.firstChild);
+            } else {
+                // Slide đã có sẵn <p:timing> (từ hiệu ứng hoạt hình gốc): chèn <p:audio> sau </p:seq> và lệnh phát tự động vào mainSeq
+                if (/<\/p:seq\s*>/i.test(updatedSlideXml)) {
+                    updatedSlideXml = updatedSlideXml.replace(/<\/p:seq\s*>/i, `</p:seq>${audioNodeXml}`);
+                }
+                if (autoPlay && /nodeType="mainSeq"/i.test(updatedSlideXml)) {
+                    const autoPlayXml = buildAutoPlayParXml();
+                    updatedSlideXml = updatedSlideXml.replace(
+                        /(<p:cTn\b[^>]*nodeType="mainSeq"[^>]*>)([\s\S]*?)(<\/p:cTn\s*>)/i,
+                        (full, openCtn, innerCtn, closeCtn) => {
+                            if (/<p:childTnLst\s*\/>/i.test(innerCtn)) {
+                                return openCtn + innerCtn.replace(/<p:childTnLst\s*\/>/i, `<p:childTnLst>${autoPlayXml}</p:childTnLst>`) + closeCtn;
+                            }
+                            if (/<p:childTnLst\b[^>]*>/i.test(innerCtn)) {
+                                return openCtn + innerCtn.replace(/<p:childTnLst\b[^>]*>/i, m => `${m}${autoPlayXml}`) + closeCtn;
+                            }
+                            return `${openCtn}<p:childTnLst>${autoPlayXml}</p:childTnLst>${innerCtn}${closeCtn}`;
+                        }
+                    );
                 }
             }
 
-            const serializedSlide = new XMLSerializer().serializeToString(slideDoc);
-            const serializedRels = new XMLSerializer().serializeToString(relsDoc);
             return {
-                slideXml: serializedSlide.startsWith('<?xml') ? serializedSlide : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n${serializedSlide}`,
-                relsXml: serializedRels.startsWith('<?xml') ? serializedRels : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n${serializedRels}`
+                slideXml: updatedSlideXml,
+                relsXml: updatedRelsXml
             };
         }
 
@@ -4617,7 +4580,8 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                     const audioBytes = new Uint8Array(await s.audioBlob.arrayBuffer());
                     zip.file(`ppt/media/${audioMediaFileName}`, audioBytes, { compression: 'STORE' });
 
-                    const relsPath = `ppt/slides/_rels/${s.fileName}.rels`;
+                    const slideDir = s.slidePath.substring(0, s.slidePath.lastIndexOf('/'));
+                    const relsPath = `${slideDir}/_rels/${s.fileName}.rels`;
                     const slideXmlStr = await zip.file(s.slidePath).async('string');
                     const relsXmlStr = zip.file(relsPath) ? await zip.file(relsPath).async('string') : '';
 
