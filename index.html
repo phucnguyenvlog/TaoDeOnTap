@@ -299,16 +299,16 @@
                 </div>
 
                 <!-- Khung Kéo Thả / Chọn Tệp -->
-                <input type="file" id="imageFileInput" accept="image/*,.docx,.doc,.pdf" multiple class="hidden" onchange="handleImageFilesSelected(this.files)">
-                <div id="imageDropzone" onclick="document.getElementById('imageFileInput').click()" class="cursor-pointer rounded-3xl border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50/70 hover:bg-blue-50/40 p-6 sm:p-10 text-center space-y-3 transition">
-                    <div class="flex items-center justify-center gap-3">
+                <input type="file" id="imageFileInput" multiple class="sr-only" onchange="handleImageFilesSelected(this.files)">
+                <label for="imageFileInput" id="imageDropzone" class="block cursor-pointer rounded-3xl border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50/70 hover:bg-blue-50/40 p-6 sm:p-10 text-center space-y-3 transition">
+                    <div class="pointer-events-none flex items-center justify-center gap-3">
                         <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-sm"><i class="fa-solid fa-file-word"></i></div>
                         <div class="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-xl shadow-sm"><i class="fa-solid fa-file-pdf"></i></div>
                         <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl shadow-sm"><i class="fa-solid fa-camera"></i></div>
                     </div>
-                    <div class="text-sm sm:text-base font-extrabold text-slate-900">Bấm vào đây để chọn File Word (.docx), PDF (.pdf) hoặc Ảnh chụp đề</div>
-                    <div class="text-xs text-slate-500">Hỗ trợ tự nhận diện câu Trắc nghiệm ABCD, Đúng/Sai, Tự luận & Công thức Toán/Lý/Hóa</div>
-                </div>
+                    <div class="pointer-events-none text-sm sm:text-base font-extrabold text-slate-900">Bấm vào đây để chọn File Word (.docx), PDF (.pdf) hoặc Ảnh chụp đề</div>
+                    <div class="pointer-events-none text-xs text-slate-500">Hỗ trợ tự nhận diện câu Trắc nghiệm ABCD, Đúng/Sai, Tự luận & Công thức Toán/Lý/Hóa</div>
+                </label>
 
                 <!-- Danh sách file đã tải lên -->
                 <div id="uploadedImagesSection" class="hidden space-y-3">
@@ -652,10 +652,10 @@
                 <button type="button" onclick="clearChatAttachedImage()" class="w-7 h-7 rounded-lg bg-white text-rose-600 border border-slate-200 text-xs"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="flex items-end gap-2">
-                <input type="file" id="chatFileInput" accept="image/*,.docx,.doc,.pdf" class="hidden" onchange="handleChatImageSelected(this.files)">
-                <button type="button" onclick="document.getElementById('chatFileInput').click()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 transition" title="Đính kèm ảnh / Word / PDF">
-                    <i class="fa-solid fa-paperclip"></i>
-                </button>
+                <input type="file" id="chatFileInput" class="sr-only" onchange="handleChatImageSelected(this.files)">
+                <label for="chatFileInput" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 cursor-pointer transition" title="Đính kèm ảnh / Word / PDF">
+                    <i class="fa-solid fa-paperclip pointer-events-none"></i>
+                </label>
                 <textarea id="aiChatInput" rows="1" onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendAIChatMessage(); }" placeholder="Nhập câu hỏi hoặc yêu cầu soạn/sửa đề..." class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 focus:border-teal-500 text-xs sm:text-sm outline-none resize-none max-h-32"></textarea>
                 <button type="button" id="btnSendAIChat" onclick="sendAIChatMessage()" class="px-4 h-10 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-extrabold shrink-0 transition disabled:opacity-50">
                     <i class="fa-solid fa-paper-plane"></i>
@@ -797,9 +797,9 @@
                             <button type="button" onclick="loadCurrentExamIntoTTS()" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold transition">
                                 <i class="fa-solid fa-file-import mr-1"></i>Lấy đề đang mở
                             </button>
-                            <label class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold cursor-pointer transition">
-                                <i class="fa-solid fa-upload mr-1"></i>Nạp file
-                                <input type="file" id="ttsDocFileInput" accept=".txt,.docx,.doc,.pdf" class="hidden" onchange="handleTTSFileUpload(this.files)">
+                            <input type="file" id="ttsDocFileInput" class="sr-only" onchange="handleTTSFileUpload(this.files)">
+                            <label for="ttsDocFileInput" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold cursor-pointer transition">
+                                <i class="fa-solid fa-upload pointer-events-none mr-1"></i><span class="pointer-events-none">Nạp file</span>
                             </label>
                             <button type="button" onclick="applyTTSTemplate()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Mẫu</button>
                             <button type="button" onclick="cleanTTSEditorText()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">Làm sạch</button>
@@ -959,20 +959,21 @@
                             <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">1</span>
                             <span>Chọn tệp PowerPoint (.pptx) cần lồng tiếng</span>
                         </div>
-                        <button type="button" id="btnPptxChangeFile" onclick="document.getElementById('pptxFileInput').click()" class="hidden px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
-                            <i class="fa-solid fa-folder-open mr-1"></i>Chọn file .pptx khác
-                        </button>
+                        <label for="pptxFileInput" id="btnPptxChangeFile" class="hidden cursor-pointer px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                            <i class="fa-solid fa-folder-open pointer-events-none mr-1"></i><span class="pointer-events-none">Chọn file .pptx khác</span>
+                        </label>
                     </div>
 
-                    <input type="file" id="pptxFileInput" accept=".pptx" class="hidden" onchange="handlePptxFileSelected(this.files)">
+                    <!-- Không đặt accept hạn chế để iPhone/Safari/iCloud Drive không làm mờ tệp .pptx -->
+                    <input type="file" id="pptxFileInput" class="sr-only" onchange="handlePptxFileSelected(this.files)">
 
-                    <div id="pptxDropzone" onclick="document.getElementById('pptxFileInput').click()" class="cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/70 hover:bg-orange-50/40 p-6 sm:p-8 text-center space-y-2.5 transition">
-                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center text-2xl mx-auto shadow-sm">
+                    <label for="pptxFileInput" id="pptxDropzone" class="block cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/70 hover:bg-orange-50/40 p-6 sm:p-8 text-center space-y-2.5 transition">
+                        <div class="pointer-events-none w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center text-2xl mx-auto shadow-sm">
                             <i class="fa-solid fa-file-powerpoint"></i>
                         </div>
-                        <div class="text-sm sm:text-base font-extrabold text-slate-900">Bấm vào đây hoặc kéo thả tệp PowerPoint (.pptx)</div>
-                        <div class="text-xs text-slate-500">Giữ nguyên 100% giao diện, hình ảnh, hiệu ứng gốc của slide — chỉ chèn thêm âm thanh MP3 chuẩn vào từng trang</div>
-                    </div>
+                        <div class="pointer-events-none text-sm sm:text-base font-extrabold text-slate-900">Bấm vào đây để chọn tệp PowerPoint (.pptx)</div>
+                        <div class="pointer-events-none text-xs text-slate-500">Hỗ trợ đầy đủ iPhone/Safari (Tệp / iCloud), iPad, Android &amp; Máy tính — giữ nguyên 100% hiệu ứng gốc của slide</div>
+                    </label>
 
                     <!-- Thông tin tệp đã nạp -->
                     <div id="pptxFileInfoBar" class="hidden p-3 rounded-xl bg-orange-50/70 border border-orange-200 flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -2697,7 +2698,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             a.download = `${getSafeFilenameSlug(EXAM_DATA.title, 'de_on_tap')}.doc`;
             document.body.appendChild(a);
             a.click();
-            setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 300);
+            setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
             closeWordExportModal();
             showToast('Đã xuất File Word (.doc) thành công!');
         }
@@ -3021,7 +3022,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             a.download = `${getSafeFilenameSlug(EXAM_DATA.title, 'web_on_tap')}.html`;
             document.body.appendChild(a);
             a.click();
-            setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 300);
+            setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 30000);
             showToast('Đã tải trang Web Ôn Tập độc lập dành riêng cho Học sinh (.html)!');
         }
 
@@ -3336,7 +3337,10 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             a.download = filename;
             document.body.appendChild(a);
             a.click();
-            setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 400);
+            setTimeout(() => {
+                try { a.remove(); } catch (_) {}
+                try { URL.revokeObjectURL(url); } catch (_) {}
+            }, 30000);
         }
 
         async function generateSingleTTSAudio() {
@@ -3570,7 +3574,6 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             const modal = document.getElementById('pptxAudioModal');
             if (!modal) return;
             pptxState.cancelRequested = true;
-            // Tạm dừng các thẻ audio đang phát trong modal
             modal.querySelectorAll('audio').forEach(a => { try { a.pause(); } catch (_) {} });
             modal.classList.add('hidden');
             modal.classList.remove('flex');
@@ -3619,13 +3622,27 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             showToast('Đang dừng tiến trình sau khi xong slide hiện tại...');
         }
 
-        // Giải phóng URL Blob cũ khi nạp file mới
         function revokePptxSlideAudioUrls() {
             pptxState.slides.forEach(s => {
                 if (s.audioUrl) {
                     try { URL.revokeObjectURL(s.audioUrl); } catch (_) {}
                 }
             });
+        }
+
+        async function ensureJSZipReady() {
+            if (typeof JSZip !== 'undefined') return window.JSZip;
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Không tải được thư viện đọc PowerPoint (JSZip).'));
+                document.head.appendChild(script);
+            });
+            if (typeof JSZip === 'undefined') {
+                throw new Error('Thư viện JSZip chưa sẵn sàng.');
+            }
+            return window.JSZip;
         }
 
         // Đọc văn bản sạch từ XML của 1 slide hoặc notesSlide (nhóm theo đoạn <a:p>)
@@ -3635,7 +3652,6 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 const pNodes = Array.from(doc.getElementsByTagName('*')).filter(el => el.localName === 'p' && el.namespaceURI && el.namespaceURI.includes('drawingml'));
                 const lines = [];
                 pNodes.forEach(pEl => {
-                    // Bỏ qua placeholder số trang trong notesSlide (<a:fld type="slidenum">)
                     let lineText = '';
                     const walk = (node) => {
                         if (!node || !node.childNodes) return;
@@ -3646,9 +3662,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                             }
                             if (child.localName === 't') {
                                 lineText += child.textContent || '';
-                            } else if (child.localName === 'br') {
-                                lineText += ' ';
-                            } else if (child.localName === 'tab') {
+                            } else if (child.localName === 'br' || child.localName === 'tab') {
                                 lineText += ' ';
                             } else {
                                 walk(child);
@@ -3658,7 +3672,6 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                     walk(pEl);
                     const cleaned = lineText.replace(/\s+/g, ' ').trim();
                     if (cleaned) {
-                        // Loại bỏ số trang đơn lẻ nằm ở cuối slide notes
                         if (isNotes && /^\d{1,3}$/.test(cleaned)) return;
                         lines.push(cleaned);
                     }
@@ -3742,21 +3755,22 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                     if (relsEntry) {
                         const relsDoc = new DOMParser().parseFromString(await relsEntry.async('string'), 'application/xml');
                         const notesRel = Array.from(relsDoc.getElementsByTagName('*')).find(
-                            el => el.localName === 'Relationship' && (el.getAttribute('Type') || '').toLowerCase().includes('notesslide')
+                            el => el.localName === 'Relationship' && (el.getAttribute('Type') || '').toLowerCase().includes('noteslide')
                         );
                         if (notesRel) {
-                            const notesPath = resolvePptxZipPath('ppt/slides', notesRel.getAttribute('Target'));
-                            if (zip.file(notesPath)) {
-                                notesText = extractCleanTextFromOoxmlXml(await zip.file(notesPath).async('string'), true);
+                            const notesTarget = notesRel.getAttribute('Target');
+                            const notesPath = resolvePptxZipPath('ppt/slides', notesTarget);
+                            const notesEntry = zip.file(notesPath);
+                            if (notesEntry) {
+                                notesText = extractCleanTextFromOoxmlXml(await notesEntry.async('string'), true);
                             }
                         }
                     }
                 } catch (_) {}
 
                 const firstLine = (slideText.split('\n')[0] || '').trim();
-                const title = firstLine ? firstLine.slice(0, 70) : `Slide ${i + 1}`;
-                const useNotesDefault = Boolean(notesText && notesText.length >= 6);
-                const initialScript = useNotesDefault ? notesText : slideText;
+                const title = firstLine ? firstLine.slice(0, 60) : `Trang trình chiếu ${i + 1}`;
+                const initialScript = slideText || notesText || '';
 
                 slides.push({
                     index: i + 1,
@@ -3766,9 +3780,9 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                     slideText,
                     notesText,
                     script: initialScript,
-                    sourceMode: useNotesDefault ? 'notes' : 'slide',
+                    sourceMode: slideText ? 'slide' : (notesText ? 'notes' : 'slide'),
                     enabled: Boolean(initialScript.trim()),
-                    status: initialScript.trim() ? 'idle' : 'empty',
+                    status: 'idle',
                     audioBlob: null,
                     audioUrl: '',
                     audioDuration: 0,
@@ -3782,19 +3796,38 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
         async function handlePptxFileSelected(fileList) {
             if (!fileList || fileList.length === 0) return;
             const file = fileList[0];
-            if (!file.name.toLowerCase().endsWith('.pptx')) {
-                showToast('Vui lòng chọn tệp PowerPoint định dạng .pptx!');
-                return;
-            }
-            if (typeof JSZip === 'undefined') {
-                showToast('Thư viện đọc PowerPoint (JSZip) chưa tải xong, hãy tải lại trang!');
-                return;
-            }
+            const lowerName = (file.name || '').trim().toLowerCase();
 
             try {
-                showToast(`Đang đọc và phân tích "${file.name}"...`);
+                const JSZipLib = await ensureJSZipReady();
+                showToast(`Đang đọc và phân tích "${file.name || 'PowerPoint'}"...`);
+
                 const arrayBuffer = await file.arrayBuffer();
-                const zip = await JSZip.loadAsync(arrayBuffer);
+                const headerBytes = new Uint8Array(arrayBuffer.slice(0, 8));
+
+                // Nhận diện tệp PowerPoint định dạng cũ (.ppt nhị phân OLE2: D0 CF 11 E0)
+                const isLegacyOlePpt = (lowerName.endsWith('.ppt') && !lowerName.endsWith('.pptx')) ||
+                    (headerBytes[0] === 0xD0 && headerBytes[1] === 0xCF && headerBytes[2] === 0x11 && headerBytes[3] === 0xE0);
+                if (isLegacyOlePpt) {
+                    showToast('Tệp này là định dạng PowerPoint cũ (.ppt). Hãy mở bằng PowerPoint và chọn "Lưu dưới dạng (.pptx)" rồi tải lên nhé!');
+                    return;
+                }
+
+                // Kiểm tra chữ ký tệp ZIP/OOXML (PK\x03\x04) — hoạt động ngay cả khi iPhone/iCloud ẩn đuôi .pptx
+                const isZipContainer = headerBytes.length >= 4 && headerBytes[0] === 0x50 && headerBytes[1] === 0x4B;
+                if (!isZipContainer) {
+                    showToast('Tệp bạn chọn không phải tệp PowerPoint (.pptx) hợp lệ!');
+                    return;
+                }
+
+                const zip = await JSZipLib.loadAsync(arrayBuffer);
+                const hasPresentationXml = Boolean(zip.file('ppt/presentation.xml')) ||
+                    Object.keys(zip.files).some(p => /^ppt\/slides\/slide\d+\.xml$/i.test(p));
+                if (!hasPresentationXml) {
+                    showToast('Tệp nén này không chứa cấu trúc slide PowerPoint (.pptx)!');
+                    return;
+                }
+
                 const slides = await parsePptxSlidesFromZip(zip);
 
                 if (slides.length === 0) {
@@ -3803,7 +3836,10 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 }
 
                 revokePptxSlideAudioUrls();
-                pptxState.fileName = file.name;
+                const normalizedDisplayName = lowerName.endsWith('.pptx')
+                    ? file.name
+                    : `${(file.name || 'bai_giang').replace(/\.[^.]+$/, '')}.pptx`;
+                pptxState.fileName = normalizedDisplayName;
                 pptxState.originalArrayBuffer = arrayBuffer;
                 pptxState.slides = slides;
                 pptxState.cancelRequested = false;
@@ -3814,7 +3850,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 document.getElementById('pptxControlsSection')?.classList.remove('hidden');
                 document.getElementById('pptxSlidesSection')?.classList.remove('hidden');
 
-                document.getElementById('pptxLoadedFileName').textContent = file.name;
+                document.getElementById('pptxLoadedFileName').textContent = normalizedDisplayName;
                 const withText = slides.filter(s => s.script.trim()).length;
                 document.getElementById('pptxLoadedFileMeta').textContent = `Tổng ${slides.length} slide • ${withText} slide có nội dung chữ`;
 
@@ -4180,7 +4216,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             canvas.width = 128;
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
-            // Vòng tròn nền xanh ngọc chuyên nghiệp
             const grad = ctx.createLinearGradient(0, 0, 128, 128);
             grad.addColorStop(0, '#0d9488');
             grad.addColorStop(1, '#2563eb');
@@ -4192,7 +4227,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             ctx.strokeStyle = '#ffffff';
             ctx.stroke();
 
-            // Hình chiếc loa trắng
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.moveTo(34, 52);
@@ -4204,7 +4238,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             ctx.closePath();
             ctx.fill();
 
-            // Sóng âm
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 5;
             ctx.lineCap = 'round';
@@ -4312,7 +4345,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             const spTree = Array.from(slideDoc.getElementsByTagName('*')).find(el => el.localName === 'spTree');
             if (!spTree) throw new Error(`Cấu trúc slide ${slideNumber} không hợp lệ (thiếu spTree).`);
 
-            // Tìm shape ID lớn nhất để tránh trùng lặp
             let maxShapeId = 10;
             Array.from(slideDoc.getElementsByTagName('*'))
                 .filter(el => el.localName === 'cNvPr')
@@ -4322,7 +4354,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                 });
             const shapeId = maxShapeId + 1;
 
-            // Đặt biểu tượng loa gọn ở góc dưới bên phải slide
             const iconSize = 520000;
             const margin = 180000;
             const iconX = Math.max(margin, (slideWidthEmu || 12192000) - iconSize - margin);
@@ -4449,7 +4480,6 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                 const timingFrag = new DOMParser().parseFromString(timingSnippet, 'application/xml');
                 insertSlideChildInSchemaOrder(sldRoot, slideDoc.importNode(timingFrag.documentElement, true), 'timing');
             } else {
-                // Slide đã có sẵn hiệu ứng: bổ sung nút <p:audio> và lệnh tự phát mà vẫn giữ nguyên mọi hiệu ứng gốc
                 const tmRootCtn = Array.from(existingTiming.getElementsByTagName('*')).find(
                     el => el.localName === 'cTn' && el.getAttribute('nodeType') === 'tmRoot'
                 );
@@ -4544,10 +4574,9 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
             setPptxProgress(true, 20, `Đang nhúng ${audioSlides.length} tệp âm thanh MP3 vào PowerPoint...`);
 
             try {
-                // Luôn nạp bản gốc mới sạch để không bao giờ nhân đôi biểu tượng loa nếu người dùng bấm tải nhiều lần
-                const zip = await JSZip.loadAsync(pptxState.originalArrayBuffer.slice(0));
+                const JSZipLib = await ensureJSZipReady();
+                const zip = await JSZipLib.loadAsync(pptxState.originalArrayBuffer.slice(0));
 
-                // Lấy kích thước thật của slide (4:3 hoặc 16:9) từ ppt/presentation.xml
                 let slideWidthEmu = 12192000;
                 let slideHeightEmu = 6858000;
                 try {
@@ -4566,14 +4595,12 @@ Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên,
                     }
                 } catch (_) {}
 
-                // Cập nhật [Content_Types].xml
                 const ctEntry = zip.file('[Content_Types].xml');
                 if (ctEntry) {
                     const updatedCt = ensureContentTypesForAudio(await ctEntry.async('string'));
                     zip.file('[Content_Types].xml', updatedCt);
                 }
 
-                // Thêm icon loa dùng chung vào ppt/media/
                 const iconMediaFileName = `pnvlog_speaker_${Date.now().toString().slice(-4)}.png`;
                 const iconPngBytes = await createSpeakerIconPngUint8Array();
                 zip.file(`ppt/media/${iconMediaFileName}`, iconPngBytes, { compression: 'STORE' });
