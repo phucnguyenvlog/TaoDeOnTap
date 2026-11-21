@@ -338,8 +338,8 @@
 
                 <!-- Hộp thông báo lỗi / Tiến trình AI -->
                 <div id="aiErrorBox" class="hidden p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-start gap-2">
-                    <i class="fa-solid fa-circle-exclamation text-rose-600 mt-0.5"></i>
-                    <span id="aiErrorMessage"></span>
+                    <i class="fa-solid fa-circle-exclamation text-rose-600 mt-0.5 shrink-0"></i>
+                    <span id="aiErrorMessage" class="flex-1"></span>
                 </div>
 
                 <div id="aiProcessingBox" class="hidden p-4 rounded-2xl bg-blue-50 border border-blue-200 space-y-2.5">
@@ -995,21 +995,6 @@
                             <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">2</span>
                             <span>Cấu hình lời giảng, giọng đọc &amp; lồng tiếng từng slide</span>
                         </div>
-                        <button type="button" onclick="togglePptxApiKeyBox()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 text-[11px] font-bold transition">
-                            <i class="fa-solid fa-key text-amber-600 mr-1"></i>Khóa AI riêng
-                        </button>
-                    </div>
-
-                    <!-- Ô nhập Gemini API Key miễn phí riêng (tự mở khi hết lượt AI chung hoặc khi bấm Khóa AI riêng) -->
-                    <div id="pptxCustomApiKeyBox" class="hidden p-3 rounded-xl bg-amber-50/90 border border-amber-300 space-y-2 text-xs">
-                        <div class="flex flex-wrap items-center justify-between gap-1.5">
-                            <span class="font-extrabold text-amber-950"><i class="fa-solid fa-sparkles text-amber-600 mr-1"></i>Dán Gemini API Key miễn phí của bạn để AI viết lời giảng không bao giờ hết lượt:</span>
-                            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline font-extrabold">Lấy khóa miễn phí ↗</a>
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="password" id="pptxGeminiKeyInput" placeholder="Dán mã khóa bắt đầu bằng AIzaSy..." class="flex-1 px-3 py-2 rounded-lg bg-white border border-amber-300 text-xs font-mono text-slate-900 outline-none focus:border-amber-600">
-                            <button type="button" onclick="savePptxCustomGeminiKey()" class="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold shrink-0 transition">Lưu khóa</button>
-                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1123,10 +1108,8 @@
     <script>
         const apiKey = "";
         let IS_STANDALONE_STUDENT_APP = false;
-        // Khóa kết nối đã được chuyển thành mảng số ẩn để an toàn khi đẩy lên GitHub
+        // Khóa kết nối dùng chung của hệ thống
         const EMBEDDED_PUBLIC_KEY_PARTS = [8,27,101,13,47,118,29,30,103,25,52,35,26,44,48,10,56,48,126,38,63,126,11,29,4,102,0,2,96,23,7,59,7,24,120,103,29,59,7,39,125,4,61,11,107,34,49,15,7,104,30,28,11];
-        const STORAGE_API_KEY_NAME = "PHUCNGUYEN_GEMINI_API_KEY";
-        const STORAGE_EMBED_KEY_FLAG = "PHUCNGUYEN_EMBED_KEY_HTML";
         const LETTERS = ['A', 'B', 'C', 'D'];
 
         // Logo SVG Phúc nguyên Vlog tích hợp trực tiếp cho Favicon
@@ -1314,7 +1297,7 @@
         }
 
         // =========================================================================
-        // 1. QUẢN LÝ API KEY & KẾT NỐI CỤM MODEL GEMINI MỚI NHẤT
+        // 1. KẾT NỐI HỆ THỐNG AI DÙNG CHUNG
         // =========================================================================
         function getEmbeddedPublicKey() {
             try {
@@ -1328,15 +1311,7 @@
 
         function getCandidateApiKeys() {
             const keys = [];
-            try {
-                const stored = (localStorage.getItem(STORAGE_API_KEY_NAME) || '').trim();
-                if (stored) {
-                    stored.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean).forEach(k => {
-                        if (!keys.includes(k)) keys.push(k);
-                    });
-                }
-            } catch (e) {}
-            if (typeof apiKey === 'string' && apiKey.trim() && !keys.includes(apiKey.trim())) {
+            if (typeof apiKey === 'string' && apiKey.trim()) {
                 keys.push(apiKey.trim());
             }
             const embedded = getEmbeddedPublicKey();
@@ -1344,17 +1319,6 @@
                 keys.push(embedded);
             }
             return keys;
-        }
-
-        function updateApiKeyHeaderBadge() {
-            const btn = document.getElementById('btnHeaderApiKey');
-            if (!btn) return;
-            const hasKey = getCandidateApiKeys().length > 0;
-            btn.setAttribute('data-ready', hasKey ? '1' : '0');
-        }
-
-        function openApiKeyModal() {
-            showToast('Hệ thống đã tích hợp sẵn kết nối AI hoạt động tự động!');
         }
 
         async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
@@ -1371,11 +1335,11 @@
             const models = [
                 'gemini-2.5-flash',
                 'gemini-2.5-flash-lite',
-                'gemini-2.0-flash',
-                'gemini-flash-latest'
+                'gemini-flash-latest',
+                'gemini-2.0-flash'
             ];
             const keys = getCandidateApiKeys();
-            let lastError = 'Không thể kết nối máy chủ AI';
+            let lastError = 'Hệ thống AI dùng chung đang tạm bận, bạn vui lòng thử lại sau vài giây.';
             let sawQuota429 = false;
 
             const body = {
@@ -1392,41 +1356,46 @@
                 body.generationConfig.responseMimeType = 'application/json';
             }
 
-            for (const keyVal of keys) {
-                for (const modelName of models) {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(keyVal)}`;
-                    try {
-                        const res = await fetchWithTimeout(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(body)
-                        }, 45000);
+            // Tự động xoay vòng qua các model dùng chung (kèm 1 nhịp chờ thử lại nếu tạm quá tải)
+            for (let pass = 0; pass < 2; pass++) {
+                if (pass === 1) {
+                    if (!sawQuota429) break;
+                    await new Promise(r => setTimeout(r, 2500));
+                }
+                for (const keyVal of keys) {
+                    for (const modelName of models) {
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(keyVal)}`;
+                        try {
+                            const res = await fetchWithTimeout(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(body)
+                            }, 45000);
 
-                        if (!res.ok) {
-                            if (res.status === 429) {
-                                sawQuota429 = true;
-                                lastError = 'Hết lượt AI miễn phí chung (HTTP 429). Hãy dán Gemini API Key cá nhân miễn phí để dùng không giới hạn.';
-                            } else {
+                            if (!res.ok) {
                                 const errText = await res.text().catch(() => '');
-                                lastError = `Lỗi AI (${res.status}): ${errText.slice(0, 100)}`;
+                                if (res.status === 429) {
+                                    sawQuota429 = true;
+                                    lastError = 'Hệ thống AI dùng chung đang tạm quá tải lượt truy cập. Bạn vui lòng đợi khoảng 15–30 giây rồi bấm thử lại nhé!';
+                                } else {
+                                    lastError = `Máy chủ AI tạm bận (${res.status}). Bạn vui lòng thử lại sau giây lát.`;
+                                }
+                                continue;
                             }
-                            continue;
+                            const data = await res.json();
+                            const textOut = data?.candidates?.[0]?.content?.parts
+                                ?.filter(p => typeof p.text === 'string')
+                                .map(p => p.text)
+                                .join('') || '';
+                            if (textOut.trim()) return textOut.trim();
+                            lastError = 'AI chưa trả về nội dung, bạn hãy thử lại nhé.';
+                        } catch (err) {
+                            lastError = 'Kết nối mạng không ổn định, bạn vui lòng thử lại.';
                         }
-                        const data = await res.json();
-                        const textOut = data?.candidates?.[0]?.content?.parts
-                            ?.filter(p => typeof p.text === 'string')
-                            .map(p => p.text)
-                            .join('') || '';
-                        if (textOut.trim()) return textOut.trim();
-                        lastError = 'AI không trả về nội dung văn bản.';
-                    } catch (err) {
-                        lastError = err.message || 'Lỗi mạng khi gọi AI';
                     }
                 }
             }
-            const finalErr = new Error(sawQuota429
-                ? 'Tài khoản AI miễn phí chung đang tạm hết lượt (429). Hãy dán Gemini API Key miễn phí của bạn để AI viết lời giảng hay!'
-                : lastError);
+            const finalErr = new Error(lastError);
             finalErr.isQuota429 = sawQuota429;
             throw finalErr;
         }
@@ -1827,7 +1796,7 @@ ${combinedText ? `\nNỘI DUNG VĂN BẢN TRÍCH XUẤT TỪ FILE:\n${combinedTe
                 switchMainWorkspace('study');
                 showToast(`Đã tạo xong Web Ôn Tập (${EXAM_DATA.partA.length} TN • ${EXAM_DATA.partB.length} Đ/S • ${EXAM_DATA.partC.length} TL)!`);
             } catch (err) {
-                if (errMsg) errMsg.textContent = `Không thể phân tích tệp lúc này (${err.message}). Vui lòng thử lại!`;
+                if (errMsg) errMsg.textContent = `Không thể phân tích tệp lúc này: ${err.message}`;
                 if (errBox) errBox.classList.remove('hidden');
             } finally {
                 if (btn) btn.disabled = false;
@@ -2648,7 +2617,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 }
             } catch (err) {
                 if (loadingBubble) loadingBubble.remove();
-                appendChatBubble(currentBot, 'ai', `⚠️ Không thể xử lý lúc này: ${err.message}. Bạn hãy thử gửi lại nhé!`);
+                appendChatBubble(currentBot, 'ai', `⚠️ ${err.message}`);
             } finally {
                 if (btn) btn.disabled = false;
             }
@@ -3599,38 +3568,6 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             cancelRequested: false
         };
 
-        function togglePptxApiKeyBox(forceShow = null) {
-            const box = document.getElementById('pptxCustomApiKeyBox');
-            const inp = document.getElementById('pptxGeminiKeyInput');
-            if (!box) return;
-            const shouldShow = typeof forceShow === 'boolean' ? forceShow : box.classList.contains('hidden');
-            box.classList.toggle('hidden', !shouldShow);
-            if (shouldShow && inp) {
-                try {
-                    const saved = (localStorage.getItem(STORAGE_API_KEY_NAME) || '').trim();
-                    if (saved) inp.value = saved;
-                } catch (_) {}
-                inp.focus();
-            }
-        }
-
-        function savePptxCustomGeminiKey() {
-            const inp = document.getElementById('pptxGeminiKeyInput');
-            const val = (inp?.value || '').trim();
-            if (!val) {
-                showToast('Vui lòng dán mã Gemini API Key vào ô trống!');
-                return;
-            }
-            try {
-                localStorage.setItem(STORAGE_API_KEY_NAME, val);
-                updateApiKeyHeaderBadge();
-                showToast('Đã lưu Gemini API Key cá nhân! Bạn có thể bấm AI Viết Lời Giảng ngay.');
-                document.getElementById('pptxCustomApiKeyBox')?.classList.add('hidden');
-            } catch (e) {
-                showToast('Không thể lưu khóa vào trình duyệt.');
-            }
-        }
-
         function openPptxAudioStudio() {
             const modal = document.getElementById('pptxAudioModal');
             if (!modal) return;
@@ -3958,7 +3895,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                     const durStr = s.audioDuration > 0 ? `${s.audioDuration.toFixed(1)}s • ` : '';
                     statusPill = `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold"><i class="fa-solid fa-circle-check mr-1"></i>Đã có MP3 (${durStr}${s.audioSizeKB} KB)</span>`;
                 } else if (s.status === 'error') {
-                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-extrabold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Chưa viết được</span>`;
+                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-extrabold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Tạm gián đoạn</span>`;
                 } else if (!s.script.trim()) {
                     statusPill = `<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold">Slide trống / chỉ có ảnh</span>`;
                 }
@@ -3991,7 +3928,11 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                             placeholder="Nhập hoặc chỉnh sửa lời đọc cho Slide ${s.index} (để trống nếu không cần lồng tiếng slide này)..."
                             class="w-full rounded-xl bg-slate-50 focus:bg-white border border-slate-200 focus:border-orange-500 p-2.5 text-xs sm:text-sm leading-relaxed text-slate-800 outline-none resize-y transition">${escapeHtml(s.script)}</textarea>
 
-                        ${s.errorMsg ? `<div class="text-[11px] text-rose-600 font-semibold"><i class="fa-solid fa-circle-exclamation mr-1"></i>${escapeHtml(s.errorMsg)}</div>` : ''}
+                        ${s.errorMsg ? `
+                            <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-[11px] text-rose-700 font-semibold">
+                                <i class="fa-solid fa-circle-exclamation mr-1"></i>${escapeHtml(s.errorMsg)}
+                            </div>
+                        ` : ''}
 
                         <div class="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                             <span class="text-[11px] text-slate-400 font-semibold">${s.script.trim().length.toLocaleString('vi-VN')} ký tự</span>
@@ -4088,7 +4029,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
             return 'Phong cách: Giáo viên giàu kinh nghiệm đứng lớp giảng bài truyền cảm, ấm áp, lôi cuốn. Không bao giờ đọc vẹt chữ trên slide mà diễn giải mềm mại, đặt câu hỏi gợi mở cho học sinh suy nghĩ, và nối mạch tự nhiên từ slide trước sang slide sau.';
         }
 
-        // Dùng AI thật viết lời giảng hay, có mạch liên kết giữa các slide (không bao giờ dùng ghép câu máy móc)
+        // Dùng AI viết lời giảng hay, có mạch liên kết giữa các slide
         async function aiPolishSlideScriptText(slideObj, totalSlides) {
             const source = (slideObj.script || slideObj.notesText || slideObj.slideText || '').trim();
             if (!source) return '';
@@ -4178,11 +4119,9 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     s.status = s.audioBlob ? 'done' : 'idle';
                 }
             } catch (err) {
-                // Giữ nguyên văn bản gốc của slide, KHÔNG làm dở lời văn
                 s.status = 'error';
-                s.errorMsg = err.message || 'AI chưa phản hồi — văn bản gốc của slide vẫn được giữ nguyên.';
-                if (err.isQuota429) togglePptxApiKeyBox(true);
-                showToast('AI miễn phí chung tạm hết lượt — hãy dán Gemini API Key cá nhân ở hộp màu vàng phía trên nhé!');
+                s.errorMsg = err.message || 'Hệ thống AI dùng chung đang tạm bận — văn bản gốc của slide vẫn được giữ nguyên.';
+                showToast(s.errorMsg);
             } finally {
                 pptxState.isBusy = false;
                 updatePptxSummaryBadges();
@@ -4201,9 +4140,9 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             setPptxProgress(true, 10, `AI đang biên soạn lời giảng hay cho ${targets.length} slide...`);
             updatePptxSummaryBadges();
 
-            const BATCH_SIZE = 8;
+            const BATCH_SIZE = 10;
             let doneCount = 0;
-            let hitQuota = false;
+            let firstErrorMsg = '';
 
             try {
                 for (let start = 0; start < targets.length; start += BATCH_SIZE) {
@@ -4233,23 +4172,24 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                             }
                         });
                     } catch (batchErr) {
-                        // Giữ nguyên 100% chữ gốc của các slide chưa viết được, tuyệt đối không làm dở lời văn
-                        if (batchErr.isQuota429) hitQuota = true;
+                        firstErrorMsg = batchErr.message || 'Hệ thống AI dùng chung đang tạm bận.';
                         chunk.forEach(s => {
                             s.status = 'error';
-                            s.errorMsg = batchErr.message || 'Tạm dừng vì hết lượt AI miễn phí chung (giữ nguyên chữ gốc).';
+                            s.errorMsg = firstErrorMsg;
                         });
                         renderPptxSlidesList();
                         break;
                     }
                     renderPptxSlidesList();
+                    if (start + BATCH_SIZE < targets.length && !pptxState.cancelRequested) {
+                        await new Promise(r => setTimeout(r, 600));
+                    }
                 }
 
-                if (hitQuota) {
-                    togglePptxApiKeyBox(true);
+                if (firstErrorMsg) {
                     showToast(doneCount > 0
-                        ? `AI đã viết xong ${doneCount} slide đầu, sau đó hết lượt miễn phí chung. Dán Gemini API Key cá nhân ở trên để viết tiếp nhé!`
-                        : 'Lượt AI miễn phí chung tạm hết — hãy dán Gemini API Key cá nhân miễn phí vào hộp màu vàng phía trên!');
+                        ? `Đã viết xong ${doneCount} slide đầu, sau đó tạm dừng: ${firstErrorMsg}`
+                        : firstErrorMsg);
                 } else if (doneCount > 0) {
                     showToast(`AI đã biên soạn xong lời giảng truyền cảm cho ${doneCount}/${targets.length} slide!`);
                 }
@@ -4842,7 +4782,6 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
         async function initApp() {
             bindDropzoneAndPasteEvents();
             bindPptxDropzoneEvents();
-            updateApiKeyHeaderBadge();
             switchActiveAIBot('tutor');
             renderTTSVoiceCards();
             startExamTimer();
