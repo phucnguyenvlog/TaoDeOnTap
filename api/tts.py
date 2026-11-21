@@ -1,10 +1,13 @@
 import asyncio
 import json
+import os
 import re
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 
 import edge_tts
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 VOICES = [
     {
@@ -153,6 +156,17 @@ async def synth_full_text(text: str, voice: str, rate: str) -> bytes:
     return b"".join(parts)
 
 
+def load_index_html():
+    for candidate in (
+        os.path.join(BASE_DIR, "index.html"),
+        os.path.join(os.getcwd(), "index.html"),
+    ):
+        if os.path.isfile(candidate):
+            with open(candidate, "rb") as f:
+                return f.read()
+    return None
+
+
 class handler(BaseHTTPRequestHandler):
     def _cors_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -175,21 +189,36 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        path = parsed.path.rstrip("/") or "/"
         action = parse_qs(parsed.query).get("action", [""])[0]
 
-        if action == "voices" or parsed.path.endswith("/voices"):
+        if action == "voices" or path == "/voices":
             self._send_json(200, {"voices": VOICES})
             return
 
-        self._send_json(
-            200,
-            {
-                "status": "ok",
-                "model": "Microsoft Neural TTS (Vercel)",
-                "engine": "edge-tts",
-                "voices_count": len(VOICES),
-            },
-        )
+        if action == "health" or path in ("/health", "/api/tts"):
+            self._send_json(
+                200,
+                {
+                    "status": "ok",
+                    "model": "Microsoft Neural TTS (Vercel)",
+                    "engine": "edge-tts",
+                    "voices_count": len(VOICES),
+                },
+            )
+            return
+
+        if path in ("/", "/index.html"):
+            html = load_index_html()
+            if html is not None:
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(html)))
+                self.end_headers()
+                self.wfile.write(html)
+                return
+
+        self._send_json(404, {"detail": "Not Found"})
 
     def do_POST(self):
         try:
