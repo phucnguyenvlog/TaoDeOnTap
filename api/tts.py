@@ -1,0 +1,223 @@
+import asyncio
+import json
+import re
+from http.server import BaseHTTPRequestHandler
+from urllib.parse import parse_qs, urlparse
+
+import edge_tts
+
+VOICES = [
+    {
+        "id": "vi-VN-HoaiMyNeural",
+        "name": "Hoài My (Nữ • Tiếng Việt chuẩn)",
+        "gender": "female",
+        "locale": "vi-VN",
+        "description": "Giọng nữ miền Bắc tự nhiên, rõ chữ, đọc đề thi & văn bản dài cực mượt",
+    },
+    {
+        "id": "vi-VN-NamMinhNeural",
+        "name": "Nam Minh (Nam • Tiếng Việt chuẩn)",
+        "gender": "male",
+        "locale": "vi-VN",
+        "description": "Giọng nam trầm ấm, dứt khoát, phù hợp đọc giảng bài & thuyết minh",
+    },
+    {
+        "id": "en-US-JennyNeural",
+        "name": "Jenny (Nữ • Tiếng Anh Mỹ)",
+        "gender": "female",
+        "locale": "en-US",
+        "description": "Giọng nữ bản xứ Mỹ chuẩn cho đề thi Tiếng Anh",
+    },
+    {
+        "id": "en-US-GuyNeural",
+        "name": "Guy (Nam • Tiếng Anh Mỹ)",
+        "gender": "male",
+        "locale": "en-US",
+        "description": "Giọng nam bản xứ Mỹ tự nhiên",
+    },
+    {
+        "id": "en-GB-SoniaNeural",
+        "name": "Sonia (Nữ • Tiếng Anh Anh)",
+        "gender": "female",
+        "locale": "en-GB",
+        "description": "Giọng nữ chuẩn Anh-Anh (British English)",
+    },
+]
+
+MALE_KEYWORDS = (
+    "nam",
+    "male",
+    "hải đăng",
+    "hai dang",
+    "minh đức",
+    "minh duc",
+    "thiện minh",
+    "thien minh",
+    "quang sơn",
+    "quang son",
+    "thiền tâm",
+    "adam",
+    "namminh",
+)
+
+
+def resolve_voice(voice_input: str) -> str:
+    if not voice_input:
+        return "vi-VN-HoaiMyNeural"
+    v = str(voice_input).strip()
+    if v.endswith("Neural"):
+        return v
+    low = v.lower()
+    if any(k in low for k in MALE_KEYWORDS):
+        return "vi-VN-NamMinhNeural"
+    return "vi-VN-HoaiMyNeural"
+
+
+def format_rate(speed) -> str:
+    try:
+        val = float(speed)
+    except (TypeError, ValueError):
+        val = 1.0
+    pct = int(round((val - 1.0) * 100))
+    pct = max(-50, min(100, pct))
+    return f"{pct:+d}%"
+
+
+def clean_text(text: str) -> str:
+    text = re.sub(r"\[(cười|hắng giọng|thở dài|nghi[^\]]*|khoảng nghỉ[^\]]*)\]", " ", text, flags=re.IGNORECASE)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def split_chunks(text: str, max_len: int = 1600):
+    if len(text) <= max_len:
+        return [text]
+    sentences = re.split(r"(?<=[.!?\n;:])\s+", text)
+    chunks = []
+    current = ""
+    for sent in sentences:
+        sent = sent.strip()
+        if not sent:
+            continue
+        if len(sent) > max_len:
+            if current:
+                chunks.append(current)
+                current = ""
+            words = sent.split(" ")
+            part = ""
+            for w in words:
+                if len(part) + len(w) + 1 <= max_len:
+                    part = f"{part} {w}".strip()
+                else:
+                    if part:
+                        chunks.append(part)
+                    part = w
+            if part:
+                chunks.append(part)
+        elif len(current) + len(sent) + 1 <= max_len:
+            current = f"{current} {sent}".strip()
+        else:
+            if current:
+                chunks.append(current)
+            current = sent
+    if current:
+        chunks.append(current)
+    return chunks
+
+
+async def synth_one_chunk(chunk_text: str, voice: str, rate: str, sem: asyncio.Semaphore) -> bytes:
+    last_err = None
+    async with sem:
+        for attempt in range(3):
+            try:
+                communicate = edge_tts.Communicate(text=chunk_text, voice=voice, rate=rate)
+                buf = bytearray()
+                async for msg in communicate.stream():
+                    if msg["type"] == "audio":
+                        buf.extend(msg["data"])
+                if buf:
+                    return bytes(buf)
+                last_err = RuntimeError("Empty audio received")
+            except Exception as exc:
+                last_err = exc
+                await asyncio.sleep(0.4 * (attempt + 1))
+    raise RuntimeError(f"TTS chunk failed: {last_err}")
+
+
+async def synth_full_text(text: str, voice: str, rate: str) -> bytes:
+    chunks = split_chunks(text, max_len=1600)
+    sem = asyncio.Semaphore(4)
+    tasks = [synth_one_chunk(c, voice, rate, sem) for c in chunks]
+    parts = await asyncio.gather(*tasks)
+    return b"".join(parts)
+
+
+class handler(BaseHTTPRequestHandler):
+    def _cors_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
+
+    def _send_json(self, status_code: int, payload: dict):
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status_code)
+        self._cors_headers()
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self._cors_headers()
+        self.end_headers()
+
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        action = parse_qs(parsed.query).get("action", [""])[0]
+
+        if action == "voices" or parsed.path.endswith("/voices"):
+            self._send_json(200, {"voices": VOICES})
+            return
+
+        self._send_json(
+            200,
+            {
+                "status": "ok",
+                "model": "Microsoft Neural TTS (Vercel)",
+                "engine": "edge-tts",
+                "voices_count": len(VOICES),
+            },
+        )
+
+    def do_POST(self):
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            raw = self.rfile.read(length) if length > 0 else b"{}"
+            data = json.loads(raw.decode("utf-8"))
+
+            text = clean_text(str(data.get("text") or ""))
+            if not text:
+                self._send_json(400, {"error": "Văn bản trống, vui lòng nhập nội dung."})
+                return
+
+            voice = resolve_voice(data.get("voice") or data.get("voice_id") or "")
+            rate = format_rate(data.get("speed", 1.0))
+
+            loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(loop)
+                audio_bytes = loop.run_until_complete(synth_full_text(text, voice, rate))
+            finally:
+                loop.close()
+
+            self.send_response(200)
+            self._cors_headers()
+            self.send_header("Content-Type", "audio/mpeg")
+            self.send_header("Content-Disposition", 'inline; filename="voice.mp3"')
+            self.send_header("Content-Length", str(len(audio_bytes)))
+            self.end_headers()
+            self.wfile.write(audio_bytes)
+        except Exception as exc:
+            self._send_json(500, {"error": f"Lỗi tạo âm thanh: {exc}"})
