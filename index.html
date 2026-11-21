@@ -33,6 +33,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <!-- QRious vẽ Mã QR trực tiếp ngay trên trình duyệt (không bao giờ bị lỗi ảnh QR) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <!-- JSZip đọc, phân tích & đóng gói tệp PowerPoint (.pptx) trực tiếp trên trình duyệt -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         html, body {
             max-width: 100%;
@@ -246,6 +248,10 @@
                 <button type="button" onclick="openTTSStudio()" class="px-3 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-extrabold transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-volume-high text-teal-600"></i>
                     <span class="truncate">Văn Bản → Âm Thanh</span>
+                </button>
+                <button type="button" onclick="openPptxAudioStudio()" class="px-3 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-file-powerpoint text-orange-600"></i>
+                    <span class="truncate">Lồng Tiếng PowerPoint</span>
                 </button>
                 <button type="button" onclick="openAssistantWithBot('tutor')" class="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-extrabold transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-robot text-emerald-600"></i>
@@ -918,6 +924,155 @@
                     <div id="ttsHistoryList" class="space-y-1.5"></div>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- CÔNG CỤ LỒNG TIẾNG POWERPOINT TỰ ĐỘNG (.PPTX -> MP3 -> .PPTX)       -->
+    <!-- =================================================================== -->
+    <div id="pptxAudioModal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-sm z-50 hidden items-center justify-center p-2 sm:p-4">
+        <div class="bg-slate-50 text-slate-800 w-full max-w-5xl max-h-[95vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl border border-slate-200">
+            <!-- Tiêu đề hộp thoại PowerPoint -->
+            <div class="bg-white px-4 sm:px-5 py-3.5 flex items-center justify-between gap-3 shrink-0 border-b border-slate-200">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-600 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+                        <i class="fa-solid fa-file-powerpoint"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Lồng Tiếng PowerPoint Tự Động (.PPTX)</h3>
+                        <p class="text-[11px] sm:text-xs text-slate-500 truncate">Phân tích từng slide • AI viết lời giảng mượt • Nhúng MP3 trực tiếp &amp; tải file .pptx hoàn chỉnh</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closePptxAudioStudio()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-xmark"></i>
+                    <span>Đóng</span>
+                </button>
+            </div>
+
+            <!-- Vùng cuộn chính -->
+            <div class="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4">
+                <!-- BƯỚC 1: TẢI FILE POWERPOINT (.PPTX) -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">1</span>
+                            <span>Chọn tệp PowerPoint (.pptx) cần lồng tiếng</span>
+                        </div>
+                        <button type="button" id="btnPptxChangeFile" onclick="document.getElementById('pptxFileInput').click()" class="hidden px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                            <i class="fa-solid fa-folder-open mr-1"></i>Chọn file .pptx khác
+                        </button>
+                    </div>
+
+                    <input type="file" id="pptxFileInput" accept=".pptx" class="hidden" onchange="handlePptxFileSelected(this.files)">
+
+                    <div id="pptxDropzone" onclick="document.getElementById('pptxFileInput').click()" class="cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/70 hover:bg-orange-50/40 p-6 sm:p-8 text-center space-y-2.5 transition">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center text-2xl mx-auto shadow-sm">
+                            <i class="fa-solid fa-file-powerpoint"></i>
+                        </div>
+                        <div class="text-sm sm:text-base font-extrabold text-slate-900">Bấm vào đây hoặc kéo thả tệp PowerPoint (.pptx)</div>
+                        <div class="text-xs text-slate-500">Giữ nguyên 100% giao diện, hình ảnh, hiệu ứng gốc của slide — chỉ chèn thêm âm thanh MP3 chuẩn vào từng trang</div>
+                    </div>
+
+                    <!-- Thông tin tệp đã nạp -->
+                    <div id="pptxFileInfoBar" class="hidden p-3 rounded-xl bg-orange-50/70 border border-orange-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <i class="fa-solid fa-file-powerpoint text-orange-600 text-lg shrink-0"></i>
+                            <div class="min-w-0">
+                                <div id="pptxLoadedFileName" class="font-black text-slate-900 truncate">bai-giang.pptx</div>
+                                <div id="pptxLoadedFileMeta" class="text-[11px] text-orange-800 font-semibold">0 slide</div>
+                            </div>
+                        </div>
+                        <span id="pptxAudioReadySummary" class="px-2.5 py-1 rounded-full bg-white text-emerald-700 border border-emerald-200 font-extrabold text-[11px]">Đã lồng tiếng: 0/0 slide</span>
+                    </div>
+                </div>
+
+                <!-- BƯỚC 2: CẤU HÌNH GIỌNG ĐỌC & ĐIỀU KHIỂN HÀNG LOẠT -->
+                <div id="pptxControlsSection" class="hidden bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3.5">
+                    <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">2</span>
+                        <span>Cấu hình giọng đọc &amp; lồng tiếng từng slide</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Giọng đọc (Vercel Neural TTS)</label>
+                            <select id="pptxVoiceSelect" onchange="pptxState.voiceId = this.value" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-bold text-slate-800 outline-none focus:border-orange-500"></select>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-1">
+                                <span>Tốc độ đọc lời giảng</span>
+                                <span id="pptxSpeedLabel" class="font-mono font-extrabold text-orange-700">1.00x</span>
+                            </div>
+                            <input type="range" id="pptxSpeedRange" min="0.70" max="1.50" step="0.05" value="1.00" oninput="onPptxSpeedChange(this.value)" class="w-full accent-orange-600 cursor-pointer mt-1.5">
+                        </div>
+                    </div>
+
+                    <!-- Tùy chọn phát trong PowerPoint -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                        <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
+                            <input type="checkbox" id="pptxOptAutoPlay" checked class="w-4 h-4 rounded accent-orange-600">
+                            <span>Tự động phát khi chiếu slide</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
+                            <input type="checkbox" id="pptxOptHideIcon" checked class="w-4 h-4 rounded accent-orange-600">
+                            <span>Ẩn biểu tượng loa khi trình chiếu</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
+                            <input type="checkbox" id="pptxOptAutoAdvance" class="w-4 h-4 rounded accent-orange-600">
+                            <span>Tự chuyển slide sau khi đọc xong</span>
+                        </label>
+                    </div>
+
+                    <!-- Thanh nút thao tác hàng loạt -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <button type="button" id="btnPptxAiPolishAll" onclick="aiPolishAllPptxSlides()" class="py-2.5 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold transition flex items-center justify-center gap-1.5 disabled:opacity-50">
+                            <i class="fa-solid fa-wand-magic-sparkles text-amber-600"></i>
+                            <span>AI Viết Lời Giảng Tất Cả</span>
+                        </button>
+                        <button type="button" id="btnPptxGenerateAll" onclick="generateAllPptxSlidesAudio()" class="py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white text-xs font-extrabold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50">
+                            <i class="fa-solid fa-volume-high"></i>
+                            <span>Tạo Âm Thanh Tất Cả Slide</span>
+                        </button>
+                        <button type="button" id="btnPptxDownloadFinal" onclick="exportNarratedPptxFile()" disabled class="py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-orange-600 to-rose-600 hover:from-orange-700 hover:to-rose-700 text-white text-xs font-extrabold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-45 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Tải File PowerPoint (.PPTX)</span>
+                        </button>
+                    </div>
+
+                    <!-- Thanh tiến trình xử lý chung -->
+                    <div id="pptxProgressBox" class="hidden p-3.5 rounded-2xl bg-orange-50 border border-orange-200 space-y-2 animate-fade-in">
+                        <div class="flex items-center justify-between gap-2">
+                            <span id="pptxProgressLabel" class="flex items-center gap-2 text-xs font-extrabold text-orange-950 min-w-0">
+                                <i class="fa-solid fa-spinner fa-spin text-orange-600 shrink-0"></i>
+                                <span class="truncate">Đang xử lý slide...</span>
+                            </span>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <span id="pptxProgressPct" class="px-2 py-0.5 rounded-full bg-orange-600 text-white text-[11px] font-black font-mono">0%</span>
+                                <button type="button" id="btnPptxCancelBatch" onclick="cancelPptxBatchTask()" class="px-2.5 py-0.5 rounded-lg bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold">Dừng</button>
+                            </div>
+                        </div>
+                        <div class="w-full h-2.5 bg-orange-100 rounded-full overflow-hidden">
+                            <div id="pptxProgressBar" class="h-full progress-bar-animated rounded-full transition-all duration-300" style="width: 10%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BƯỚC 3: DANH SÁCH TỪNG SLIDE & LỜI ĐỌC CHỈNH SỬA TRỰC TIẾP -->
+                <div id="pptxSlidesSection" class="hidden space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+                        <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">3</span>
+                            <span>Nội dung phân tích từng Slide (Bạn có thể sửa lời đọc &amp; nghe thử từng trang)</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-[11px]">
+                            <button type="button" onclick="toggleAllPptxSlidesEnabled(true)" class="font-bold text-teal-700 hover:underline">Chọn tất cả</button>
+                            <span class="text-slate-300">|</span>
+                            <button type="button" onclick="toggleAllPptxSlidesEnabled(false)" class="font-bold text-slate-500 hover:underline">Bỏ chọn hết</button>
+                        </div>
+                    </div>
+                    <div id="pptxSlidesList" class="space-y-3"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -2843,7 +2998,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 '#headerStepNav', '#headerActionToolbar', '#studyTopQuickBanner',
                 '#sidebarTeacherExportBtns', '#teacherBrandLogoBox', '#studentPreviewExitBanner',
                 '#workspaceScanner', '#workspaceEditor', '#aiChatDrawer', '#aiChatBackdrop',
-                '#ttsStudioModal', '#wordExportModal', '#shareLinkModal', '#pdfCaptureModalOverlay',
+                '#ttsStudioModal', '#pptxAudioModal', '#wordExportModal', '#shareLinkModal', '#pdfCaptureModalOverlay',
                 '#btnFloatingTTS', '#btnFloatingSuperAI', '#btnFloatingAIBuilder'
             ].forEach(sel => {
                 const node = cloneDoc.querySelector(sel);
@@ -3388,6 +3543,1110 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
         }
 
         // =========================================================================
+        // 9B. CÔNG CỤ LỒNG TIẾNG POWERPOINT TỰ ĐỘNG (.PPTX -> MP3 -> .PPTX)
+        // =========================================================================
+        const pptxState = {
+            fileName: '',
+            originalArrayBuffer: null,
+            slides: [], // [{ index, slidePath, fileName, title, slideText, notesText, script, sourceMode, enabled, status, audioBlob, audioUrl, audioDuration, audioSizeKB, errorMsg }]
+            voiceId: 'vi-VN-HoaiMyNeural',
+            speed: 1.0,
+            isBusy: false,
+            cancelRequested: false
+        };
+
+        function openPptxAudioStudio() {
+            const modal = document.getElementById('pptxAudioModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            populatePptxVoiceSelect();
+            if (!ttsVoicesSyncedOnce) {
+                syncVoicesFromVercelSilent().then(() => populatePptxVoiceSelect());
+            }
+        }
+
+        function closePptxAudioStudio() {
+            const modal = document.getElementById('pptxAudioModal');
+            if (!modal) return;
+            pptxState.cancelRequested = true;
+            // Tạm dừng các thẻ audio đang phát trong modal
+            modal.querySelectorAll('audio').forEach(a => { try { a.pause(); } catch (_) {} });
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function populatePptxVoiceSelect() {
+            const sel = document.getElementById('pptxVoiceSelect');
+            if (!sel) return;
+            const prev = pptxState.voiceId || selectedTTSVoiceId || 'vi-VN-HoaiMyNeural';
+            sel.innerHTML = ttsVoicesList.map(v =>
+                `<option value="${escapeHtml(v.id)}" ${v.id === prev ? 'selected' : ''}>${escapeHtml(v.name)} (${escapeHtml(v.badge)})</option>`
+            ).join('');
+            pptxState.voiceId = sel.value || ttsVoicesList[0]?.id || 'vi-VN-HoaiMyNeural';
+        }
+
+        function onPptxSpeedChange(val) {
+            const num = Math.max(0.7, Math.min(1.5, parseFloat(val) || 1.0));
+            pptxState.speed = num;
+            const lbl = document.getElementById('pptxSpeedLabel');
+            const rng = document.getElementById('pptxSpeedRange');
+            if (lbl) lbl.textContent = num.toFixed(2) + 'x';
+            if (rng) rng.value = num.toFixed(2);
+        }
+
+        function setPptxProgress(visible, pct = 0, label = '') {
+            const box = document.getElementById('pptxProgressBox');
+            if (!box) return;
+            if (!visible) {
+                box.classList.add('hidden');
+                return;
+            }
+            box.classList.remove('hidden');
+            const clamped = Math.max(4, Math.min(100, Math.round(pct)));
+            const pctEl = document.getElementById('pptxProgressPct');
+            const barEl = document.getElementById('pptxProgressBar');
+            const lblEl = document.getElementById('pptxProgressLabel');
+            if (pctEl) pctEl.textContent = `${clamped}%`;
+            if (barEl) barEl.style.width = `${clamped}%`;
+            if (lblEl && label) {
+                lblEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-orange-600 shrink-0"></i><span class="truncate">${escapeHtml(label)}</span>`;
+            }
+        }
+
+        function cancelPptxBatchTask() {
+            pptxState.cancelRequested = true;
+            showToast('Đang dừng tiến trình sau khi xong slide hiện tại...');
+        }
+
+        // Giải phóng URL Blob cũ khi nạp file mới
+        function revokePptxSlideAudioUrls() {
+            pptxState.slides.forEach(s => {
+                if (s.audioUrl) {
+                    try { URL.revokeObjectURL(s.audioUrl); } catch (_) {}
+                }
+            });
+        }
+
+        // Đọc văn bản sạch từ XML của 1 slide hoặc notesSlide (nhóm theo đoạn <a:p>)
+        function extractCleanTextFromOoxmlXml(xmlText, isNotes = false) {
+            try {
+                const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+                const pNodes = Array.from(doc.getElementsByTagName('*')).filter(el => el.localName === 'p' && el.namespaceURI && el.namespaceURI.includes('drawingml'));
+                const lines = [];
+                pNodes.forEach(pEl => {
+                    // Bỏ qua placeholder số trang trong notesSlide (<a:fld type="slidenum">)
+                    let lineText = '';
+                    const walk = (node) => {
+                        if (!node || !node.childNodes) return;
+                        for (const child of node.childNodes) {
+                            if (child.nodeType !== 1) continue;
+                            if (isNotes && child.localName === 'fld' && (child.getAttribute('type') || '').toLowerCase() === 'slidenum') {
+                                continue;
+                            }
+                            if (child.localName === 't') {
+                                lineText += child.textContent || '';
+                            } else if (child.localName === 'br') {
+                                lineText += ' ';
+                            } else if (child.localName === 'tab') {
+                                lineText += ' ';
+                            } else {
+                                walk(child);
+                            }
+                        }
+                    };
+                    walk(pEl);
+                    const cleaned = lineText.replace(/\s+/g, ' ').trim();
+                    if (cleaned) {
+                        // Loại bỏ số trang đơn lẻ nằm ở cuối slide notes
+                        if (isNotes && /^\d{1,3}$/.test(cleaned)) return;
+                        lines.push(cleaned);
+                    }
+                });
+                return lines.join('\n').trim();
+            } catch (e) {
+                return '';
+            }
+        }
+
+        // Chuẩn hóa đường dẫn tương đối bên trong file ZIP của PPTX (VD: ../notesSlides/notesSlide1.xml)
+        function resolvePptxZipPath(baseDir, relTarget) {
+            const cleanTarget = String(relTarget || '').replace(/\\/g, '/');
+            if (cleanTarget.startsWith('/')) return cleanTarget.replace(/^\/+/, '');
+            const baseParts = baseDir.split('/').filter(Boolean);
+            const relParts = cleanTarget.split('/').filter(Boolean);
+            for (const part of relParts) {
+                if (part === '..') baseParts.pop();
+                else if (part !== '.') baseParts.push(part);
+            }
+            return baseParts.join('/');
+        }
+
+        // Phân tích đúng thứ tự các slide từ ppt/presentation.xml và đọc chữ + ghi chú từng slide
+        async function parsePptxSlidesFromZip(zip) {
+            const orderedPaths = [];
+            try {
+                const presFile = zip.file('ppt/presentation.xml');
+                const presRelsFile = zip.file('ppt/_rels/presentation.xml.rels');
+                if (presFile && presRelsFile) {
+                    const presDoc = new DOMParser().parseFromString(await presFile.async('string'), 'application/xml');
+                    const relsDoc = new DOMParser().parseFromString(await presRelsFile.async('string'), 'application/xml');
+                    const relMap = {};
+                    Array.from(relsDoc.getElementsByTagName('*'))
+                        .filter(el => el.localName === 'Relationship')
+                        .forEach(el => {
+                            const id = el.getAttribute('Id');
+                            const target = el.getAttribute('Target');
+                            if (id && target) relMap[id] = resolvePptxZipPath('ppt', target);
+                        });
+                    const sldIds = Array.from(presDoc.getElementsByTagName('*')).filter(el => el.localName === 'sldId');
+                    sldIds.forEach(el => {
+                        const rid = el.getAttribute('r:id') || el.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+                        if (rid && relMap[rid] && zip.file(relMap[rid])) {
+                            orderedPaths.push(relMap[rid]);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Presentation order fallback:', e);
+            }
+
+            // Dự phòng nếu không đọc được thứ tự từ presentation.xml
+            if (orderedPaths.length === 0) {
+                const fallback = [];
+                zip.forEach((relativePath, fileObj) => {
+                    if (!fileObj.dir && /^ppt\/slides\/slide\d+\.xml$/i.test(relativePath)) {
+                        fallback.push(relativePath);
+                    }
+                });
+                fallback.sort((a, b) => {
+                    const na = parseInt((a.match(/slide(\d+)\.xml/i) || [])[1] || '0', 10);
+                    const nb = parseInt((b.match(/slide(\d+)\.xml/i) || [])[1] || '0', 10);
+                    return na - nb;
+                });
+                orderedPaths.push(...fallback);
+            }
+
+            const slides = [];
+            for (let i = 0; i < orderedPaths.length; i++) {
+                const slidePath = orderedPaths[i];
+                const fileName = slidePath.split('/').pop();
+                const slideXml = await zip.file(slidePath).async('string');
+                const slideText = extractCleanTextFromOoxmlXml(slideXml, false);
+
+                // Đọc thêm Ghi chú thuyết trình (Speaker Notes) nếu slide có sẵn
+                let notesText = '';
+                try {
+                    const relsPath = `ppt/slides/_rels/${fileName}.rels`;
+                    const relsEntry = zip.file(relsPath);
+                    if (relsEntry) {
+                        const relsDoc = new DOMParser().parseFromString(await relsEntry.async('string'), 'application/xml');
+                        const notesRel = Array.from(relsDoc.getElementsByTagName('*')).find(
+                            el => el.localName === 'Relationship' && (el.getAttribute('Type') || '').toLowerCase().includes('notesslide')
+                        );
+                        if (notesRel) {
+                            const notesPath = resolvePptxZipPath('ppt/slides', notesRel.getAttribute('Target'));
+                            if (zip.file(notesPath)) {
+                                notesText = extractCleanTextFromOoxmlXml(await zip.file(notesPath).async('string'), true);
+                            }
+                        }
+                    }
+                } catch (_) {}
+
+                const firstLine = (slideText.split('\n')[0] || '').trim();
+                const title = firstLine ? firstLine.slice(0, 70) : `Slide ${i + 1}`;
+                const useNotesDefault = Boolean(notesText && notesText.length >= 6);
+                const initialScript = useNotesDefault ? notesText : slideText;
+
+                slides.push({
+                    index: i + 1,
+                    slidePath,
+                    fileName,
+                    title,
+                    slideText,
+                    notesText,
+                    script: initialScript,
+                    sourceMode: useNotesDefault ? 'notes' : 'slide',
+                    enabled: Boolean(initialScript.trim()),
+                    status: initialScript.trim() ? 'idle' : 'empty',
+                    audioBlob: null,
+                    audioUrl: '',
+                    audioDuration: 0,
+                    audioSizeKB: 0,
+                    errorMsg: ''
+                });
+            }
+            return slides;
+        }
+
+        async function handlePptxFileSelected(fileList) {
+            if (!fileList || fileList.length === 0) return;
+            const file = fileList[0];
+            if (!file.name.toLowerCase().endsWith('.pptx')) {
+                showToast('Vui lòng chọn tệp PowerPoint định dạng .pptx!');
+                return;
+            }
+            if (typeof JSZip === 'undefined') {
+                showToast('Thư viện đọc PowerPoint (JSZip) chưa tải xong, hãy tải lại trang!');
+                return;
+            }
+
+            try {
+                showToast(`Đang đọc và phân tích "${file.name}"...`);
+                const arrayBuffer = await file.arrayBuffer();
+                const zip = await JSZip.loadAsync(arrayBuffer);
+                const slides = await parsePptxSlidesFromZip(zip);
+
+                if (slides.length === 0) {
+                    showToast('Không tìm thấy slide nào trong tệp PowerPoint này!');
+                    return;
+                }
+
+                revokePptxSlideAudioUrls();
+                pptxState.fileName = file.name;
+                pptxState.originalArrayBuffer = arrayBuffer;
+                pptxState.slides = slides;
+                pptxState.cancelRequested = false;
+
+                document.getElementById('pptxDropzone')?.classList.add('hidden');
+                document.getElementById('btnPptxChangeFile')?.classList.remove('hidden');
+                document.getElementById('pptxFileInfoBar')?.classList.remove('hidden');
+                document.getElementById('pptxControlsSection')?.classList.remove('hidden');
+                document.getElementById('pptxSlidesSection')?.classList.remove('hidden');
+
+                document.getElementById('pptxLoadedFileName').textContent = file.name;
+                const withText = slides.filter(s => s.script.trim()).length;
+                document.getElementById('pptxLoadedFileMeta').textContent = `Tổng ${slides.length} slide • ${withText} slide có nội dung chữ`;
+
+                populatePptxVoiceSelect();
+                updatePptxSummaryBadges();
+                renderPptxSlidesList();
+                showToast(`Đã phân tích xong ${slides.length} slide! Bạn có thể bấm Tạo Âm Thanh hoặc dùng AI viết lời giảng mượt hơn.`);
+            } catch (err) {
+                showToast(`Không thể mở tệp PowerPoint: ${err.message}`);
+            } finally {
+                const inp = document.getElementById('pptxFileInput');
+                if (inp) inp.value = '';
+            }
+        }
+
+        function updatePptxSummaryBadges() {
+            const total = pptxState.slides.length;
+            const ready = pptxState.slides.filter(s => s.audioBlob).length;
+            const badge = document.getElementById('pptxAudioReadySummary');
+            const dlBtn = document.getElementById('btnPptxDownloadFinal');
+            if (badge) badge.textContent = `Đã lồng tiếng: ${ready}/${total} slide`;
+            if (dlBtn) dlBtn.disabled = ready === 0 || pptxState.isBusy;
+        }
+
+        function renderPptxSlidesList() {
+            const list = document.getElementById('pptxSlidesList');
+            if (!list) return;
+
+            list.innerHTML = pptxState.slides.map((s, idx) => {
+                let statusPill = `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">Chưa có âm thanh</span>`;
+                if (s.status === 'generating') {
+                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 text-[10px] font-extrabold"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tạo MP3...</span>`;
+                } else if (s.status === 'polishing') {
+                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-extrabold"><i class="fa-solid fa-spinner fa-spin mr-1"></i>AI đang viết lời...</span>`;
+                } else if (s.audioBlob) {
+                    const durStr = s.audioDuration > 0 ? `${s.audioDuration.toFixed(1)}s • ` : '';
+                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold"><i class="fa-solid fa-circle-check mr-1"></i>Đã có MP3 (${durStr}${s.audioSizeKB} KB)</span>`;
+                } else if (s.status === 'error') {
+                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-extrabold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Lỗi</span>`;
+                } else if (!s.script.trim()) {
+                    statusPill = `<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold">Slide trống / chỉ có ảnh</span>`;
+                }
+
+                const hasNotes = Boolean(s.notesText && s.notesText.trim());
+                const sourceSwitcher = hasNotes ? `
+                    <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold">
+                        <button type="button" onclick="switchPptxSlideSource(${idx}, 'slide')" class="px-2 py-0.5 rounded-md transition ${s.sourceMode === 'slide' ? 'bg-white text-orange-700 shadow-2xs' : 'text-slate-600'}">Chữ Slide</button>
+                        <button type="button" onclick="switchPptxSlideSource(${idx}, 'notes')" class="px-2 py-0.5 rounded-md transition ${s.sourceMode === 'notes' ? 'bg-white text-orange-700 shadow-2xs' : 'text-slate-600'}">Ghi chú (Notes)</button>
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="bg-white rounded-2xl border ${s.audioBlob ? 'border-emerald-300' : 'border-slate-200'} shadow-2xs p-3.5 space-y-2.5">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <input type="checkbox" ${s.enabled ? 'checked' : ''} onchange="togglePptxSlideEnabled(${idx}, this.checked)" class="w-4 h-4 rounded accent-orange-600 cursor-pointer shrink-0" title="Bật/tắt lồng tiếng cho slide này">
+                                <span class="px-2.5 py-0.5 rounded-lg bg-orange-100 text-orange-800 text-xs font-black shrink-0">Slide ${s.index}</span>
+                                <span class="text-xs font-bold text-slate-700 truncate">${escapeHtml(s.title)}</span>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                ${sourceSwitcher}
+                                ${statusPill}
+                            </div>
+                        </div>
+
+                        <textarea
+                            rows="3"
+                            oninput="updatePptxSlideScript(${idx}, this.value)"
+                            placeholder="Nhập hoặc chỉnh sửa lời đọc cho Slide ${s.index} (để trống nếu không cần lồng tiếng slide này)..."
+                            class="w-full rounded-xl bg-slate-50 focus:bg-white border border-slate-200 focus:border-orange-500 p-2.5 text-xs sm:text-sm leading-relaxed text-slate-800 outline-none resize-y transition">${escapeHtml(s.script)}</textarea>
+
+                        ${s.errorMsg ? `<div class="text-[11px] text-rose-600 font-semibold"><i class="fa-solid fa-circle-exclamation mr-1"></i>${escapeHtml(s.errorMsg)}</div>` : ''}
+
+                        <div class="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                            <span class="text-[11px] text-slate-400 font-semibold">${s.script.trim().length.toLocaleString('vi-VN')} ký tự</span>
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <button type="button" onclick="aiPolishSinglePptxSlide(${idx})" ${pptxState.isBusy ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-bold transition disabled:opacity-50">
+                                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI viết lời mượt
+                                </button>
+                                <button type="button" onclick="generateSinglePptxSlideAudio(${idx})" ${pptxState.isBusy ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-extrabold transition disabled:opacity-50">
+                                    <i class="fa-solid fa-volume-high mr-1"></i>${s.audioBlob ? 'Tạo lại MP3' : 'Tạo MP3 slide này'}
+                                </button>
+                                ${s.audioBlob ? `
+                                    <button type="button" onclick="downloadSinglePptxSlideMp3(${idx})" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[11px] font-bold transition" title="Tải riêng file MP3 của slide này">
+                                        <i class="fa-solid fa-download"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        ${s.audioUrl ? `
+                            <div class="pt-1.5 border-t border-slate-100">
+                                <audio controls playsinline src="${s.audioUrl}" class="w-full h-9 rounded-lg"></audio>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updatePptxSlideScript(idx, val) {
+            const s = pptxState.slides[idx];
+            if (!s) return;
+            s.script = val;
+            if (val.trim() && !s.enabled) s.enabled = true;
+        }
+
+        function togglePptxSlideEnabled(idx, checked) {
+            if (!pptxState.slides[idx]) return;
+            pptxState.slides[idx].enabled = Boolean(checked);
+        }
+
+        function toggleAllPptxSlidesEnabled(val) {
+            pptxState.slides.forEach(s => {
+                s.enabled = val ? Boolean(s.script.trim() || s.audioBlob) : false;
+            });
+            renderPptxSlidesList();
+        }
+
+        function switchPptxSlideSource(idx, mode) {
+            const s = pptxState.slides[idx];
+            if (!s) return;
+            s.sourceMode = mode;
+            s.script = mode === 'notes' ? (s.notesText || '') : (s.slideText || '');
+            s.enabled = Boolean(s.script.trim());
+            renderPptxSlidesList();
+        }
+
+        function downloadSinglePptxSlideMp3(idx) {
+            const s = pptxState.slides[idx];
+            if (!s?.audioBlob) return;
+            triggerBlobFileDownload(s.audioBlob, `slide_${s.index}_${getSafeFilenameSlug(s.title, 'audio')}.mp3`);
+        }
+
+        // Đo thời lượng chính xác của file MP3 (phục vụ hiển thị & tuỳ chọn tự chuyển slide)
+        async function measureAudioBlobDuration(blob) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    const ctx = new AudioCtx();
+                    const ab = await blob.arrayBuffer();
+                    const buf = await ctx.decodeAudioData(ab.slice(0));
+                    const dur = buf.duration || 0;
+                    ctx.close().catch(() => {});
+                    if (dur > 0) return dur;
+                }
+            } catch (_) {}
+            return await new Promise(resolve => {
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio();
+                const done = (d) => { URL.revokeObjectURL(url); resolve(d || 0); };
+                audio.onloadedmetadata = () => done(isFinite(audio.duration) ? audio.duration : 0);
+                audio.onerror = () => done(0);
+                audio.src = url;
+            });
+        }
+
+        // Dùng Gemini viết lại chữ gạch đầu dòng trên slide thành lời thuyết trình tự nhiên
+        async function aiPolishSlideScriptText(slideObj, totalSlides) {
+            const source = (slideObj.script || slideObj.notesText || slideObj.slideText || '').trim();
+            if (!source) return '';
+            const prompt = `Bạn là giáo viên thuyết trình bài giảng PowerPoint chuyên nghiệp.
+Đây là nội dung thô của Slide ${slideObj.index}/${totalSlides}:
+"""
+${source.slice(0, 3500)}
+"""
+Hãy chuyển nội dung trên thành lời giảng thuyết trình tự nhiên, mạch lạc, dễ nghe khi đọc thành âm thanh MP3 (không dùng gạch đầu dòng, không dùng ký tự markdown như ** hay #, không viết "Slide 1:" ở đầu trừ khi cần thiết, giữ đầy đủ ý chính, độ dài súc tích vừa đủ). Chỉ trả về đúng đoạn văn lời giảng.`;
+            const res = await callGeminiTextOrMultimodal([{ text: prompt }], '', false, 1200);
+            return String(res || '').replace(/[*#_`]+/g, '').trim();
+        }
+
+        async function aiPolishSinglePptxSlide(idx) {
+            const s = pptxState.slides[idx];
+            if (!s || pptxState.isBusy) return;
+            if (!s.script.trim() && !s.slideText.trim()) {
+                showToast(`Slide ${s.index} chưa có nội dung chữ để AI viết lời!`);
+                return;
+            }
+            pptxState.isBusy = true;
+            s.status = 'polishing';
+            s.errorMsg = '';
+            renderPptxSlidesList();
+            try {
+                const polished = await aiPolishSlideScriptText(s, pptxState.slides.length);
+                if (polished) {
+                    s.script = polished;
+                    s.enabled = true;
+                    s.status = s.audioBlob ? 'done' : 'idle';
+                    showToast(`AI đã viết lại lời giảng mượt cho Slide ${s.index}!`);
+                } else {
+                    s.status = 'idle';
+                }
+            } catch (err) {
+                s.status = 'error';
+                s.errorMsg = `AI chưa viết được lời giảng: ${err.message}`;
+            } finally {
+                pptxState.isBusy = false;
+                updatePptxSummaryBadges();
+                renderPptxSlidesList();
+            }
+        }
+
+        async function aiPolishAllPptxSlides() {
+            const targets = pptxState.slides.filter(s => s.enabled && (s.script.trim() || s.slideText.trim()));
+            if (targets.length === 0) {
+                showToast('Không có slide nào có chữ được chọn để AI viết lời giảng!');
+                return;
+            }
+            pptxState.isBusy = true;
+            pptxState.cancelRequested = false;
+            setPptxProgress(true, 5, `AI đang viết lời giảng mượt cho ${targets.length} slide...`);
+            updatePptxSummaryBadges();
+
+            let doneCount = 0;
+            try {
+                for (let i = 0; i < targets.length; i++) {
+                    if (pptxState.cancelRequested) break;
+                    const s = targets[i];
+                    s.status = 'polishing';
+                    s.errorMsg = '';
+                    renderPptxSlidesList();
+                    setPptxProgress(true, Math.round(((i + 0.3) / targets.length) * 95), `AI đang viết lời giảng cho Slide ${s.index} (${i + 1}/${targets.length})...`);
+                    try {
+                        const polished = await aiPolishSlideScriptText(s, pptxState.slides.length);
+                        if (polished) {
+                            s.script = polished;
+                            doneCount++;
+                        }
+                        s.status = s.audioBlob ? 'done' : 'idle';
+                    } catch (err) {
+                        s.status = 'error';
+                        s.errorMsg = `Lỗi AI: ${err.message}`;
+                    }
+                    renderPptxSlidesList();
+                }
+                showToast(`AI đã viết mượt lời giảng cho ${doneCount}/${targets.length} slide!`);
+            } finally {
+                pptxState.isBusy = false;
+                setPptxProgress(false);
+                updatePptxSummaryBadges();
+                renderPptxSlidesList();
+            }
+        }
+
+        // Gọi thẳng Vercel /api/tts/generate để tạo MP3 cho 1 slide
+        async function fetchPptxSlideMp3FromVercel(text) {
+            const response = await fetchWithTimeout('/api/tts/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text,
+                    voice: pptxState.voiceId,
+                    voice_id: pptxState.voiceId,
+                    speed: pptxState.speed
+                })
+            }, 58000);
+
+            const ct = (response.headers.get('content-type') || '').toLowerCase();
+            if (!response.ok || !ct.includes('audio')) {
+                let msg = `Máy chủ trả mã ${response.status}`;
+                try {
+                    const j = await response.json();
+                    if (j && (j.error || j.detail)) msg = j.error || j.detail;
+                } catch (_) {}
+                throw new Error(msg);
+            }
+            const blob = await response.blob();
+            if (!blob || blob.size < 200) throw new Error('Tệp MP3 trả về bị rỗng.');
+            return blob;
+        }
+
+        async function generateSinglePptxSlideAudio(idx) {
+            const s = pptxState.slides[idx];
+            if (!s || pptxState.isBusy) return;
+            const text = (s.script || '').trim();
+            if (!text) {
+                showToast(`Slide ${s.index} chưa có lời đọc!`);
+                return;
+            }
+            pptxState.isBusy = true;
+            s.status = 'generating';
+            s.errorMsg = '';
+            updatePptxSummaryBadges();
+            renderPptxSlidesList();
+
+            try {
+                const blob = await fetchPptxSlideMp3FromVercel(text);
+                if (s.audioUrl) {
+                    try { URL.revokeObjectURL(s.audioUrl); } catch (_) {}
+                }
+                s.audioBlob = blob;
+                s.audioUrl = URL.createObjectURL(blob);
+                s.audioSizeKB = Math.max(1, Math.round(blob.size / 1024));
+                s.audioDuration = await measureAudioBlobDuration(blob);
+                s.status = 'done';
+                s.enabled = true;
+                showToast(`Đã tạo âm thanh MP3 cho Slide ${s.index}!`);
+            } catch (err) {
+                s.status = 'error';
+                s.errorMsg = `Không gọi được /api/tts/generate (${err.message}). Hãy mở trang web trên đường link Vercel!`;
+            } finally {
+                pptxState.isBusy = false;
+                updatePptxSummaryBadges();
+                renderPptxSlidesList();
+            }
+        }
+
+        async function generateAllPptxSlidesAudio() {
+            const targets = pptxState.slides.filter(s => s.enabled && (s.script || '').trim());
+            if (targets.length === 0) {
+                showToast('Không có slide nào có nội dung được chọn để tạo âm thanh!');
+                return;
+            }
+            pptxState.isBusy = true;
+            pptxState.cancelRequested = false;
+            setPptxProgress(true, 6, `Bắt đầu tạo âm thanh MP3 cho ${targets.length} slide...`);
+            updatePptxSummaryBadges();
+
+            let successCount = 0;
+            try {
+                for (let i = 0; i < targets.length; i++) {
+                    if (pptxState.cancelRequested) break;
+                    const s = targets[i];
+                    s.status = 'generating';
+                    s.errorMsg = '';
+                    renderPptxSlidesList();
+                    setPptxProgress(true, Math.round(((i + 0.25) / targets.length) * 95), `Đang tạo MP3 cho Slide ${s.index} (${i + 1}/${targets.length})...`);
+                    try {
+                        const blob = await fetchPptxSlideMp3FromVercel(s.script.trim());
+                        if (s.audioUrl) {
+                            try { URL.revokeObjectURL(s.audioUrl); } catch (_) {}
+                        }
+                        s.audioBlob = blob;
+                        s.audioUrl = URL.createObjectURL(blob);
+                        s.audioSizeKB = Math.max(1, Math.round(blob.size / 1024));
+                        s.audioDuration = await measureAudioBlobDuration(blob);
+                        s.status = 'done';
+                        successCount++;
+                    } catch (err) {
+                        s.status = 'error';
+                        s.errorMsg = `Lỗi tạo MP3: ${err.message}`;
+                    }
+                    updatePptxSummaryBadges();
+                    renderPptxSlidesList();
+                }
+
+                if (successCount > 0) {
+                    showToast(`Đã tạo âm thanh xong ${successCount}/${targets.length} slide! Bấm "Tải File PowerPoint (.PPTX)" để nhận file hoàn chỉnh.`);
+                } else {
+                    showToast('Chưa tạo được âm thanh slide nào — hãy kiểm tra trang web đang chạy trên link Vercel!');
+                }
+            } finally {
+                pptxState.isBusy = false;
+                setPptxProgress(false);
+                updatePptxSummaryBadges();
+                renderPptxSlidesList();
+            }
+        }
+
+        // Tạo biểu tượng cái loa PNG sắc nét (128x128) để nhúng làm ảnh đại diện cho audio trong slide PowerPoint
+        async function createSpeakerIconPngUint8Array() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            // Vòng tròn nền xanh ngọc chuyên nghiệp
+            const grad = ctx.createLinearGradient(0, 0, 128, 128);
+            grad.addColorStop(0, '#0d9488');
+            grad.addColorStop(1, '#2563eb');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(64, 64, 58, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            // Hình chiếc loa trắng
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(34, 52);
+            ctx.lineTo(50, 52);
+            ctx.lineTo(68, 36);
+            ctx.lineTo(68, 92);
+            ctx.lineTo(50, 76);
+            ctx.lineTo(34, 76);
+            ctx.closePath();
+            ctx.fill();
+
+            // Sóng âm
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(68, 64, 15, -Math.PI / 4, Math.PI / 4);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(68, 64, 26, -Math.PI / 3.5, Math.PI / 3.5);
+            ctx.stroke();
+
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            return new Uint8Array(await blob.arrayBuffer());
+        }
+
+        // Bảo đảm [Content_Types].xml đã khai báo định dạng mp3 và png chuẩn OPC
+        function ensureContentTypesForAudio(xmlString) {
+            const CT_NS = 'http://schemas.openxmlformats.org/package/2006/content-types';
+            const doc = new DOMParser().parseFromString(xmlString, 'application/xml');
+            const root = doc.documentElement;
+            const defaults = Array.from(root.getElementsByTagName('*')).filter(el => el.localName === 'Default');
+            const hasExt = (ext) => defaults.some(d => (d.getAttribute('Extension') || '').toLowerCase() === ext);
+            const firstOverride = Array.from(root.childNodes).find(n => n.nodeType === 1 && n.localName === 'Override') || null;
+
+            const addDefault = (ext, mime) => {
+                if (hasExt(ext)) return;
+                const el = doc.createElementNS(CT_NS, 'Default');
+                el.setAttribute('Extension', ext);
+                el.setAttribute('ContentType', mime);
+                root.insertBefore(el, firstOverride);
+            };
+            addDefault('mp3', 'audio/mpeg');
+            addDefault('png', 'image/png');
+
+            const out = new XMLSerializer().serializeToString(doc);
+            return out.startsWith('<?xml') ? out : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n${out}`;
+        }
+
+        // Chèn thẻ con trực tiếp vào <p:sld> đúng thứ tự XSD: cSld -> clrMapOvr -> transition -> timing -> extLst
+        function insertSlideChildInSchemaOrder(sldRoot, newEl, tagName) {
+            const order = ['cSld', 'clrMapOvr', 'transition', 'timing', 'extLst'];
+            const targetIdx = order.indexOf(tagName);
+            const children = Array.from(sldRoot.childNodes).filter(n => n.nodeType === 1);
+            for (const ch of children) {
+                const chIdx = order.indexOf(ch.localName);
+                if (chIdx > targetIdx) {
+                    sldRoot.insertBefore(newEl, ch);
+                    return;
+                }
+            }
+            sldRoot.appendChild(newEl);
+        }
+
+        // Nhúng chuẩn thẻ <p:pic> (audioFile + p14:media) và <p:timing> / <p:transition> vào XML của từng slide
+        function embedAudioIntoSlideXml(slideXmlStr, relsXmlStr, options) {
+            const {
+                slideNumber,
+                audioMediaFileName,
+                iconMediaFileName,
+                slideWidthEmu,
+                slideHeightEmu,
+                autoPlay,
+                hideIcon,
+                autoAdvance,
+                audioDurationSec
+            } = options;
+
+            const REL_NS = 'http://schemas.openxmlformats.org/package/2006/relationships';
+            const P_NS = 'http://schemas.openxmlformats.org/presentationml/2006/main';
+            const A_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+            const R_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+            const P14_NS = 'http://schemas.microsoft.com/office/powerpoint/2010/main';
+
+            // 1. Cập nhật file .rels của slide
+            const baseRels = relsXmlStr && relsXmlStr.trim()
+                ? relsXmlStr
+                : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${REL_NS}"></Relationships>`;
+            const relsDoc = new DOMParser().parseFromString(baseRels, 'application/xml');
+            const relsRoot = relsDoc.documentElement;
+            let maxRid = 0;
+            Array.from(relsRoot.getElementsByTagName('*'))
+                .filter(el => el.localName === 'Relationship')
+                .forEach(el => {
+                    const m = (el.getAttribute('Id') || '').match(/^rId(\d+)$/i);
+                    if (m) maxRid = Math.max(maxRid, parseInt(m[1], 10));
+                });
+
+            const audioRelId = `rId${++maxRid}`;
+            const mediaRelId = `rId${++maxRid}`;
+            const iconRelId = `rId${++maxRid}`;
+
+            const appendRel = (id, type, target) => {
+                const rel = relsDoc.createElementNS(REL_NS, 'Relationship');
+                rel.setAttribute('Id', id);
+                rel.setAttribute('Type', type);
+                rel.setAttribute('Target', target);
+                relsRoot.appendChild(rel);
+            };
+            appendRel(audioRelId, 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/audio', `../media/${audioMediaFileName}`);
+            appendRel(mediaRelId, 'http://schemas.microsoft.com/office/2007/relationships/media', `../media/${audioMediaFileName}`);
+            appendRel(iconRelId, 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image', `../media/${iconMediaFileName}`);
+
+            // 2. Cập nhật XML của slide
+            const slideDoc = new DOMParser().parseFromString(slideXmlStr, 'application/xml');
+            const sldRoot = slideDoc.documentElement;
+            const spTree = Array.from(slideDoc.getElementsByTagName('*')).find(el => el.localName === 'spTree');
+            if (!spTree) throw new Error(`Cấu trúc slide ${slideNumber} không hợp lệ (thiếu spTree).`);
+
+            // Tìm shape ID lớn nhất để tránh trùng lặp
+            let maxShapeId = 10;
+            Array.from(slideDoc.getElementsByTagName('*'))
+                .filter(el => el.localName === 'cNvPr')
+                .forEach(el => {
+                    const num = parseInt(el.getAttribute('id') || '0', 10);
+                    if (!isNaN(num)) maxShapeId = Math.max(maxShapeId, num);
+                });
+            const shapeId = maxShapeId + 1;
+
+            // Đặt biểu tượng loa gọn ở góc dưới bên phải slide
+            const iconSize = 520000;
+            const margin = 180000;
+            const iconX = Math.max(margin, (slideWidthEmu || 12192000) - iconSize - margin);
+            const iconY = Math.max(margin, (slideHeightEmu || 6858000) - iconSize - margin);
+
+            const picSnippet = `<p:pic xmlns:p="${P_NS}" xmlns:a="${A_NS}" xmlns:r="${R_NS}">
+                <p:nvPicPr>
+                    <p:cNvPr id="${shapeId}" name="AmThanhSlide${slideNumber}">
+                        <a:hlinkClick r:id="" action="ppaction://media"/>
+                    </p:cNvPr>
+                    <p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>
+                    <p:nvPr>
+                        <a:audioFile r:link="${audioRelId}"/>
+                        <p:extLst>
+                            <p:ext uri="{DAA4B4D4-6D71-4841-9C94-3DE7FCFB9230}">
+                                <p14:media xmlns:p14="${P14_NS}" r:embed="${mediaRelId}"/>
+                            </p:ext>
+                        </p:extLst>
+                    </p:nvPr>
+                </p:nvPicPr>
+                <p:blipFill>
+                    <a:blip r:embed="${iconRelId}"/>
+                    <a:stretch><a:fillRect/></a:stretch>
+                </p:blipFill>
+                <p:spPr>
+                    <a:xfrm>
+                        <a:off x="${iconX}" y="${iconY}"/>
+                        <a:ext cx="${iconSize}" cy="${iconSize}"/>
+                    </a:xfrm>
+                    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+                </p:spPr>
+            </p:pic>`;
+            const picFrag = new DOMParser().parseFromString(picSnippet, 'application/xml');
+            spTree.appendChild(slideDoc.importNode(picFrag.documentElement, true));
+
+            // 3. Tự động chuyển slide sau khi đọc xong (nếu bật)
+            if (autoAdvance && audioDurationSec > 0) {
+                const advMs = Math.max(1500, Math.round((audioDurationSec + 1.0) * 1000));
+                let transEl = Array.from(sldRoot.childNodes).find(n => n.nodeType === 1 && n.localName === 'transition');
+                if (!transEl) {
+                    transEl = slideDoc.createElementNS(P_NS, 'p:transition');
+                    insertSlideChildInSchemaOrder(sldRoot, transEl, 'transition');
+                }
+                transEl.setAttribute('advClick', '1');
+                transEl.setAttribute('advTm', String(advMs));
+            }
+
+            // 4. Tạo hoặc bổ sung <p:timing> để phát tự động / ẩn biểu tượng loa đúng chuẩn PowerPoint
+            let maxTnId = 1;
+            Array.from(slideDoc.getElementsByTagName('*'))
+                .filter(el => el.localName === 'cTn')
+                .forEach(el => {
+                    const num = parseInt(el.getAttribute('id') || '0', 10);
+                    if (!isNaN(num)) maxTnId = Math.max(maxTnId, num);
+                });
+            const nextTnId = () => ++maxTnId;
+
+            const showStoppedVal = hideIcon ? '0' : '1';
+            const existingTiming = Array.from(sldRoot.childNodes).find(n => n.nodeType === 1 && n.localName === 'timing');
+
+            if (!existingTiming) {
+                const idRoot = nextTnId();
+                const idSeq = nextTnId();
+                const idP1 = nextTnId();
+                const idP2 = nextTnId();
+                const idP3 = nextTnId();
+                const idCmd = nextTnId();
+                const idAudio = nextTnId();
+
+                const autoPlaySeqChild = autoPlay ? `<p:par>
+                    <p:cTn id="${idP1}" fill="hold">
+                        <p:stCondLst><p:cond delay="0"/></p:stCondLst>
+                        <p:childTnLst>
+                            <p:par>
+                                <p:cTn id="${idP2}" fill="hold">
+                                    <p:stCondLst><p:cond delay="0"/></p:stCondLst>
+                                    <p:childTnLst>
+                                        <p:par>
+                                            <p:cTn id="${idP3}" presetID="1" presetClass="mediacall" presetSubtype="0" fill="hold" nodeType="withEffect">
+                                                <p:stCondLst><p:cond delay="0"/></p:stCondLst>
+                                                <p:childTnLst>
+                                                    <p:cmd type="call" cmd="playFrom(0.0)">
+                                                        <p:cBhvr>
+                                                            <p:cTn id="${idCmd}" dur="1" fill="never"/>
+                                                            <p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>
+                                                        </p:cBhvr>
+                                                    </p:cmd>
+                                                </p:childTnLst>
+                                            </p:cTn>
+                                        </p:par>
+                                    </p:childTnLst>
+                                </p:cTn>
+                            </p:par>
+                        </p:childTnLst>
+                    </p:cTn>
+                </p:par>` : '';
+
+                const timingSnippet = `<p:timing xmlns:p="${P_NS}">
+                    <p:tnLst>
+                        <p:par>
+                            <p:cTn id="${idRoot}" dur="indefinite" restart="never" nodeType="tmRoot">
+                                <p:childTnLst>
+                                    <p:seq concurrent="1" nextAc="seek">
+                                        <p:cTn id="${idSeq}" dur="indefinite" nodeType="mainSeq">
+                                            <p:childTnLst>${autoPlaySeqChild}</p:childTnLst>
+                                        </p:cTn>
+                                        <p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>
+                                        <p:nextCondLst><p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst>
+                                    </p:seq>
+                                    <p:audio>
+                                        <p:cMediaNode showWhenStopped="${showStoppedVal}">
+                                            <p:cTn id="${idAudio}" fill="hold" display="0">
+                                                <p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>
+                                                <p:endCondLst><p:cond evt="onStopAudio" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:endCondLst>
+                                            </p:cTn>
+                                            <p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>
+                                        </p:cMediaNode>
+                                    </p:audio>
+                                </p:childTnLst>
+                            </p:cTn>
+                        </p:par>
+                    </p:tnLst>
+                </p:timing>`;
+                const timingFrag = new DOMParser().parseFromString(timingSnippet, 'application/xml');
+                insertSlideChildInSchemaOrder(sldRoot, slideDoc.importNode(timingFrag.documentElement, true), 'timing');
+            } else {
+                // Slide đã có sẵn hiệu ứng: bổ sung nút <p:audio> và lệnh tự phát mà vẫn giữ nguyên mọi hiệu ứng gốc
+                const tmRootCtn = Array.from(existingTiming.getElementsByTagName('*')).find(
+                    el => el.localName === 'cTn' && el.getAttribute('nodeType') === 'tmRoot'
+                );
+                const mainSeqCtn = Array.from(existingTiming.getElementsByTagName('*')).find(
+                    el => el.localName === 'cTn' && el.getAttribute('nodeType') === 'mainSeq'
+                );
+
+                if (tmRootCtn) {
+                    let rootChildLst = Array.from(tmRootCtn.childNodes).find(n => n.nodeType === 1 && n.localName === 'childTnLst');
+                    if (!rootChildLst) {
+                        rootChildLst = slideDoc.createElementNS(P_NS, 'p:childTnLst');
+                        tmRootCtn.appendChild(rootChildLst);
+                    }
+                    const idAudio = nextTnId();
+                    const audioNodeSnippet = `<p:audio xmlns:p="${P_NS}">
+                        <p:cMediaNode showWhenStopped="${showStoppedVal}">
+                            <p:cTn id="${idAudio}" fill="hold" display="0">
+                                <p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>
+                                <p:endCondLst><p:cond evt="onStopAudio" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:endCondLst>
+                            </p:cTn>
+                            <p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>
+                        </p:cMediaNode>
+                    </p:audio>`;
+                    const audioFrag = new DOMParser().parseFromString(audioNodeSnippet, 'application/xml');
+                    rootChildLst.appendChild(slideDoc.importNode(audioFrag.documentElement, true));
+                }
+
+                if (autoPlay && mainSeqCtn) {
+                    let seqChildLst = Array.from(mainSeqCtn.childNodes).find(n => n.nodeType === 1 && n.localName === 'childTnLst');
+                    if (!seqChildLst) {
+                        seqChildLst = slideDoc.createElementNS(P_NS, 'p:childTnLst');
+                        mainSeqCtn.appendChild(seqChildLst);
+                    }
+                    const idP1 = nextTnId();
+                    const idP2 = nextTnId();
+                    const idP3 = nextTnId();
+                    const idCmd = nextTnId();
+                    const playParSnippet = `<p:par xmlns:p="${P_NS}">
+                        <p:cTn id="${idP1}" fill="hold">
+                            <p:stCondLst><p:cond delay="0"/></p:stCondLst>
+                            <p:childTnLst>
+                                <p:par>
+                                    <p:cTn id="${idP2}" fill="hold">
+                                        <p:stCondLst><p:cond delay="0"/></p:stCondLst>
+                                        <p:childTnLst>
+                                            <p:par>
+                                                <p:cTn id="${idP3}" presetID="1" presetClass="mediacall" presetSubtype="0" fill="hold" nodeType="withEffect">
+                                                    <p:stCondLst><p:cond delay="0"/></p:stCondLst>
+                                                    <p:childTnLst>
+                                                        <p:cmd type="call" cmd="playFrom(0.0)">
+                                                            <p:cBhvr>
+                                                                <p:cTn id="${idCmd}" dur="1" fill="never"/>
+                                                                <p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>
+                                                            </p:cBhvr>
+                                                        </p:cmd>
+                                                    </p:childTnLst>
+                                                </p:cTn>
+                                            </p:par>
+                                        </p:childTnLst>
+                                    </p:cTn>
+                                </p:par>
+                            </p:childTnLst>
+                        </p:cTn>
+                    </p:par>`;
+                    const playFrag = new DOMParser().parseFromString(playParSnippet, 'application/xml');
+                    seqChildLst.insertBefore(slideDoc.importNode(playFrag.documentElement, true), seqChildLst.firstChild);
+                }
+            }
+
+            const serializedSlide = new XMLSerializer().serializeToString(slideDoc);
+            const serializedRels = new XMLSerializer().serializeToString(relsDoc);
+            return {
+                slideXml: serializedSlide.startsWith('<?xml') ? serializedSlide : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n${serializedSlide}`,
+                relsXml: serializedRels.startsWith('<?xml') ? serializedRels : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n${serializedRels}`
+            };
+        }
+
+        // Đóng gói toàn bộ file PowerPoint (.pptx) đã chèn âm thanh MP3 từng slide và tải về máy
+        async function exportNarratedPptxFile() {
+            if (!pptxState.originalArrayBuffer) {
+                showToast('Chưa có tệp PowerPoint nào được nạp!');
+                return;
+            }
+            const audioSlides = pptxState.slides.filter(s => s.audioBlob);
+            if (audioSlides.length === 0) {
+                showToast('Hãy tạo âm thanh cho ít nhất 1 slide trước khi xuất tệp PowerPoint!');
+                return;
+            }
+
+            pptxState.isBusy = true;
+            updatePptxSummaryBadges();
+            setPptxProgress(true, 20, `Đang nhúng ${audioSlides.length} tệp âm thanh MP3 vào PowerPoint...`);
+
+            try {
+                // Luôn nạp bản gốc mới sạch để không bao giờ nhân đôi biểu tượng loa nếu người dùng bấm tải nhiều lần
+                const zip = await JSZip.loadAsync(pptxState.originalArrayBuffer.slice(0));
+
+                // Lấy kích thước thật của slide (4:3 hoặc 16:9) từ ppt/presentation.xml
+                let slideWidthEmu = 12192000;
+                let slideHeightEmu = 6858000;
+                try {
+                    const presEntry = zip.file('ppt/presentation.xml');
+                    if (presEntry) {
+                        const presDoc = new DOMParser().parseFromString(await presEntry.async('string'), 'application/xml');
+                        const sldSz = Array.from(presDoc.getElementsByTagName('*')).find(el => el.localName === 'sldSz');
+                        if (sldSz) {
+                            const cx = parseInt(sldSz.getAttribute('cx') || '0', 10);
+                            const cy = parseInt(sldSz.getAttribute('cy') || '0', 10);
+                            if (cx > 0 && cy > 0) {
+                                slideWidthEmu = cx;
+                                slideHeightEmu = cy;
+                            }
+                        }
+                    }
+                } catch (_) {}
+
+                // Cập nhật [Content_Types].xml
+                const ctEntry = zip.file('[Content_Types].xml');
+                if (ctEntry) {
+                    const updatedCt = ensureContentTypesForAudio(await ctEntry.async('string'));
+                    zip.file('[Content_Types].xml', updatedCt);
+                }
+
+                // Thêm icon loa dùng chung vào ppt/media/
+                const iconMediaFileName = `pnvlog_speaker_${Date.now().toString().slice(-4)}.png`;
+                const iconPngBytes = await createSpeakerIconPngUint8Array();
+                zip.file(`ppt/media/${iconMediaFileName}`, iconPngBytes, { compression: 'STORE' });
+
+                const autoPlay = Boolean(document.getElementById('pptxOptAutoPlay')?.checked);
+                const hideIcon = Boolean(document.getElementById('pptxOptHideIcon')?.checked);
+                const autoAdvance = Boolean(document.getElementById('pptxOptAutoAdvance')?.checked);
+                const stamp = Date.now().toString().slice(-4);
+
+                for (let i = 0; i < audioSlides.length; i++) {
+                    const s = audioSlides[i];
+                    setPptxProgress(true, 25 + Math.round(((i + 1) / audioSlides.length) * 55), `Đang gắn âm thanh vào Slide ${s.index}...`);
+                    const audioMediaFileName = `pnvlog_slide_${s.index}_${stamp}.mp3`;
+                    const audioBytes = new Uint8Array(await s.audioBlob.arrayBuffer());
+                    zip.file(`ppt/media/${audioMediaFileName}`, audioBytes, { compression: 'STORE' });
+
+                    const relsPath = `ppt/slides/_rels/${s.fileName}.rels`;
+                    const slideXmlStr = await zip.file(s.slidePath).async('string');
+                    const relsXmlStr = zip.file(relsPath) ? await zip.file(relsPath).async('string') : '';
+
+                    const patched = embedAudioIntoSlideXml(slideXmlStr, relsXmlStr, {
+                        slideNumber: s.index,
+                        audioMediaFileName,
+                        iconMediaFileName,
+                        slideWidthEmu,
+                        slideHeightEmu,
+                        autoPlay,
+                        hideIcon,
+                        autoAdvance,
+                        audioDurationSec: s.audioDuration || 0
+                    });
+
+                    zip.file(s.slidePath, patched.slideXml);
+                    zip.file(relsPath, patched.relsXml);
+                }
+
+                setPptxProgress(true, 90, 'Đang đóng gói tệp PowerPoint (.pptx) hoàn chỉnh...');
+                const outBlob = await zip.generateAsync({
+                    type: 'blob',
+                    mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                    compression: 'DEFLATE',
+                    compressionOptions: { level: 6 }
+                });
+
+                const baseName = (pptxState.fileName || 'bai_giang.pptx').replace(/\.pptx$/i, '');
+                triggerBlobFileDownload(outBlob, `${getSafeFilenameSlug(baseName, 'bai_giang')}_co_am_thanh.pptx`);
+                showToast(`Đã tải xuống tệp PowerPoint đã lồng tiếng (${audioSlides.length} slide)!`);
+            } catch (err) {
+                showToast(`Lỗi khi đóng gói tệp PowerPoint: ${err.message}`);
+            } finally {
+                pptxState.isBusy = false;
+                setPptxProgress(false);
+                updatePptxSummaryBadges();
+            }
+        }
+
+        function bindPptxDropzoneEvents() {
+            const dz = document.getElementById('pptxDropzone');
+            if (!dz) return;
+            ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => {
+                e.preventDefault();
+                dz.classList.add('dropzone-active');
+            }));
+            ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => {
+                e.preventDefault();
+                dz.classList.remove('dropzone-active');
+            }));
+            dz.addEventListener('drop', e => {
+                if (e.dataTransfer?.files?.length) handlePptxFileSelected(e.dataTransfer.files);
+            });
+        }
+
+        // =========================================================================
         // 10. KHỞI TẠO TOÀN BỘ ỨNG DỤNG (INIT APP & SỰ KIỆN KÉO THẢ / DÁN ẢNH)
         // =========================================================================
         function bindDropzoneAndPasteEvents() {
@@ -3422,6 +4681,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
 
         async function initApp() {
             bindDropzoneAndPasteEvents();
+            bindPptxDropzoneEvents();
             updateApiKeyHeaderBadge();
             switchActiveAIBot('tutor');
             renderTTSVoiceCards();
