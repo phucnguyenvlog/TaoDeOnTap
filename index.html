@@ -381,42 +381,42 @@
                         <i class="fa-solid fa-volume-high mr-1"></i>Đọc đề thành Âm thanh
                     </button>
                     <button type="button" onclick="previewStudentShareModeNow()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold transition">
-                <!-- BƯỚC 1: TẢI FILE POWERPOINT (.PPTX / .PPT) -->
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">1</span>
-                            <span>Chọn tệp PowerPoint (.pptx hoặc .ppt cũ) cần lồng tiếng</span>
-                        </div>
-                        <label for="pptxFileInput" id="btnPptxChangeFile" class="hidden cursor-pointer px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
-                            <i class="fa-solid fa-folder-open pointer-events-none mr-1"></i><span class="pointer-events-none">Chọn file PowerPoint khác</span>
-                        </label>
+                        <i class="fa-solid fa-eye mr-1"></i>Xem thử giao diện Học sinh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Trạng thái chưa có câu hỏi -->
+            <div id="emptyExamStateBox" class="bg-white rounded-3xl border border-slate-200 p-8 text-center space-y-3">
+                <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mx-auto">
+                    <i class="fa-solid fa-file-circle-question"></i>
+                </div>
+                <h3 class="text-base sm:text-lg font-black text-slate-900">Chưa có câu hỏi nào trong đề ôn tập</h3>
+                <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">Hãy quay lại <strong>Bước 1 (Tạo Đề)</strong> để tải ảnh/Word/PDF lên hoặc dùng <strong>AI Soạn Đề</strong> để tạo đề tự động.</p>
+                <button type="button" onclick="switchMainWorkspace('scanner')" class="px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-extrabold transition">
+                    Đi tới Bước 1 • Tạo Đề Ngay
+                </button>
+            </div>
+
+            <!-- Bảng tổng kết điểm sau khi nộp bài -->
+            <div id="resultSummaryBanner" class="hidden bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-3xl p-4 sm:p-5 shadow-md">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-emerald-100">Kết quả tổng kết bài làm</div>
+                        <div class="text-2xl sm:text-3xl font-black mt-0.5"><span id="scoreScale10">0.00</span> / 10 điểm</div>
                     </div>
-
-                    <input type="file" id="pptxFileInput" class="sr-only" onchange="handlePptxFileSelected(this.files)">
-
-                    <label for="pptxFileInput" id="pptxDropzone" class="block cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/70 hover:bg-orange-50/40 p-6 sm:p-8 text-center space-y-2.5 transition">
-                        <div class="pointer-events-none w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center text-2xl mx-auto shadow-sm">
-                            <i class="fa-solid fa-file-powerpoint"></i>
+                    <div class="grid grid-cols-3 gap-2 sm:gap-3 text-center">
+                        <div class="px-3 py-2 rounded-2xl bg-white/15">
+                            <div class="text-[10px] text-emerald-100 font-bold">Trắc nghiệm</div>
+                            <div id="scorePartA" class="text-sm sm:text-base font-black">0/0</div>
                         </div>
-                        <div class="pointer-events-none text-sm sm:text-base font-extrabold text-slate-900">Bấm vào đây để chọn tệp PowerPoint (.pptx hoặc .ppt cũ)</div>
-                        <div class="pointer-events-none text-xs text-slate-500">Hỗ trợ tự động chuyển đổi tệp .ppt cũ sang .pptx ngay lập tức • Tương thích iPhone/Safari, iPad, Android &amp; Máy tính</div>
-                    </label>
-
-                    <!-- Thông tin tệp đã nạp -->
-                    <div id="pptxFileInfoBar" class="hidden p-3 rounded-xl bg-orange-50/70 border border-orange-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <div class="flex items-center gap-2.5 min-w-0">
-                            <i class="fa-solid fa-file-powerpoint text-orange-600 text-lg shrink-0"></i>
-                            <div class="min-w-0">
-                                <div id="pptxLoadedFileName" class="font-black text-slate-900 truncate">bai-giang.pptx</div>
-                                <div id="pptxLoadedFileMeta" class="text-[11px] text-orange-800 font-semibold">0 slide</div>
-                            </div>
+                        <div class="px-3 py-2 rounded-2xl bg-white/15">
+                            <div class="text-[10px] text-emerald-100 font-bold">Đúng / Sai</div>
+                            <div id="scorePartB" class="text-sm sm:text-base font-black">0/0</div>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" id="btnPptxDownloadConvertedRaw" onclick="downloadConvertedRawPptxFromAudioStudio()" class="hidden px-2.5 py-1 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-[11px] transition">
-                                <i class="fa-solid fa-download mr-1"></i>Tải bản .PPTX đã chuyển
-                            </button>
-                            <span id="pptxAudioReadySummary" class="px-2.5 py-1 rounded-full bg-white text-emerald-700 border border-emerald-200 font-extrabold text-[11px]">Đã lồng tiếng: 0/0 slide</span>
+                        <div class="px-3 py-2 rounded-2xl bg-white/15">
+                            <div class="text-[10px] text-emerald-100 font-bold">Thời gian</div>
+                            <div id="scoreTime" class="text-sm sm:text-base font-black">00:00</div>
                         </div>
                     </div>
                 </div>
@@ -961,10 +961,10 @@
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
                             <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">1</span>
-                            <span>Chọn tệp PowerPoint (.pptx) cần lồng tiếng</span>
+                            <span>Chọn tệp PowerPoint (.pptx hoặc .ppt cũ) cần lồng tiếng</span>
                         </div>
                         <label for="pptxFileInput" id="btnPptxChangeFile" class="hidden cursor-pointer px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
-                            <i class="fa-solid fa-folder-open pointer-events-none mr-1"></i><span class="pointer-events-none">Chọn file .pptx khác</span>
+                            <i class="fa-solid fa-folder-open pointer-events-none mr-1"></i><span class="pointer-events-none">Chọn file PowerPoint khác</span>
                         </label>
                     </div>
 
@@ -975,7 +975,7 @@
                             <i class="fa-solid fa-file-powerpoint"></i>
                         </div>
                         <div class="pointer-events-none text-sm sm:text-base font-extrabold text-slate-900">Bấm vào đây để chọn tệp PowerPoint (.pptx)</div>
-                        <div class="pointer-events-none text-xs text-slate-500">Hỗ trợ đầy đủ iPhone/Safari (Tệp / iCloud), iPad, Android &amp; Máy tính — giữ nguyên 100% hiệu ứng gốc của slide</div>
+                        <div class="pointer-events-none text-xs text-slate-500">Nạp file <strong>.pptx</strong> sẽ <strong>giữ nguyên 100% hiệu ứng, chuyển cảnh &amp; thiết kế gốc</strong>. Nếu là file <strong>.ppt cũ (97–2003)</strong>, nên mở bằng PowerPoint → <em>Lưu dưới dạng .pptx</em> trước khi tải lên để không bị mất hiệu ứng!</div>
                     </label>
 
                     <!-- Thông tin tệp đã nạp -->
@@ -987,83 +987,94 @@
                                 <div id="pptxLoadedFileMeta" class="text-[11px] text-orange-800 font-semibold">0 slide</div>
                             </div>
                         </div>
-                        <span id="pptxAudioReadySummary" class="px-2.5 py-1 rounded-full bg-white text-emerald-700 border border-emerald-200 font-extrabold text-[11px]">Đã lồng tiếng: 0/0 slide</span>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" id="btnPptxDownloadConvertedRaw" onclick="downloadConvertedRawPptxFromAudioStudio()" class="hidden px-2.5 py-1 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-[11px] transition">
+                                <i class="fa-solid fa-download mr-1"></i>Tải bản .PPTX đã chuyển
+                            </button>
+                            <span id="pptxAudioReadySummary" class="px-2.5 py-1 rounded-full bg-white text-emerald-700 border border-emerald-200 font-extrabold text-[11px]">Đã lồng tiếng: 0/0 slide</span>
+                        </div>
+                    </div>
+
+                    <!-- Cảnh báo rõ khi người dùng nạp tệp .ppt cũ (PowerPoint 97-2003) -->
+                    <div id="pptxLegacyConvertedWarning" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs leading-relaxed flex items-start gap-2.5">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 shrink-0"></i>
+                        <div>
+                            <strong>Lưu ý quan trọng với file .PPT đời cũ (97–2003):</strong> Vì trình duyệt chỉ có thể trích xuất chữ, ghi chú &amp; hình ảnh rồi dựng lại slide mới nên <strong>hiệu ứng, chuyển cảnh và nền gốc của file .ppt cũ sẽ không được giữ lại</strong>. Để giữ nguyên <strong>100% hiệu ứng đẹp như bản gốc</strong>, bạn hãy mở file đó bằng <strong>Microsoft PowerPoint</strong> → chọn <em>Lưu bản sao (Save As)</em> đuôi <strong>.pptx</strong> rồi tải file .pptx đó vào đây nhé!
+                        </div>
                     </div>
                 </div>
 
-                <!-- BƯỚC 2: CẤU HÌNH GIỌNG ĐỌC, PHONG CÁCH LỜI GIẢNG & ĐIỀU KHIỂN HÀNG LOẠT -->
+                <!-- BƯỚC 2: CẤU HÌNH GIỌNG ĐỌC, PHONG CÁCH LỜI GIẢNG & HÀNH ĐỘNG HÀNG LOẠT -->
                 <div id="pptxControlsSection" class="hidden bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3.5">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">2</span>
-                            <span>Cấu hình lời giảng, giọng đọc &amp; lồng tiếng từng slide</span>
-                        </div>
+                    <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">2</span>
+                        <span>Cấu hình giọng đọc, lời giảng AI &amp; xuất tệp PowerPoint có âm thanh</span>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Phong cách AI viết lời giảng</label>
-                            <select id="pptxNarrationStyleSelect" onchange="pptxState.narrationStyle = this.value" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-bold text-slate-800 outline-none focus:border-orange-500">
+                            <label class="block font-bold text-slate-600 mb-1">Giọng đọc (Vercel TTS)</label>
+                            <select id="pptxVoiceSelect" onchange="pptxState.voiceId = this.value" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-800 outline-none focus:border-orange-500"></select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-600 mb-1">Phong cách AI viết lời giảng</label>
+                            <select id="pptxStyleSelect" onchange="pptxState.narrationStyle = this.value" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-800 outline-none focus:border-orange-500">
                                 <option value="teacher" selected>Giáo viên giảng bài truyền cảm</option>
-                                <option value="presenter">Thuyết trình chuyên nghiệp / MC</option>
-                                <option value="story">Kể chuyện sinh động (THCS / Tiểu học)</option>
+                                <option value="presenter">Thuyết trình chuyên nghiệp</option>
+                                <option value="story">Kể chuyện sinh động (Tiểu học/THCS)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Giọng đọc (Vercel Neural TTS)</label>
-                            <select id="pptxVoiceSelect" onchange="pptxState.voiceId = this.value" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-bold text-slate-800 outline-none focus:border-orange-500"></select>
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-1">
-                                <span>Tốc độ đọc lời giảng</span>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="font-bold text-slate-600">Tốc độ đọc</label>
                                 <span id="pptxSpeedLabel" class="font-mono font-extrabold text-orange-700">1.00x</span>
                             </div>
                             <input type="range" id="pptxSpeedRange" min="0.70" max="1.50" step="0.05" value="1.00" oninput="onPptxSpeedChange(this.value)" class="w-full accent-orange-600 cursor-pointer mt-1.5">
                         </div>
                     </div>
 
-                    <!-- Tùy chọn phát trong PowerPoint -->
+                    <!-- Tùy chọn nhúng âm thanh trong PowerPoint -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
                         <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
                             <input type="checkbox" id="pptxOptAutoPlay" checked class="w-4 h-4 rounded accent-orange-600">
-                            <span>Tự động phát khi chiếu slide</span>
+                            <span>Tự động phát khi chiếu</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
                             <input type="checkbox" id="pptxOptHideIcon" checked class="w-4 h-4 rounded accent-orange-600">
-                            <span>Ẩn biểu tượng loa khi trình chiếu</span>
+                            <span>Ẩn biểu tượng loa khi chiếu</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
                             <input type="checkbox" id="pptxOptAutoAdvance" class="w-4 h-4 rounded accent-orange-600">
-                            <span>Tự chuyển slide sau khi đọc xong</span>
+                            <span>Tự chuyển slide khi đọc xong</span>
                         </label>
                     </div>
 
-                    <!-- Thanh nút thao tác hàng loạt -->
+                    <!-- 3 Nút hành động chính -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <button type="button" id="btnPptxAiPolishAll" onclick="aiPolishAllPptxSlides()" class="py-2.5 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold transition flex items-center justify-center gap-1.5 disabled:opacity-50">
+                        <button type="button" onclick="aiPolishAllPptxSlides()" class="py-2.5 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold transition flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-wand-magic-sparkles text-amber-600"></i>
                             <span>AI Viết Lời Giảng Hay Tất Cả</span>
                         </button>
-                        <button type="button" id="btnPptxGenerateAll" onclick="generateAllPptxSlidesAudio()" class="py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white text-xs font-extrabold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50">
-                            <i class="fa-solid fa-volume-high"></i>
+                        <button type="button" onclick="generateAllPptxSlidesAudio()" class="py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white text-xs font-extrabold transition flex items-center justify-center gap-1.5 shadow-2xs">
+                            <i class="fa-solid fa-bolt"></i>
                             <span>Tạo Âm Thanh Tất Cả Slide</span>
                         </button>
-                        <button type="button" id="btnPptxDownloadFinal" onclick="exportNarratedPptxFile()" disabled class="py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-orange-600 to-rose-600 hover:from-orange-700 hover:to-rose-700 text-white text-xs font-extrabold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-45 disabled:cursor-not-allowed">
+                        <button type="button" id="btnPptxDownloadFinal" onclick="exportNarratedPptxFile()" disabled class="py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-orange-600 to-rose-600 hover:from-orange-700 hover:to-rose-700 text-white text-xs font-black transition flex items-center justify-center gap-1.5 shadow-2xs disabled:opacity-45">
                             <i class="fa-solid fa-download"></i>
                             <span>Tải File PowerPoint (.PPTX)</span>
                         </button>
                     </div>
 
-                    <!-- Thanh tiến trình xử lý chung -->
-                    <div id="pptxProgressBox" class="hidden p-3.5 rounded-2xl bg-orange-50 border border-orange-200 space-y-2 animate-fade-in">
-                        <div class="flex items-center justify-between gap-2">
-                            <span id="pptxProgressLabel" class="flex items-center gap-2 text-xs font-extrabold text-orange-950 min-w-0">
+                    <!-- Thanh tiến trình xử lý hàng loạt -->
+                    <div id="pptxProgressBox" class="hidden p-3.5 rounded-xl bg-orange-50 border border-orange-200 space-y-2 animate-fade-in">
+                        <div class="flex items-center justify-between gap-2 text-xs font-extrabold text-orange-950">
+                            <span id="pptxProgressLabel" class="flex items-center gap-2 min-w-0">
                                 <i class="fa-solid fa-spinner fa-spin text-orange-600 shrink-0"></i>
-                                <span class="truncate">Đang xử lý slide...</span>
+                                <span class="truncate">Đang xử lý...</span>
                             </span>
                             <div class="flex items-center gap-2 shrink-0">
                                 <span id="pptxProgressPct" class="px-2 py-0.5 rounded-full bg-orange-600 text-white text-[11px] font-black font-mono">0%</span>
-                                <button type="button" id="btnPptxCancelBatch" onclick="cancelPptxBatchTask()" class="px-2.5 py-0.5 rounded-lg bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold">Dừng</button>
+                                <button type="button" onclick="cancelPptxBatchTask()" class="px-2 py-0.5 rounded-lg bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold">Dừng</button>
                             </div>
                         </div>
                         <div class="w-full h-2.5 bg-orange-100 rounded-full overflow-hidden">
@@ -1115,6 +1126,14 @@
 
             <!-- Nội dung cuộn -->
             <div class="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4">
+                <!-- Lưu ý trung thực về giới hạn chuyển đổi .ppt trên trình duyệt -->
+                <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs leading-relaxed flex items-start gap-2.5">
+                    <i class="fa-solid fa-circle-info text-amber-600 mt-0.5 shrink-0"></i>
+                    <div>
+                        <strong>Lưu ý:</strong> Chuyển đổi <strong>.PPT → .PPTX</strong> trực tiếp trên trình duyệt sẽ trích xuất <strong>nội dung chữ, ghi chú (Notes) và hình ảnh</strong> sang giao diện slide mới sạch đẹp (<strong>không giữ được hiệu ứng &amp; nền đồ hoạ gốc</strong> của file .ppt 97–2003). Nếu bài giảng có nhiều hiệu ứng đẹp cần giữ nguyên 100%, hãy mở file bằng <strong>Microsoft PowerPoint</strong> rồi chọn <em>Lưu dưới dạng → PowerPoint Presentation (.pptx)</em> trước khi lồng tiếng.
+                    </div>
+                </div>
+
                 <!-- Tuỳ chọn bố cục file .pptx đầu ra -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3">
                     <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
@@ -4162,6 +4181,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 document.getElementById('pptxControlsSection')?.classList.remove('hidden');
                 document.getElementById('pptxSlidesSection')?.classList.remove('hidden');
                 document.getElementById('btnPptxDownloadConvertedRaw')?.classList.toggle('hidden', !convertedFromLegacyPpt);
+                document.getElementById('pptxLegacyConvertedWarning')?.classList.toggle('hidden', !convertedFromLegacyPpt);
 
                 document.getElementById('pptxLoadedFileName').textContent = normalizedDisplayName;
                 const withText = slides.filter(s => s.script.trim()).length;
@@ -4682,21 +4702,42 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             return bytes;
         }
 
+        function stripXmlBom(str) {
+            return String(str ?? '').replace(/^\uFEFF/, '');
+        }
+
+        function findZipEntryCaseInsensitive(zip, targetPath) {
+            const normTarget = String(targetPath || '').replace(/\\/g, '/').replace(/^\/+/, '').toLowerCase();
+            if (!normTarget) return null;
+            const exact = zip.file(targetPath);
+            if (exact) return { path: exact.name, entry: exact };
+            for (const key of Object.keys(zip.files)) {
+                const f = zip.files[key];
+                if (!f || f.dir) continue;
+                const normKey = key.replace(/\\/g, '/').replace(/^\/+/, '').toLowerCase();
+                if (normKey === normTarget) {
+                    return { path: key, entry: f };
+                }
+            }
+            return null;
+        }
+
         function ensureContentTypesForAudio(xmlString) {
-            const doc = new DOMParser().parseFromString(xmlString, 'application/xml');
+            const cleanXml = stripXmlBom(xmlString);
+            const doc = new DOMParser().parseFromString(cleanXml, 'application/xml');
             const defaults = Array.from(doc.getElementsByTagName('*')).filter(el => el.localName === 'Default');
             const hasExt = (ext) => defaults.some(d => (d.getAttribute('Extension') || '').toLowerCase() === ext);
 
             let toInsert = '';
             if (!hasExt('mp3')) toInsert += '<Default Extension="mp3" ContentType="audio/mpeg"/>';
             if (!hasExt('png')) toInsert += '<Default Extension="png" ContentType="image/png"/>';
-            if (!toInsert) return xmlString;
+            if (!toInsert) return cleanXml;
 
-            if (/<Types\b[^>]*\/>/i.test(xmlString)) {
-                return xmlString.replace(/<Types\b([^>]*)\/>/i, `<Types$1>${toInsert}</Types>`);
+            if (/<Types\b[^>]*\/>/i.test(cleanXml)) {
+                return cleanXml.replace(/<Types\b([^>]*)\/>/i, `<Types$1>${toInsert}</Types>`);
             }
             // Đặt các thẻ <Default> ngay đầu <Types> (trước <Override>) theo đúng chuẩn PowerPoint
-            return xmlString.replace(/<Types\b([^>]*)>/i, `<Types$1>${toInsert}`);
+            return cleanXml.replace(/<Types\b([^>]*)>/i, `<Types$1>${toInsert}`);
         }
 
         // Tìm vị trí thẻ con trực tiếp (depth = 0) trong đoạn XML, bỏ qua hoàn toàn các thẻ lồng bên trong
@@ -4828,8 +4869,11 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             const R_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
             const P14_NS = 'http://schemas.microsoft.com/office/powerpoint/2010/main';
 
-            const baseRels = relsXmlStr && relsXmlStr.trim()
-                ? relsXmlStr
+            const cleanSlideXml = stripXmlBom(slideXmlStr);
+            const cleanRelsXml = stripXmlBom(relsXmlStr);
+
+            const baseRels = cleanRelsXml && cleanRelsXml.trim()
+                ? cleanRelsXml
                 : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="${REL_NS}"></Relationships>`;
             const relsDoc = new DOMParser().parseFromString(baseRels, 'application/xml');
             let maxRid = 0;
@@ -4857,7 +4901,7 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                 updatedRelsXml = updatedRelsXml.replace(/<\/Relationships\s*>/i, `${newRelsXml}</Relationships>`);
             }
 
-            const slideDoc = new DOMParser().parseFromString(slideXmlStr, 'application/xml');
+            const slideDoc = new DOMParser().parseFromString(cleanSlideXml, 'application/xml');
             let maxShapeId = 10;
             Array.from(slideDoc.getElementsByTagName('*'))
                 .filter(el => el.localName === 'cNvPr')
@@ -4877,7 +4921,7 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             const nextTnId = () => ++maxTnId;
 
             // Đảm bảo đầy đủ namespace chuẩn trên thẻ gốc <p:sld>
-            let normalizedSlideXml = slideXmlStr.replace(/<p:sld\b([^>]*)>/i, (fullTag, attrs) => {
+            let normalizedSlideXml = cleanSlideXml.replace(/<p:sld\b([^>]*)>/i, (fullTag, attrs) => {
                 let nextAttrs = attrs;
                 if (!/\bxmlns:p\s*=/.test(nextAttrs)) nextAttrs += ` xmlns:p="${P_NS}"`;
                 if (!/\bxmlns:a\s*=/.test(nextAttrs)) nextAttrs += ` xmlns:a="${A_NS}"`;
@@ -4944,25 +4988,26 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     });
                 } else {
                     const transXml = `<p:transition advClick="1" advTm="${advMs}"/>`;
-                    const timingIdx = findDirectChildTagIndex(tailPart, 'p:timing');
-                    const extIdx = findDirectChildTagIndex(tailPart, 'p:extLst');
-                    if (timingIdx >= 0) {
-                        tailPart = tailPart.slice(0, timingIdx) + transXml + tailPart.slice(timingIdx);
-                    } else if (extIdx >= 0) {
-                        tailPart = tailPart.slice(0, extIdx) + transXml + tailPart.slice(extIdx);
+                    const directTimingIdx = findDirectChildTagIndex(tailPart, 'p:timing');
+                    const directExtIdx = findDirectChildTagIndex(tailPart, 'p:extLst');
+                    if (directTimingIdx >= 0) {
+                        tailPart = tailPart.slice(0, directTimingIdx) + transXml + tailPart.slice(directTimingIdx);
+                    } else if (directExtIdx >= 0) {
+                        tailPart = tailPart.slice(0, directExtIdx) + transXml + tailPart.slice(directExtIdx);
                     } else {
                         tailPart = tailPart.replace(/<\/p:sld\s*>/i, `${transXml}</p:sld>`);
                     }
                 }
             }
 
-            // 2. Tạo khối điều khiển phát âm thanh chuẩn gốc Microsoft PowerPoint
+            // 2. Tạo khối điều khiển phát âm thanh chuẩn ECMA-376 tương thích tuyệt đối với PowerPoint iPhone/iOS & Desktop
             const idAudio = nextTnId();
             const showStoppedAttr = hideIcon ? ' showWhenStopped="0"' : '';
+            const playDurMs = Math.max(1000, Math.round((audioDurationSec || 1) * 1000));
             const audioNodeXml =
                 `<p:audio>` +
                     `<p:cMediaNode vol="80000"${showStoppedAttr}>` +
-                        `<p:cTn id="${idAudio}" display="0" masterRel="sameClick">` +
+                        `<p:cTn id="${idAudio}" fill="hold" display="0">` +
                             `<p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>` +
                             `<p:endCondLst><p:cond evt="onStopAudio" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:endCondLst>` +
                         `</p:cTn>` +
@@ -4970,36 +5015,25 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     `</p:cMediaNode>` +
                 `</p:audio>`;
 
-            const buildAutoPlayParXml = (mainSeqId) => {
-                const idP1 = nextTnId();
+            const buildAutoPlayInnerParXml = () => {
                 const idP2 = nextTnId();
                 const idP3 = nextTnId();
                 const idCmd = nextTnId();
-                const startCondXml = mainSeqId
-                    ? `<p:cond delay="indefinite"/><p:cond evt="onBegin" delay="0"><p:tn val="${mainSeqId}"/></p:cond>`
-                    : `<p:cond delay="0"/>`;
                 return (
                     `<p:par>` +
-                        `<p:cTn id="${idP1}" fill="hold">` +
-                            `<p:stCondLst>${startCondXml}</p:stCondLst>` +
+                        `<p:cTn id="${idP2}" fill="hold">` +
+                            `<p:stCondLst><p:cond delay="0"/></p:stCondLst>` +
                             `<p:childTnLst>` +
                                 `<p:par>` +
-                                    `<p:cTn id="${idP2}" fill="hold">` +
+                                    `<p:cTn id="${idP3}" presetID="1" presetClass="mediacall" presetSubtype="0" fill="hold" nodeType="afterEffect">` +
                                         `<p:stCondLst><p:cond delay="0"/></p:stCondLst>` +
                                         `<p:childTnLst>` +
-                                            `<p:par>` +
-                                                `<p:cTn id="${idP3}" presetID="1" presetClass="mediacall" presetSubtype="0" fill="hold" nodeType="withEffect">` +
-                                                    `<p:stCondLst><p:cond delay="0"/></p:stCondLst>` +
-                                                    `<p:childTnLst>` +
-                                                        `<p:cmd type="call" cmd="playFrom(0.0)">` +
-                                                            `<p:cBhvr>` +
-                                                                `<p:cTn id="${idCmd}" dur="1" fill="never"/>` +
-                                                                `<p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>` +
-                                                            `</p:cBhvr>` +
-                                                        `</p:cmd>` +
-                                                    `</p:childTnLst>` +
-                                                `</p:cTn>` +
-                                            `</p:par>` +
+                                            `<p:cmd type="call" cmd="playFrom(0.0)">` +
+                                                `<p:cBhvr>` +
+                                                    `<p:cTn id="${idCmd}" dur="${playDurMs}" fill="hold"/>` +
+                                                    `<p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>` +
+                                                `</p:cBhvr>` +
+                                            `</p:cmd>` +
                                         `</p:childTnLst>` +
                                     `</p:cTn>` +
                                 `</p:par>` +
@@ -5009,10 +5043,87 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                 );
             };
 
+            const buildAutoPlayParXml = () => {
+                const idP1 = nextTnId();
+                return (
+                    `<p:par>` +
+                        `<p:cTn id="${idP1}" fill="hold">` +
+                            `<p:stCondLst><p:cond delay="0"/></p:stCondLst>` +
+                            `<p:childTnLst>${buildAutoPlayInnerParXml()}</p:childTnLst>` +
+                        `</p:cTn>` +
+                    `</p:par>`
+                );
+            };
+
+            // Ghép lệnh tự phát âm thanh vào mainSeq mà KHÔNG làm xung đột hay mất hiệu ứng gốc đã có trên slide
+            const injectAutoPlayIntoExistingMainSeq = (timingXml) => {
+                const mainSeqCTn = findBalancedXmlElement(timingXml, /<p:cTn\b[^>]*\bnodeType\s*=\s*["']mainSeq["'][^>]*>/i);
+                if (!mainSeqCTn) return { ok: false, xml: timingXml };
+
+                if (!mainSeqCTn.selfClosing) {
+                    const inner = timingXml.slice(mainSeqCTn.openTagEnd, mainSeqCTn.closeTagStart);
+                    const childLstRel = findDirectChildTagIndex(inner, 'p:childTnLst');
+                    if (childLstRel >= 0) {
+                        const lstInfo = findBalancedXmlElement(inner, /<p:childTnLst\b[^>]*>/i, childLstRel);
+                        if (lstInfo && !lstInfo.selfClosing) {
+                            const lstContent = inner.slice(lstInfo.openTagEnd, lstInfo.closeTagStart);
+                            const firstParRel = findDirectChildTagIndex(lstContent, 'p:par');
+                            if (firstParRel >= 0) {
+                                const firstParInfo = findBalancedXmlElement(lstContent, /<p:par\b[^>]*>/i, firstParRel);
+                                if (firstParInfo && !firstParInfo.selfClosing) {
+                                    const firstParXml = lstContent.slice(firstParInfo.start, firstParInfo.end);
+                                    const firstCTn = findBalancedXmlElement(firstParXml, /<p:cTn\b[^>]*>/i);
+                                    if (firstCTn && !firstCTn.selfClosing) {
+                                        const cTnInner = firstParXml.slice(firstCTn.openTagEnd, firstCTn.closeTagStart);
+                                        const stRel = findDirectChildTagIndex(cTnInner, 'p:stCondLst');
+                                        const stInfo = stRel >= 0 ? findBalancedXmlElement(cTnInner, /<p:stCondLst\b[^>]*>/i, stRel) : null;
+                                        const stXml = stInfo ? cTnInner.slice(stInfo.start, stInfo.end) : '';
+                                        // Nếu nhóm hiệu ứng đầu tiên đã là hiệu ứng chạy tự động khi mở slide
+                                        // thì chèn âm thanh chạy song song ngay trong nhóm đó để bảo toàn 100% mạch hiệu ứng gốc
+                                        const isAutoStartGroup = /\bevt\s*=\s*["']onBegin["']/i.test(stXml) ||
+                                            (/\bdelay\s*=\s*["']0["']/i.test(stXml) && !/\bdelay\s*=\s*["']indefinite["']/i.test(stXml));
+                                        if (isAutoStartGroup) {
+                                            const mergedFirstPar = insertIntoCTnChildList(
+                                                firstParXml,
+                                                /<p:cTn\b[^>]*>/i,
+                                                buildAutoPlayInnerParXml(),
+                                                true
+                                            );
+                                            if (mergedFirstPar.ok) {
+                                                const newLstContent =
+                                                    lstContent.slice(0, firstParInfo.start) +
+                                                    mergedFirstPar.xml +
+                                                    lstContent.slice(firstParInfo.end);
+                                                const newInner =
+                                                    inner.slice(0, lstInfo.openTagEnd) +
+                                                    newLstContent +
+                                                    inner.slice(lstInfo.closeTagStart);
+                                                return {
+                                                    ok: true,
+                                                    xml: timingXml.slice(0, mainSeqCTn.openTagEnd) + newInner + timingXml.slice(mainSeqCTn.closeTagStart)
+                                                };
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Nếu slide gốc chỉ dùng hiệu ứng bấm chuột (On Click), thêm 1 bước tự phát ở đầu mainSeq (các hiệu ứng bấm chuột vẫn giữ nguyên)
+                return insertIntoCTnChildList(
+                    timingXml,
+                    /<p:cTn\b[^>]*\bnodeType\s*=\s*["']mainSeq["'][^>]*>/i,
+                    buildAutoPlayParXml(),
+                    true
+                );
+            };
+
             const buildFreshTimingXml = () => {
                 const idRoot = nextTnId();
                 const idSeq = nextTnId();
-                const autoPlayXml = autoPlay ? buildAutoPlayParXml(idSeq) : '';
+                const autoPlayXml = autoPlay ? buildAutoPlayParXml() : '';
                 const seqChildXml = autoPlayXml ? `<p:childTnLst>${autoPlayXml}</p:childTnLst>` : '';
                 return (
                     `<p:timing>` +
@@ -5052,31 +5163,26 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     }
                 } else {
                     let timingBlock = tailPart.slice(timingInfo.start, timingInfo.end);
-                    const rootRes = insertIntoCTnChildList(
+                    let rootRes = insertIntoCTnChildList(
                         timingBlock,
                         /<p:cTn\b[^>]*\bnodeType\s*=\s*["']tmRoot["'][^>]*>/i,
                         audioNodeXml,
                         false
                     );
+                    // Dự phòng: nếu <p:timing> gốc không ghi thuộc tính nodeType="tmRoot", chèn vào <p:cTn> đầu tiên — TUYỆT ĐỐI không xoá hiệu ứng gốc!
                     if (!rootRes.ok) {
-                        timingBlock = buildFreshTimingXml();
-                    } else {
+                        rootRes = insertIntoCTnChildList(timingBlock, /<p:cTn\b[^>]*>/i, audioNodeXml, false);
+                    }
+                    if (rootRes.ok) {
                         timingBlock = rootRes.xml;
                         if (autoPlay) {
                             const mainSeqOpenMatch = timingBlock.match(/<p:cTn\b[^>]*\bnodeType\s*=\s*["']mainSeq["'][^>]*>/i);
-                            const mainSeqIdMatch = mainSeqOpenMatch ? mainSeqOpenMatch[0].match(/\bid\s*=\s*["'](\d+)["']/i) : null;
                             if (mainSeqOpenMatch) {
-                                const autoPlayXml = buildAutoPlayParXml(mainSeqIdMatch ? mainSeqIdMatch[1] : null);
-                                const mainSeqRes = insertIntoCTnChildList(
-                                    timingBlock,
-                                    /<p:cTn\b[^>]*\bnodeType\s*=\s*["']mainSeq["'][^>]*>/i,
-                                    autoPlayXml,
-                                    true
-                                );
+                                const mainSeqRes = injectAutoPlayIntoExistingMainSeq(timingBlock);
                                 if (mainSeqRes.ok) timingBlock = mainSeqRes.xml;
                             } else {
                                 const idSeq = nextTnId();
-                                const autoPlayXml = buildAutoPlayParXml(idSeq);
+                                const autoPlayXml = buildAutoPlayParXml();
                                 const newMainSeqXml =
                                     `<p:seq concurrent="1" nextAc="seek">` +
                                         `<p:cTn id="${idSeq}" dur="indefinite" nodeType="mainSeq"><p:childTnLst>${autoPlayXml}</p:childTnLst></p:cTn>` +
@@ -5107,6 +5213,15 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             };
         }
 
+        // Dọn sạch các mục thư mục ảo (dir: true) khỏi gói ZIP theo chuẩn OPC để PowerPoint iOS/iPadOS mở 100% không báo lỗi
+        function stripDirectoryEntriesFromZip(zip) {
+            Object.keys(zip.files).forEach(key => {
+                if (zip.files[key] && zip.files[key].dir) {
+                    delete zip.files[key];
+                }
+            });
+        }
+
         async function exportNarratedPptxFile() {
             if (!pptxState.originalArrayBuffer) {
                 showToast('Chưa có tệp PowerPoint nào được nạp!');
@@ -5124,14 +5239,14 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
 
             try {
                 const JSZipLib = await ensureJSZipReady();
-                const zip = await JSZipLib.loadAsync(pptxState.originalArrayBuffer.slice(0));
+                const zip = await JSZipLib.loadAsync(pptxState.originalArrayBuffer.slice(0), { createFolders: false });
 
                 let slideWidthEmu = 12192000;
                 let slideHeightEmu = 6858000;
                 try {
-                    const presEntry = zip.file('ppt/presentation.xml');
-                    if (presEntry) {
-                        const presDoc = new DOMParser().parseFromString(await presEntry.async('string'), 'application/xml');
+                    const presFound = findZipEntryCaseInsensitive(zip, 'ppt/presentation.xml');
+                    if (presFound) {
+                        const presDoc = new DOMParser().parseFromString(stripXmlBom(await presFound.entry.async('string')), 'application/xml');
                         const sldSz = Array.from(presDoc.getElementsByTagName('*')).find(el => el.localName === 'sldSz');
                         if (sldSz) {
                             const cx = parseInt(sldSz.getAttribute('cx') || '0', 10);
@@ -5148,22 +5263,23 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                 let maxMediaIdx = 0;
                 let maxImageIdx = 0;
                 zip.forEach((relPath) => {
-                    const mMedia = relPath.match(/^ppt\/media\/media(\d+)\./i);
+                    const normPath = relPath.replace(/\\/g, '/');
+                    const mMedia = normPath.match(/^ppt\/media\/media(\d+)\./i);
                     if (mMedia) maxMediaIdx = Math.max(maxMediaIdx, parseInt(mMedia[1], 10));
-                    const mImg = relPath.match(/^ppt\/media\/image(\d+)\./i);
+                    const mImg = normPath.match(/^ppt\/media\/image(\d+)\./i);
                     if (mImg) maxImageIdx = Math.max(maxImageIdx, parseInt(mImg[1], 10));
                 });
 
-                const ctEntry = zip.file('[Content_Types].xml');
-                if (ctEntry) {
-                    const updatedCt = ensureContentTypesForAudio(await ctEntry.async('string'));
+                const ctFound = findZipEntryCaseInsensitive(zip, '[Content_Types].xml');
+                if (ctFound) {
+                    const updatedCt = ensureContentTypesForAudio(await ctFound.entry.async('string'));
                     assertValidOoxmlXml(updatedCt, '[Content_Types].xml');
-                    zip.file('[Content_Types].xml', updatedCt);
+                    zip.file(ctFound.path, updatedCt, { createFolders: false });
                 }
 
                 const iconMediaFileName = `image${++maxImageIdx}.png`;
                 const iconPngBytes = createSpeakerIconPngUint8Array();
-                zip.file(`ppt/media/${iconMediaFileName}`, iconPngBytes, { compression: 'STORE' });
+                zip.file(`ppt/media/${iconMediaFileName}`, iconPngBytes, { compression: 'STORE', createFolders: false });
 
                 const autoPlay = Boolean(document.getElementById('pptxOptAutoPlay')?.checked);
                 const hideIcon = Boolean(document.getElementById('pptxOptHideIcon')?.checked);
@@ -5174,12 +5290,21 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     setPptxProgress(true, 25 + Math.round(((i + 1) / audioSlides.length) * 55), `Đang gắn âm thanh vào Slide ${s.index}...`);
                     const audioMediaFileName = `media${++maxMediaIdx}.mp3`;
                     const audioBytes = new Uint8Array(await s.audioBlob.arrayBuffer());
-                    zip.file(`ppt/media/${audioMediaFileName}`, audioBytes, { compression: 'STORE' });
+                    zip.file(`ppt/media/${audioMediaFileName}`, audioBytes, { compression: 'STORE', createFolders: false });
 
-                    const slideDir = s.slidePath.substring(0, s.slidePath.lastIndexOf('/'));
-                    const relsPath = `${slideDir}/_rels/${s.fileName}.rels`;
-                    const slideXmlStr = await zip.file(s.slidePath).async('string');
-                    const relsXmlStr = zip.file(relsPath) ? await zip.file(relsPath).async('string') : '';
+                    const slideFound = findZipEntryCaseInsensitive(zip, s.slidePath);
+                    if (!slideFound) {
+                        throw new Error(`Không tìm thấy dữ liệu gốc của Slide ${s.index} trong tệp PowerPoint.`);
+                    }
+                    const actualSlidePath = slideFound.path;
+                    const actualFileName = actualSlidePath.split('/').pop();
+                    const actualSlideDir = actualSlidePath.substring(0, actualSlidePath.lastIndexOf('/'));
+                    const expectedRelsPath = `${actualSlideDir}/_rels/${actualFileName}.rels`;
+                    const relsFound = findZipEntryCaseInsensitive(zip, expectedRelsPath);
+                    const actualRelsPath = relsFound ? relsFound.path : expectedRelsPath;
+
+                    const slideXmlStr = await slideFound.entry.async('string');
+                    const relsXmlStr = relsFound ? await relsFound.entry.async('string') : '';
 
                     const patched = embedAudioIntoSlideXml(slideXmlStr, relsXmlStr, {
                         slideNumber: s.index,
@@ -5193,16 +5318,20 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                         audioDurationSec: s.audioDuration || 0
                     });
 
-                    zip.file(s.slidePath, patched.slideXml);
-                    zip.file(relsPath, patched.relsXml);
+                    zip.file(actualSlidePath, patched.slideXml, { createFolders: false });
+                    zip.file(actualRelsPath, patched.relsXml, { createFolders: false });
                 }
 
-                setPptxProgress(true, 90, 'Đang đóng gói tệp PowerPoint (.pptx) hoàn chỉnh...');
+                // Loại bỏ toàn bộ mục thư mục ảo (dir: true) chuẩn OPC cho PowerPoint iPhone/iPad
+                stripDirectoryEntriesFromZip(zip);
+
+                setPptxProgress(true, 90, 'Đang đóng gói & kiểm tra chuẩn iPhone/PowerPoint...');
                 const outBlob = await zip.generateAsync({
                     type: 'blob',
                     mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
                     compression: 'DEFLATE',
-                    compressionOptions: { level: 6 }
+                    compressionOptions: { level: 6 },
+                    platform: 'DOS'
                 });
 
                 const baseName = (pptxState.fileName || 'bai_giang.pptx').replace(/\.pptx$/i, '');
@@ -5871,6 +6000,7 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                                 `</a:rPr>` +
                                 `<a:t>${safeLine}</a:t>` +
                             `</a:r>` +
+                            `<a:endParaRPr lang="vi-VN" sz="${sz}"/>` +
                         `</a:p>`
                     );
                 }).join('');
@@ -6004,7 +6134,7 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                             else hasJpg = true;
 
                             const mediaName = `image${++mediaCounter}.${ext}`;
-                            zip.file(`ppt/media/${mediaName}`, img.bytes, { compression: 'STORE' });
+                            zip.file(`ppt/media/${mediaName}`, img.bytes, { compression: 'STORE', createFolders: false });
                             const relId = `rId${nextRelId++}`;
                             slideRels.push(`<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${mediaName}"/>`);
                             totalEmbeddedImages++;
@@ -6056,8 +6186,8 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     `<Relationships xmlns="${REL_NS}">${slideRels.join('')}</Relationships>`;
 
                 assertValidOoxmlXml(slideXml, `Converted Slide ${slideNum}`);
-                zip.file(`ppt/slides/slide${slideNum}.xml`, slideXml);
-                zip.file(`ppt/slides/_rels/slide${slideNum}.xml.rels`, slideRelsXml);
+                zip.file(`ppt/slides/slide${slideNum}.xml`, slideXml, { createFolders: false });
+                zip.file(`ppt/slides/_rels/slide${slideNum}.xml.rels`, slideRelsXml, { createFolders: false });
             }
 
             // [Content_Types].xml
@@ -6114,6 +6244,9 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     `<p:sldIdLst>${sldIdListXml}</p:sldIdLst>` +
                     `<p:sldSz cx="${slideW}" cy="${slideH}"${sldSzTypeAttr}/>` +
                     `<p:notesSz cx="6858000" cy="9144000"/>` +
+                    `<p:defaultTextStyle>` +
+                        `<a:defPPr><a:defRPr lang="vi-VN"/></a:defPPr>` +
+                    `</p:defaultTextStyle>` +
                 `</p:presentation>`;
 
             const slideMasterXml =
@@ -6128,6 +6261,17 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     `</p:cSld>` +
                     `<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>` +
                     `<p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst>` +
+                    `<p:txStyles>` +
+                        `<p:titleStyle>` +
+                            `<a:lvl1pPr algn="l"><a:defRPr sz="4400" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="Arial"/><a:ea typeface="Arial"/><a:cs typeface="Arial"/></a:defRPr></a:lvl1pPr>` +
+                        `</p:titleStyle>` +
+                        `<p:bodyStyle>` +
+                            `<a:lvl1pPr marL="342900" indent="-342900"><a:defRPr sz="2400" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="Arial"/><a:ea typeface="Arial"/><a:cs typeface="Arial"/></a:defRPr></a:lvl1pPr>` +
+                        `</p:bodyStyle>` +
+                        `<p:otherStyle>` +
+                            `<a:defPPr><a:defRPr lang="vi-VN"/></a:defPPr>` +
+                        `</p:otherStyle>` +
+                    `</p:txStyles>` +
                 `</p:sldMaster>`;
 
             const slideMasterRelsXml =
@@ -6220,28 +6364,32 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                 `<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">` +
                     `<Application>Phuc Nguyen Vlog PPT Converter</Application>` +
                     `<Slides>${slides.length}</Slides>` +
+                    `<PresentationFormat>On-screen Show (${aspect})</PresentationFormat>` +
                 `</Properties>`;
 
-            zip.file('[Content_Types].xml', contentTypesXml);
-            zip.file('_rels/.rels', rootRelsXml);
-            zip.file('docProps/core.xml', coreXml);
-            zip.file('docProps/app.xml', appXml);
-            zip.file('ppt/presentation.xml', presentationXml);
-            zip.file('ppt/_rels/presentation.xml.rels', presRelsXml);
-            zip.file('ppt/slideMasters/slideMaster1.xml', slideMasterXml);
-            zip.file('ppt/slideMasters/_rels/slideMaster1.xml.rels', slideMasterRelsXml);
-            zip.file('ppt/slideLayouts/slideLayout1.xml', slideLayoutXml);
-            zip.file('ppt/slideLayouts/_rels/slideLayout1.xml.rels', slideLayoutRelsXml);
-            zip.file('ppt/theme/theme1.xml', themeXml);
-            zip.file('ppt/presProps.xml', presPropsXml);
-            zip.file('ppt/viewProps.xml', viewPropsXml);
-            zip.file('ppt/tableStyles.xml', tableStylesXml);
+            zip.file('[Content_Types].xml', contentTypesXml, { createFolders: false });
+            zip.file('_rels/.rels', rootRelsXml, { createFolders: false });
+            zip.file('docProps/core.xml', coreXml, { createFolders: false });
+            zip.file('docProps/app.xml', appXml, { createFolders: false });
+            zip.file('ppt/presentation.xml', presentationXml, { createFolders: false });
+            zip.file('ppt/_rels/presentation.xml.rels', presRelsXml, { createFolders: false });
+            zip.file('ppt/slideMasters/slideMaster1.xml', slideMasterXml, { createFolders: false });
+            zip.file('ppt/slideMasters/_rels/slideMaster1.xml.rels', slideMasterRelsXml, { createFolders: false });
+            zip.file('ppt/slideLayouts/slideLayout1.xml', slideLayoutXml, { createFolders: false });
+            zip.file('ppt/slideLayouts/_rels/slideLayout1.xml.rels', slideLayoutRelsXml, { createFolders: false });
+            zip.file('ppt/theme/theme1.xml', themeXml, { createFolders: false });
+            zip.file('ppt/presProps.xml', presPropsXml, { createFolders: false });
+            zip.file('ppt/viewProps.xml', viewPropsXml, { createFolders: false });
+            zip.file('ppt/tableStyles.xml', tableStylesXml, { createFolders: false });
+
+            stripDirectoryEntriesFromZip(zip);
 
             const pptxBlob = await zip.generateAsync({
                 type: 'blob',
                 mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
                 compression: 'DEFLATE',
-                compressionOptions: { level: 6 }
+                compressionOptions: { level: 6 },
+                platform: 'DOS'
             });
             const pptxArrayBuffer = await pptxBlob.arrayBuffer();
             return { pptxBlob, pptxArrayBuffer, totalEmbeddedImages };
@@ -6455,6 +6603,7 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                 document.getElementById('pptxControlsSection')?.classList.remove('hidden');
                 document.getElementById('pptxSlidesSection')?.classList.remove('hidden');
                 document.getElementById('btnPptxDownloadConvertedRaw')?.classList.remove('hidden');
+                document.getElementById('pptxLegacyConvertedWarning')?.classList.remove('hidden');
 
                 document.getElementById('pptxLoadedFileName').textContent = item.pptxFileName;
                 const withText = slides.filter(s => s.script.trim()).length;
