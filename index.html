@@ -253,6 +253,10 @@
                     <i class="fa-solid fa-file-powerpoint text-orange-600"></i>
                     <span class="truncate">Lồng Tiếng PowerPoint</span>
                 </button>
+                <button type="button" onclick="openPptConverterModal()" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-arrows-rotate text-rose-600"></i>
+                    <span class="truncate">Chuyển .PPT → .PPTX</span>
+                </button>
                 <button type="button" onclick="openAssistantWithBot('tutor')" class="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-extrabold transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-robot text-emerald-600"></i>
                     <span class="truncate">Siêu AI (Hỏi/Giải)</span>
@@ -377,42 +381,42 @@
                         <i class="fa-solid fa-volume-high mr-1"></i>Đọc đề thành Âm thanh
                     </button>
                     <button type="button" onclick="previewStudentShareModeNow()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold transition">
-                        <i class="fa-solid fa-eye mr-1"></i>Xem thử giao diện Học sinh
-                    </button>
-                </div>
-            </div>
-
-            <!-- Trạng thái chưa có câu hỏi -->
-            <div id="emptyExamStateBox" class="bg-white rounded-3xl border border-slate-200 p-8 text-center space-y-3">
-                <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mx-auto">
-                    <i class="fa-solid fa-file-circle-question"></i>
-                </div>
-                <h3 class="text-base sm:text-lg font-black text-slate-900">Chưa có câu hỏi nào trong đề ôn tập</h3>
-                <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">Hãy quay lại <strong>Bước 1 (Tạo Đề)</strong> để tải ảnh/Word/PDF lên hoặc dùng <strong>AI Soạn Đề</strong> để tạo đề tự động.</p>
-                <button type="button" onclick="switchMainWorkspace('scanner')" class="px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-extrabold transition">
-                    Đi tới Bước 1 • Tạo Đề Ngay
-                </button>
-            </div>
-
-            <!-- Bảng tổng kết điểm sau khi nộp bài -->
-            <div id="resultSummaryBanner" class="hidden bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-3xl p-4 sm:p-5 shadow-md">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <div class="text-xs font-bold uppercase tracking-wider text-emerald-100">Kết quả tổng kết bài làm</div>
-                        <div class="text-2xl sm:text-3xl font-black mt-0.5"><span id="scoreScale10">0.00</span> / 10 điểm</div>
+                <!-- BƯỚC 1: TẢI FILE POWERPOINT (.PPTX / .PPT) -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">1</span>
+                            <span>Chọn tệp PowerPoint (.pptx hoặc .ppt cũ) cần lồng tiếng</span>
+                        </div>
+                        <label for="pptxFileInput" id="btnPptxChangeFile" class="hidden cursor-pointer px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                            <i class="fa-solid fa-folder-open pointer-events-none mr-1"></i><span class="pointer-events-none">Chọn file PowerPoint khác</span>
+                        </label>
                     </div>
-                    <div class="grid grid-cols-3 gap-2 sm:gap-3 text-center">
-                        <div class="px-3 py-2 rounded-2xl bg-white/15">
-                            <div class="text-[10px] text-emerald-100 font-bold">Trắc nghiệm</div>
-                            <div id="scorePartA" class="text-sm sm:text-base font-black">0/0</div>
+
+                    <input type="file" id="pptxFileInput" class="sr-only" onchange="handlePptxFileSelected(this.files)">
+
+                    <label for="pptxFileInput" id="pptxDropzone" class="block cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/70 hover:bg-orange-50/40 p-6 sm:p-8 text-center space-y-2.5 transition">
+                        <div class="pointer-events-none w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center text-2xl mx-auto shadow-sm">
+                            <i class="fa-solid fa-file-powerpoint"></i>
                         </div>
-                        <div class="px-3 py-2 rounded-2xl bg-white/15">
-                            <div class="text-[10px] text-emerald-100 font-bold">Đúng / Sai</div>
-                            <div id="scorePartB" class="text-sm sm:text-base font-black">0/0</div>
+                        <div class="pointer-events-none text-sm sm:text-base font-extrabold text-slate-900">Bấm vào đây để chọn tệp PowerPoint (.pptx hoặc .ppt cũ)</div>
+                        <div class="pointer-events-none text-xs text-slate-500">Hỗ trợ tự động chuyển đổi tệp .ppt cũ sang .pptx ngay lập tức • Tương thích iPhone/Safari, iPad, Android &amp; Máy tính</div>
+                    </label>
+
+                    <!-- Thông tin tệp đã nạp -->
+                    <div id="pptxFileInfoBar" class="hidden p-3 rounded-xl bg-orange-50/70 border border-orange-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <i class="fa-solid fa-file-powerpoint text-orange-600 text-lg shrink-0"></i>
+                            <div class="min-w-0">
+                                <div id="pptxLoadedFileName" class="font-black text-slate-900 truncate">bai-giang.pptx</div>
+                                <div id="pptxLoadedFileMeta" class="text-[11px] text-orange-800 font-semibold">0 slide</div>
+                            </div>
                         </div>
-                        <div class="px-3 py-2 rounded-2xl bg-white/15">
-                            <div class="text-[10px] text-emerald-100 font-bold">Thời gian</div>
-                            <div id="scoreTime" class="text-sm sm:text-base font-black">00:00</div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" id="btnPptxDownloadConvertedRaw" onclick="downloadConvertedRawPptxFromAudioStudio()" class="hidden px-2.5 py-1 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-[11px] transition">
+                                <i class="fa-solid fa-download mr-1"></i>Tải bản .PPTX đã chuyển
+                            </button>
+                            <span id="pptxAudioReadySummary" class="px-2.5 py-1 rounded-full bg-white text-emerald-700 border border-emerald-200 font-extrabold text-[11px]">Đã lồng tiếng: 0/0 slide</span>
                         </div>
                     </div>
                 </div>
@@ -1082,6 +1086,111 @@
                         </div>
                     </div>
                     <div id="pptxSlidesList" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- CÔNG CỤ CHUYỂN ĐỔI FILE POWERPOINT CŨ (.PPT) SANG .PPTX             -->
+    <!-- =================================================================== -->
+    <div id="pptConverterModal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-sm z-50 hidden items-center justify-center p-2 sm:p-4">
+        <div class="bg-slate-50 text-slate-800 w-full max-w-3xl max-h-[94vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl border border-slate-200">
+            <!-- Tiêu đề -->
+            <div class="bg-white px-4 sm:px-5 py-3.5 flex items-center justify-between gap-3 shrink-0 border-b border-slate-200">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500 to-orange-500 text-white flex items-center justify-center text-base shadow-sm shrink-0">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Chuyển Đổi PowerPoint Cũ (.PPT) → .PPTX</h3>
+                        <p class="text-[11px] sm:text-xs text-slate-500 truncate">Xử lý trực tiếp trên máy • Bảo toàn nội dung chữ, ghi chú &amp; hình ảnh • Hỗ trợ chọn nhiều file</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closePptConverterModal()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-xmark"></i>
+                    <span>Đóng</span>
+                </button>
+            </div>
+
+            <!-- Nội dung cuộn -->
+            <div class="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4">
+                <!-- Tuỳ chọn bố cục file .pptx đầu ra -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3">
+                    <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-rose-100 text-rose-700 text-xs font-black flex items-center justify-center">1</span>
+                        <span>Tuỳ chọn định dạng file .PPTX sau khi chuyển</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="block font-bold text-slate-600 mb-1">Tỉ lệ khung hình slide</label>
+                            <select id="pptConvertAspectSelect" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-800 outline-none focus:border-rose-500">
+                                <option value="16:9" selected>16:9 Màn hình rộng (Khuyên dùng)</option>
+                                <option value="4:3">4:3 Chuẩn PowerPoint cũ</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-600 mb-1">Giao diện slide xuất ra</label>
+                            <select id="pptConvertThemeSelect" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-800 outline-none focus:border-rose-500">
+                                <option value="blue" selected>Xanh dương giáo dục (Chuyên nghiệp)</option>
+                                <option value="teal">Xanh ngọc sáng (Hiện đại)</option>
+                                <option value="minimal">Trắng tối giản (Dễ chỉnh sửa lại)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 pt-1">
+                        <input type="checkbox" id="pptConvertIncludeImages" checked class="w-4 h-4 rounded accent-rose-600">
+                        <span>Trích xuất và nhúng kèm hình ảnh (PNG/JPEG) có trong file .ppt gốc</span>
+                    </label>
+                </div>
+
+                <!-- Khu vực tải file .ppt -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-rose-100 text-rose-700 text-xs font-black flex items-center justify-center">2</span>
+                            <span>Chọn một hoặc nhiều tệp PowerPoint cũ (.ppt)</span>
+                        </div>
+                        <button type="button" id="btnPptConvertClearAll" onclick="clearPptConvertResults()" class="hidden text-xs font-bold text-rose-600 hover:underline">Xoá danh sách</button>
+                    </div>
+
+                    <input type="file" id="pptConvertFileInput" multiple class="sr-only" onchange="handlePptConvertFilesSelected(this.files)">
+
+                    <label for="pptConvertFileInput" id="pptConvertDropzone" class="block cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 hover:border-rose-500 bg-slate-50/70 hover:bg-rose-50/40 p-6 sm:p-8 text-center space-y-2.5 transition">
+                        <div class="pointer-events-none w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-orange-500 text-white flex items-center justify-center text-2xl mx-auto shadow-sm">
+                            <i class="fa-solid fa-file-arrow-up"></i>
+                        </div>
+                        <div class="pointer-events-none text-sm sm:text-base font-extrabold text-slate-900">Bấm vào đây để chọn tệp PowerPoint cũ (.ppt)</div>
+                        <div class="pointer-events-none text-xs text-slate-500">Hỗ trợ PowerPoint 97-2003 (.ppt) • Chuyển ngay sang chuẩn Office Open XML (.pptx) mở tốt trên iPhone, Windows &amp; macOS</div>
+                    </label>
+
+                    <!-- Thanh tiến trình chuyển đổi -->
+                    <div id="pptConvertProgressBox" class="hidden p-3.5 rounded-2xl bg-rose-50 border border-rose-200 space-y-2 animate-fade-in">
+                        <div class="flex items-center justify-between gap-2 text-xs font-extrabold text-rose-900">
+                            <span id="pptConvertProgressLabel" class="flex items-center gap-2 min-w-0">
+                                <i class="fa-solid fa-spinner fa-spin text-rose-600 shrink-0"></i>
+                                <span class="truncate">Đang phân tích và chuyển đổi sang .PPTX...</span>
+                            </span>
+                            <span id="pptConvertProgressPct" class="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[11px] font-black font-mono shrink-0">0%</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-rose-100 rounded-full overflow-hidden">
+                            <div id="pptConvertProgressBar" class="h-full progress-bar-animated rounded-full transition-all duration-300" style="width: 10%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danh sách kết quả đã chuyển đổi -->
+                <div id="pptConvertResultsSection" class="hidden space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+                        <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black flex items-center justify-center">3</span>
+                            <span>Kết quả chuyển đổi (.PPTX sẵn sàng tải về)</span>
+                        </div>
+                        <button type="button" id="btnDownloadAllConvertedPptx" onclick="downloadAllConvertedPptx()" class="hidden px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition shadow-2xs">
+                            <i class="fa-solid fa-download mr-1"></i>Tải tất cả (.PPTX)
+                        </button>
+                    </div>
+                    <div id="pptConvertResultsList" class="space-y-3"></div>
                 </div>
             </div>
         </div>
@@ -3175,7 +3284,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 '#headerStepNav', '#headerActionToolbar', '#studyTopQuickBanner',
                 '#sidebarTeacherExportBtns', '#teacherBrandLogoBox', '#studentPreviewExitBanner',
                 '#workspaceScanner', '#workspaceEditor', '#aiChatDrawer', '#aiChatBackdrop',
-                '#ttsStudioModal', '#pptxAudioModal', '#wordExportModal', '#shareLinkModal', '#pdfCaptureModalOverlay',
+                '#ttsStudioModal', '#pptxAudioModal', '#pptConverterModal', '#wordExportModal', '#shareLinkModal', '#pdfCaptureModalOverlay',
                 '#btnFloatingTTS', '#btnFloatingSuperAI', '#btnFloatingAIBuilder'
             ].forEach(sel => {
                 const node = cloneDoc.querySelector(sel);
@@ -3726,6 +3835,7 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
         const pptxState = {
             fileName: '',
             originalArrayBuffer: null,
+            convertedFromLegacyPpt: false,
             slides: [],
             voiceId: 'vi-VN-HoaiMyNeural',
             narrationStyle: 'teacher',
@@ -3973,19 +4083,36 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 const JSZipLib = await ensureJSZipReady();
                 showToast(`Đang đọc và phân tích "${file.name || 'PowerPoint'}"...`);
 
-                const arrayBuffer = await file.arrayBuffer();
-                const headerBytes = new Uint8Array(arrayBuffer.slice(0, 8));
+                let arrayBuffer = await file.arrayBuffer();
+                let headerBytes = new Uint8Array(arrayBuffer.slice(0, 8));
+                let convertedFromLegacyPpt = false;
+                let legacyNotesByIndex = {};
+                let finalDisplayName = file.name || 'bai_giang.pptx';
 
                 const isLegacyOlePpt = (lowerName.endsWith('.ppt') && !lowerName.endsWith('.pptx')) ||
-                    (headerBytes[0] === 0xD0 && headerBytes[1] === 0xCF && headerBytes[2] === 0x11 && headerBytes[3] === 0xE0);
+                    (headerBytes.length >= 8 &&
+                     headerBytes[0] === 0xD0 && headerBytes[1] === 0xCF &&
+                     headerBytes[2] === 0x11 && headerBytes[3] === 0xE0 &&
+                     headerBytes[4] === 0xA1 && headerBytes[5] === 0xB1 &&
+                     headerBytes[6] === 0x1A && headerBytes[7] === 0xE1);
+
                 if (isLegacyOlePpt) {
-                    showToast('Tệp này là định dạng PowerPoint cũ (.ppt). Hãy mở bằng PowerPoint và chọn "Lưu dưới dạng (.pptx)" rồi tải lên nhé!');
-                    return;
+                    showToast('Phát hiện tệp PowerPoint cũ (.ppt) — đang tự động chuyển sang .pptx...');
+                    const convResult = await convertLegacyPptFileToPptx(file, {
+                        aspect: '16:9',
+                        theme: 'blue',
+                        includeImages: true
+                    });
+                    arrayBuffer = convResult.pptxArrayBuffer;
+                    headerBytes = new Uint8Array(arrayBuffer.slice(0, 8));
+                    convertedFromLegacyPpt = true;
+                    legacyNotesByIndex = convResult.notesByIndex || {};
+                    finalDisplayName = convResult.pptxFileName;
                 }
 
                 const isZipContainer = headerBytes.length >= 4 && headerBytes[0] === 0x50 && headerBytes[1] === 0x4B;
                 if (!isZipContainer) {
-                    showToast('Tệp bạn chọn không phải tệp PowerPoint (.pptx) hợp lệ!');
+                    showToast('Tệp bạn chọn không phải tệp PowerPoint (.pptx / .ppt) hợp lệ!');
                     return;
                 }
 
@@ -4004,12 +4131,28 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                     return;
                 }
 
+                // Nếu file được tự động chuyển từ .ppt cũ, gắn lại ghi chú (Speaker Notes) đã trích xuất
+                if (convertedFromLegacyPpt) {
+                    slides.forEach(s => {
+                        const legacyNote = (legacyNotesByIndex[s.index] || '').trim();
+                        if (legacyNote && !s.notesText) {
+                            s.notesText = legacyNote;
+                            if (!s.script.trim()) {
+                                s.script = legacyNote;
+                                s.sourceMode = 'notes';
+                                s.enabled = true;
+                            }
+                        }
+                    });
+                }
+
                 revokePptxSlideAudioUrls();
-                const normalizedDisplayName = lowerName.endsWith('.pptx')
-                    ? file.name
-                    : `${(file.name || 'bai_giang').replace(/\.[^.]+$/, '')}.pptx`;
+                const normalizedDisplayName = finalDisplayName.toLowerCase().endsWith('.pptx')
+                    ? finalDisplayName
+                    : `${(finalDisplayName || 'bai_giang').replace(/\.[^.]+$/, '')}.pptx`;
                 pptxState.fileName = normalizedDisplayName;
                 pptxState.originalArrayBuffer = arrayBuffer;
+                pptxState.convertedFromLegacyPpt = convertedFromLegacyPpt;
                 pptxState.slides = slides;
                 pptxState.cancelRequested = false;
 
@@ -4018,15 +4161,19 @@ Hãy trả về DUY NHẤT JSON hoàn chỉnh gồm {"title", "partA", "partB", 
                 document.getElementById('pptxFileInfoBar')?.classList.remove('hidden');
                 document.getElementById('pptxControlsSection')?.classList.remove('hidden');
                 document.getElementById('pptxSlidesSection')?.classList.remove('hidden');
+                document.getElementById('btnPptxDownloadConvertedRaw')?.classList.toggle('hidden', !convertedFromLegacyPpt);
 
                 document.getElementById('pptxLoadedFileName').textContent = normalizedDisplayName;
                 const withText = slides.filter(s => s.script.trim()).length;
-                document.getElementById('pptxLoadedFileMeta').textContent = `Tổng ${slides.length} slide • ${withText} slide có nội dung chữ`;
+                document.getElementById('pptxLoadedFileMeta').textContent =
+                    `Tổng ${slides.length} slide • ${withText} slide có nội dung chữ${convertedFromLegacyPpt ? ' • Đã tự chuyển từ .PPT cũ' : ''}`;
 
                 populatePptxVoiceSelect();
                 updatePptxSummaryBadges();
                 renderPptxSlidesList();
-                showToast(`Đã phân tích xong ${slides.length} slide! Bạn có thể bấm "AI Viết Lời Giảng Hay Tất Cả" hoặc Tạo Âm Thanh.`);
+                showToast(convertedFromLegacyPpt
+                    ? `Đã chuyển đổi thành công từ .PPT cũ sang .PPTX (${slides.length} slide)! Bạn có thể tải ngay hoặc lồng tiếng AI.`
+                    : `Đã phân tích xong ${slides.length} slide! Bạn có thể bấm "AI Viết Lời Giảng Hay Tất Cả" hoặc Tạo Âm Thanh.`);
             } catch (err) {
                 showToast(`Không thể mở tệp PowerPoint: ${err.message}`);
             } finally {
@@ -5087,6 +5234,1268 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
         }
 
         // =========================================================================
+        // 9C. CÔNG CỤ CHUYỂN ĐỔI FILE POWERPOINT CŨ (.PPT OLE2) -> .PPTX (OOXML)
+        // =========================================================================
+        const pptConvertState = {
+            results: [],
+            isBusy: false
+        };
+
+        function openPptConverterModal() {
+            const modal = document.getElementById('pptConverterModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            renderPptConvertResults();
+        }
+
+        function closePptConverterModal() {
+            const modal = document.getElementById('pptConverterModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function setPptConvertProgress(visible, pct = 0, label = '') {
+            const box = document.getElementById('pptConvertProgressBox');
+            if (!box) return;
+            if (!visible) {
+                box.classList.add('hidden');
+                return;
+            }
+            box.classList.remove('hidden');
+            const clamped = Math.max(5, Math.min(100, Math.round(pct)));
+            const pctEl = document.getElementById('pptConvertProgressPct');
+            const barEl = document.getElementById('pptConvertProgressBar');
+            const lblEl = document.getElementById('pptConvertProgressLabel');
+            if (pctEl) pctEl.textContent = `${clamped}%`;
+            if (barEl) barEl.style.width = `${clamped}%`;
+            if (lblEl && label) {
+                lblEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-rose-600 shrink-0"></i><span class="truncate">${escapeHtml(label)}</span>`;
+            }
+        }
+
+        // Loại bỏ ký tự điều khiển không hợp lệ trong XML 1.0 trước khi ghi vào slide .pptx
+        function sanitizeXmlText(str) {
+            return String(str ?? '')
+                .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\uFFFE\uFFFF]/g, '')
+                .replace(/\r\n/g, '\n')
+                .replace(/\r/g, '\n');
+        }
+
+        // Bộ đọc tệp nhị phân OLE2 / Compound File Binary Format (PowerPoint 97-2003 .ppt) thuần JavaScript
+        function parseOle2Cfb(arrayBuffer) {
+            const u8 = new Uint8Array(arrayBuffer);
+            const dv = new DataView(arrayBuffer);
+            if (u8.length < 512) {
+                throw new Error('Tệp quá nhỏ, không đúng định dạng PowerPoint (.ppt).');
+            }
+            const sig = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+            for (let i = 0; i < 8; i++) {
+                if (u8[i] !== sig[i]) {
+                    throw new Error('Tệp không phải định dạng PowerPoint cũ (.ppt).');
+                }
+            }
+
+            const sectorShift = dv.getUint16(30, true);
+            const miniSectorShift = dv.getUint16(32, true);
+            const sectorSize = (sectorShift === 12) ? 4096 : 512;
+            const miniSectorSize = (miniSectorShift >= 4 && miniSectorShift <= 9) ? (1 << miniSectorShift) : 64;
+            const firstDirSector = dv.getUint32(48, true);
+            const miniStreamCutoff = dv.getUint32(56, true) || 4096;
+            const firstMiniFatSector = dv.getUint32(60, true);
+            const numMiniFatSectors = dv.getUint32(64, true);
+            const firstDifatSector = dv.getUint32(68, true);
+            const numDifatSectors = dv.getUint32(72, true);
+
+            const MAX_REG_SECT = 0xFFFFFFFA;
+            const sectorOffset = (sec) => (sec + 1) * sectorSize;
+
+            // 1. Đọc danh sách DIFAT để biết vị trí tất cả FAT sectors
+            const fatSectors = [];
+            for (let i = 0; i < 109; i++) {
+                const s = dv.getUint32(76 + i * 4, true);
+                if (s <= MAX_REG_SECT) fatSectors.push(s);
+            }
+            let difatSec = firstDifatSector;
+            let difatGuard = 0;
+            const difatVisited = new Set();
+            while (difatSec <= MAX_REG_SECT && difatGuard < Math.max(numDifatSectors + 4, 256)) {
+                if (difatVisited.has(difatSec)) break;
+                difatVisited.add(difatSec);
+                const base = sectorOffset(difatSec);
+                if (base + sectorSize > u8.length) break;
+                const entriesCount = (sectorSize >>> 2) - 1;
+                for (let i = 0; i < entriesCount; i++) {
+                    const s = dv.getUint32(base + i * 4, true);
+                    if (s <= MAX_REG_SECT) fatSectors.push(s);
+                }
+                difatSec = dv.getUint32(base + entriesCount * 4, true);
+                difatGuard++;
+            }
+
+            // 2. Xây dựng bảng FAT đầy đủ
+            const entriesPerFat = sectorSize >>> 2;
+            const fat = new Uint32Array(fatSectors.length * entriesPerFat);
+            for (let i = 0; i < fatSectors.length; i++) {
+                const base = sectorOffset(fatSectors[i]);
+                if (base + sectorSize > u8.length) continue;
+                for (let j = 0; j < entriesPerFat; j++) {
+                    fat[i * entriesPerFat + j] = dv.getUint32(base + j * 4, true);
+                }
+            }
+
+            const readFatChain = (startSec, exactLength = -1) => {
+                if (startSec > MAX_REG_SECT) return new Uint8Array(0);
+                const chunks = [];
+                const visited = new Set();
+                let sec = startSec;
+                let total = 0;
+                while (sec <= MAX_REG_SECT && !visited.has(sec)) {
+                    visited.add(sec);
+                    const off = sectorOffset(sec);
+                    if (off >= u8.length) break;
+                    const end = Math.min(u8.length, off + sectorSize);
+                    chunks.push(u8.subarray(off, end));
+                    total += (end - off);
+                    if (exactLength >= 0 && total >= exactLength) break;
+                    sec = sec < fat.length ? fat[sec] : 0xFFFFFFFE;
+                }
+                const outLen = exactLength >= 0 ? Math.min(exactLength, total) : total;
+                const out = new Uint8Array(outLen);
+                let pos = 0;
+                for (const ch of chunks) {
+                    const remain = outLen - pos;
+                    if (remain <= 0) break;
+                    const slice = ch.length > remain ? ch.subarray(0, remain) : ch;
+                    out.set(slice, pos);
+                    pos += slice.length;
+                }
+                return out;
+            };
+
+            // 3. Đọc bảng thư mục (Directory Entries)
+            const dirBytes = readFatChain(firstDirSector);
+            const dirDv = new DataView(dirBytes.buffer, dirBytes.byteOffset, dirBytes.byteLength);
+            const entries = [];
+            for (let off = 0; off + 128 <= dirBytes.length; off += 128) {
+                const objType = dirBytes[off + 66];
+                if (objType === 0) continue;
+                const nameLen = dirDv.getUint16(off + 64, true);
+                const charBytes = Math.max(0, Math.min(64, nameLen) - 2);
+                let name = '';
+                for (let c = 0; c + 1 < charBytes; c += 2) {
+                    const code = dirDv.getUint16(off + c, true);
+                    if (code === 0) break;
+                    name += String.fromCharCode(code);
+                }
+                const startSector = dirDv.getUint32(off + 116, true);
+                const sizeLow = dirDv.getUint32(off + 120, true);
+                entries.push({ name, objType, startSector, size: sizeLow });
+            }
+
+            // 4. Đọc MiniStream & MiniFAT (dành cho các stream nhỏ hơn 4096 byte như Current User)
+            const rootEntry = entries.find(e => e.objType === 5);
+            const miniStream = (rootEntry && rootEntry.startSector <= MAX_REG_SECT && rootEntry.size > 0)
+                ? readFatChain(rootEntry.startSector, rootEntry.size)
+                : new Uint8Array(0);
+
+            let miniFat = new Uint32Array(0);
+            if (firstMiniFatSector <= MAX_REG_SECT && numMiniFatSectors > 0) {
+                const mfBytes = readFatChain(firstMiniFatSector, numMiniFatSectors * sectorSize);
+                const mfDv = new DataView(mfBytes.buffer, mfBytes.byteOffset, mfBytes.byteLength);
+                miniFat = new Uint32Array(mfBytes.length >>> 2);
+                for (let i = 0; i < miniFat.length; i++) {
+                    miniFat[i] = mfDv.getUint32(i * 4, true);
+                }
+            }
+
+            const readMiniChain = (startSec, exactLength) => {
+                if (startSec > MAX_REG_SECT || exactLength <= 0 || miniStream.length === 0) return new Uint8Array(0);
+                const out = new Uint8Array(exactLength);
+                const visited = new Set();
+                let sec = startSec;
+                let pos = 0;
+                while (sec <= MAX_REG_SECT && !visited.has(sec) && pos < exactLength) {
+                    visited.add(sec);
+                    const off = sec * miniSectorSize;
+                    if (off >= miniStream.length) break;
+                    const take = Math.min(miniSectorSize, exactLength - pos, miniStream.length - off);
+                    out.set(miniStream.subarray(off, off + take), pos);
+                    pos += take;
+                    sec = sec < miniFat.length ? miniFat[sec] : 0xFFFFFFFE;
+                }
+                return out.subarray(0, pos);
+            };
+
+            const getStream = (targetName) => {
+                const low = targetName.toLowerCase();
+                const entry = entries.find(e => e.objType === 2 && e.name.toLowerCase() === low);
+                if (!entry || entry.size <= 0) return null;
+                if (entry.size < miniStreamCutoff && miniStream.length > 0 && miniFat.length > 0) {
+                    return readMiniChain(entry.startSector, entry.size);
+                }
+                return readFatChain(entry.startSector, entry.size);
+            };
+
+            return { entries, getStream };
+        }
+
+        // Đọc kích thước thực của ảnh PNG / JPEG để chèn vào slide đúng tỉ lệ không bị méo
+        function readImageDimensions(bytes, ext) {
+            try {
+                const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+                if (ext === 'png' && bytes.length >= 24 &&
+                    bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
+                    const w = dv.getUint32(16, false);
+                    const h = dv.getUint32(20, false);
+                    if (w > 0 && h > 0) return { width: w, height: h };
+                }
+                if ((ext === 'jpg' || ext === 'jpeg') && bytes.length >= 12 && bytes[0] === 0xFF && bytes[1] === 0xD8) {
+                    let pos = 2;
+                    while (pos + 9 < bytes.length) {
+                        if (bytes[pos] !== 0xFF) { pos++; continue; }
+                        while (pos < bytes.length && bytes[pos] === 0xFF) pos++;
+                        const marker = bytes[pos++];
+                        if (marker === 0xD9 || marker === 0xDA) break;
+                        if (pos + 2 > bytes.length) break;
+                        const segLen = dv.getUint16(pos, false);
+                        if (marker >= 0xC0 && marker <= 0xCF && marker !== 0xC4 && marker !== 0xC8 && marker !== 0xCC) {
+                            if (pos + 7 <= bytes.length) {
+                                const h = dv.getUint16(pos + 3, false);
+                                const w = dv.getUint16(pos + 5, false);
+                                if (w > 0 && h > 0) return { width: w, height: h };
+                            }
+                            break;
+                        }
+                        if (segLen < 2) break;
+                        pos += segLen;
+                    }
+                }
+            } catch (_) {}
+            return { width: 800, height: 600 };
+        }
+
+        function decodePptTextCharsAtom(u8, start, len) {
+            const safeLen = Math.max(0, Math.min(len, u8.length - start));
+            const sub = u8.subarray(start, start + (safeLen & ~1));
+            try {
+                return sanitizeXmlText(new TextDecoder('utf-16le').decode(sub).replace(/\x0B/g, '\n'));
+            } catch (_) {
+                let s = '';
+                for (let i = 0; i + 1 < sub.length; i += 2) {
+                    s += String.fromCharCode(sub[i] | (sub[i + 1] << 8));
+                }
+                return sanitizeXmlText(s.replace(/\x0B/g, '\n'));
+            }
+        }
+
+        function decodePptTextBytesAtom(u8, start, len) {
+            const safeLen = Math.max(0, Math.min(len, u8.length - start));
+            const sub = u8.subarray(start, start + safeLen);
+            try {
+                return sanitizeXmlText(new TextDecoder('windows-1252').decode(sub).replace(/\x0B/g, '\n'));
+            } catch (_) {
+                let s = '';
+                for (let i = 0; i < sub.length; i++) s += String.fromCharCode(sub[i]);
+                return sanitizeXmlText(s.replace(/\x0B/g, '\n'));
+            }
+        }
+
+        // Trích xuất toàn bộ Slide, Tiêu đề, Nội dung chữ, Ghi chú & Hình ảnh từ tệp .PPT nhị phân
+        function extractSlidesFromLegacyPpt(arrayBuffer, includeImages = true) {
+            const cfb = parseOle2Cfb(arrayBuffer);
+            const pptDoc = cfb.getStream('PowerPoint Document');
+            if (!pptDoc || pptDoc.length < 16) {
+                throw new Error('Không tìm thấy luồng dữ liệu PowerPoint Document (tệp có thể bị đặt mật khẩu hoặc bị hỏng).');
+            }
+            const currentUser = cfb.getStream('Current User');
+            const picturesStream = includeImages ? cfb.getStream('Pictures') : null;
+            const docDv = new DataView(pptDoc.buffer, pptDoc.byteOffset, pptDoc.byteLength);
+
+            const readRec = (u8, dv, off) => {
+                if (off < 0 || off + 8 > u8.length) return null;
+                const verInst = dv.getUint16(off, true);
+                const recVer = verInst & 0x0F;
+                const recInstance = verInst >>> 4;
+                const recType = dv.getUint16(off + 2, true);
+                const recLen = dv.getUint32(off + 4, true);
+                const dataStart = off + 8;
+                const end = Math.min(u8.length, dataStart + recLen);
+                return { offset: off, recVer, recInstance, recType, recLen, dataStart, end, isContainer: recVer === 0x0F };
+            };
+
+            const walkContainer = (u8, dv, startOff, endOff, visitor, depth = 0) => {
+                if (depth > 24) return;
+                let pos = startOff;
+                while (pos + 8 <= endOff) {
+                    const rec = readRec(u8, dv, pos);
+                    if (!rec || rec.end <= pos) break;
+                    const descend = visitor(rec, depth);
+                    if (rec.isContainer && descend !== false) {
+                        walkContainer(u8, dv, rec.dataStart, rec.end, visitor, depth + 1);
+                    }
+                    pos = rec.end;
+                }
+            };
+
+            // 1. Dựng bảng Persist Map từ Current User -> chuỗi UserEditAtom (lấy đúng bản lưu mới nhất, tránh slide cũ bị xóa)
+            const persistMap = new Map();
+            let docPersistIdRef = 0;
+
+            if (currentUser && currentUser.length >= 24) {
+                const cuDv = new DataView(currentUser.buffer, currentUser.byteOffset, currentUser.byteLength);
+                const cuRec = readRec(currentUser, cuDv, 0);
+                if (cuRec && cuRec.recType === 0x0FF6 && cuRec.dataStart + 12 <= currentUser.length) {
+                    let editOff = cuDv.getUint32(cuRec.dataStart + 8, true);
+                    const visitedEdits = new Set();
+                    while (editOff > 0 && editOff + 8 <= pptDoc.length && !visitedEdits.has(editOff)) {
+                        visitedEdits.add(editOff);
+                        const ueRec = readRec(pptDoc, docDv, editOff);
+                        if (!ueRec || ueRec.recType !== 0x0FF5 || ueRec.dataStart + 20 > pptDoc.length) break;
+                        const offsetLastEdit = docDv.getUint32(ueRec.dataStart + 8, true);
+                        const offsetPersistDir = docDv.getUint32(ueRec.dataStart + 12, true);
+                        if (!docPersistIdRef) {
+                            docPersistIdRef = docDv.getUint32(ueRec.dataStart + 16, true);
+                        }
+
+                        if (offsetPersistDir < pptDoc.length) {
+                            const pdRec = readRec(pptDoc, docDv, offsetPersistDir);
+                            if (pdRec && pdRec.recType === 0x1772) {
+                                let p = pdRec.dataStart;
+                                while (p + 4 <= pdRec.end) {
+                                    const headerVal = docDv.getUint32(p, true);
+                                    p += 4;
+                                    const baseId = headerVal & 0x000FFFFF;
+                                    const count = (headerVal >>> 20) & 0x0FFF;
+                                    for (let k = 0; k < count && p + 4 <= pdRec.end; k++) {
+                                        const objOff = docDv.getUint32(p, true);
+                                        p += 4;
+                                        if (!persistMap.has(baseId + k) && objOff < pptDoc.length) {
+                                            persistMap.set(baseId + k, objOff);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        editOff = offsetLastEdit;
+                    }
+                }
+            }
+
+            // 2. Xác định DocumentContainer (0x03E8)
+            let docContainerRec = null;
+            if (docPersistIdRef && persistMap.has(docPersistIdRef)) {
+                const candidate = readRec(pptDoc, docDv, persistMap.get(docPersistIdRef));
+                if (candidate && candidate.recType === 0x03E8) docContainerRec = candidate;
+            }
+            if (!docContainerRec) {
+                walkContainer(pptDoc, docDv, 0, pptDoc.length, (rec) => {
+                    if (rec.recType === 0x03E8 && !docContainerRec) {
+                        docContainerRec = rec;
+                        return false;
+                    }
+                });
+            }
+
+            // 3. Trích xuất danh sách ảnh (BStoreContainer -> Pictures stream)
+            const blipMap = new Map();
+            if (picturesStream && picturesStream.length > 16 && docContainerRec) {
+                const picDv = new DataView(picturesStream.buffer, picturesStream.byteOffset, picturesStream.byteLength);
+                let fbseIndex = 0;
+                walkContainer(pptDoc, docDv, docContainerRec.dataStart, docContainerRec.end, (rec) => {
+                    if (rec.recType === 0xF007 && rec.dataStart + 36 <= rec.end) {
+                        fbseIndex++;
+                        const size = docDv.getUint32(rec.dataStart + 20, true);
+                        const foDelay = docDv.getUint32(rec.dataStart + 28, true);
+                        if (size > 16 && foDelay + 8 < picturesStream.length) {
+                            const blipRec = readRec(picturesStream, picDv, foDelay);
+                            if (blipRec && (blipRec.recType === 0xF01D || blipRec.recType === 0xF01E || blipRec.recType === 0xF02A)) {
+                                const payload = picturesStream.subarray(blipRec.dataStart, blipRec.end);
+                                const scanMax = Math.min(payload.length, 64);
+                                // Tìm chữ ký PNG (89 50 4E 47) hoặc JPEG (FF D8 FF)
+                                let foundExt = '';
+                                let imgStart = -1;
+                                for (let k = 0; k + 4 < scanMax; k++) {
+                                    if (payload[k] === 0x89 && payload[k + 1] === 0x50 && payload[k + 2] === 0x4E && payload[k + 3] === 0x47) {
+                                        foundExt = 'png';
+                                        imgStart = k;
+                                        break;
+                                    }
+                                    if (payload[k] === 0xFF && payload[k + 1] === 0xD8 && payload[k + 2] === 0xFF) {
+                                        foundExt = 'jpg';
+                                        imgStart = k;
+                                        break;
+                                    }
+                                }
+                                if (foundExt && imgStart >= 0 && payload.length - imgStart > 200) {
+                                    const imgBytes = payload.slice(imgStart);
+                                    const dims = readImageDimensions(imgBytes, foundExt);
+                                    blipMap.set(fbseIndex, {
+                                        pib: fbseIndex,
+                                        ext: foundExt,
+                                        bytes: imgBytes,
+                                        width: dims.width,
+                                        height: dims.height
+                                    });
+                                }
+                            }
+                        }
+                        return false;
+                    }
+                });
+            }
+
+            // 4. Đọc SlideListWithText (instance 0 = Slides, instance 2 = Notes) từ DocumentContainer
+            const slides = [];
+            const notesBySlideId = new Map();
+            const notesList = [];
+
+            if (docContainerRec) {
+                walkContainer(pptDoc, docDv, docContainerRec.dataStart, docContainerRec.end, (rec) => {
+                    if (rec.recType === 0x0FF0 && rec.recInstance === 0) {
+                        let curSlide = null;
+                        let curTextType = 1;
+                        walkContainer(pptDoc, docDv, rec.dataStart, rec.end, (child) => {
+                            if (child.recType === 0x03F3 && child.dataStart + 16 <= child.end) {
+                                const psrRef = docDv.getUint32(child.dataStart, true);
+                                const slideId = docDv.getUint32(child.dataStart + 12, true);
+                                curSlide = {
+                                    psrRef,
+                                    slideId,
+                                    title: '',
+                                    bodyLines: [],
+                                    notes: '',
+                                    images: []
+                                };
+                                slides.push(curSlide);
+                                curTextType = 1;
+                            } else if (curSlide && child.recType === 0x0F9F && child.dataStart + 4 <= child.end) {
+                                curTextType = docDv.getUint32(child.dataStart, true);
+                            } else if (curSlide && (child.recType === 0x0FA0 || child.recType === 0x0FA8)) {
+                                const txt = (child.recType === 0x0FA0
+                                    ? decodePptTextCharsAtom(pptDoc, child.dataStart, child.recLen)
+                                    : decodePptTextBytesAtom(pptDoc, child.dataStart, child.recLen)).trim();
+                                if (txt) {
+                                    if ((curTextType === 0 || curTextType === 6) && !curSlide.title) {
+                                        curSlide.title = txt.replace(/\n+/g, ' ').trim();
+                                    } else {
+                                        curSlide.bodyLines.push(...txt.split('\n').map(l => l.trim()).filter(Boolean));
+                                    }
+                                }
+                            }
+                        });
+                        return false;
+                    }
+                    if (rec.recType === 0x0FF0 && rec.recInstance === 2) {
+                        let curNote = null;
+                        walkContainer(pptDoc, docDv, rec.dataStart, rec.end, (child) => {
+                            if (child.recType === 0x03F3 && child.dataStart + 16 <= child.end) {
+                                curNote = {
+                                    psrRef: docDv.getUint32(child.dataStart, true),
+                                    slideId: docDv.getUint32(child.dataStart + 12, true),
+                                    lines: []
+                                };
+                                notesList.push(curNote);
+                            } else if (curNote && (child.recType === 0x0FA0 || child.recType === 0x0FA8)) {
+                                const txt = (child.recType === 0x0FA0
+                                    ? decodePptTextCharsAtom(pptDoc, child.dataStart, child.recLen)
+                                    : decodePptTextBytesAtom(pptDoc, child.dataStart, child.recLen)).trim();
+                                if (txt && !/^\d{1,3}$/.test(txt)) curNote.lines.push(txt);
+                            }
+                        });
+                        return false;
+                    }
+                });
+            }
+
+            // Đọc thêm nội dung NotesContainer (0x03F0) nếu cần
+            notesList.forEach(n => {
+                if (n.psrRef && persistMap.has(n.psrRef)) {
+                    const noteCont = readRec(pptDoc, docDv, persistMap.get(n.psrRef));
+                    if (noteCont && noteCont.recType === 0x03F0) {
+                        let refSlideId = 0;
+                        walkContainer(pptDoc, docDv, noteCont.dataStart, noteCont.end, (r) => {
+                            if (r.recType === 0x03F1 && r.dataStart + 4 <= r.end) {
+                                refSlideId = docDv.getUint32(r.dataStart, true);
+                            } else if (r.recType === 0x0FA0 || r.recType === 0x0FA8) {
+                                const t = (r.recType === 0x0FA0
+                                    ? decodePptTextCharsAtom(pptDoc, r.dataStart, r.recLen)
+                                    : decodePptTextBytesAtom(pptDoc, r.dataStart, r.recLen)).trim();
+                                if (t && !/^\d{1,3}$/.test(t) && !n.lines.includes(t)) n.lines.push(t);
+                            }
+                        });
+                        const joined = n.lines.join('\n').trim();
+                        if (refSlideId && joined) notesBySlideId.set(refSlideId, joined);
+                    }
+                }
+            });
+
+            // 5. Đọc từng SlideContainer (0x03EE) để lấy chữ trong Textbox / Bảng biểu & Hình ảnh của slide đó
+            const inspectSlideContainer = (slideObj, slideRec) => {
+                const existingSet = new Set([
+                    (slideObj.title || '').trim(),
+                    ...slideObj.bodyLines.map(l => l.trim())
+                ]);
+                const seenPibs = new Set();
+                let notesIdRef = 0;
+
+                walkContainer(pptDoc, docDv, slideRec.dataStart, slideRec.end, (r) => {
+                    if (r.recType === 0x03EF && r.dataStart + 20 <= r.end) {
+                        notesIdRef = docDv.getUint32(r.dataStart + 16, true);
+                    } else if (r.recType === 0x0FA0 || r.recType === 0x0FA8) {
+                        const txt = (r.recType === 0x0FA0
+                            ? decodePptTextCharsAtom(pptDoc, r.dataStart, r.recLen)
+                            : decodePptTextBytesAtom(pptDoc, r.dataStart, r.recLen)).trim();
+                        if (txt) {
+                            txt.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
+                                if (!existingSet.has(line)) {
+                                    existingSet.add(line);
+                                    slideObj.bodyLines.push(line);
+                                }
+                            });
+                        }
+                    } else if ((r.recType === 0xF00B || r.recType === 0xF121) && blipMap.size > 0) {
+                        const propCount = r.recInstance;
+                        let p = r.dataStart;
+                        for (let k = 0; k < propCount && p + 6 <= r.end; k++) {
+                            const pid = docDv.getUint16(p, true) & 0x3FFF;
+                            const pval = docDv.getUint32(p + 2, true);
+                            p += 6;
+                            if (pid === 0x0104 && blipMap.has(pval) && !seenPibs.has(pval)) {
+                                seenPibs.add(pval);
+                                slideObj.images.push(blipMap.get(pval));
+                            }
+                        }
+                    }
+                });
+
+                if (notesBySlideId.has(slideObj.slideId)) {
+                    slideObj.notes = notesBySlideId.get(slideObj.slideId);
+                } else if (notesIdRef && notesBySlideId.has(notesIdRef)) {
+                    slideObj.notes = notesBySlideId.get(notesIdRef);
+                }
+            };
+
+            slides.forEach(s => {
+                if (s.psrRef && persistMap.has(s.psrRef)) {
+                    const sRec = readRec(pptDoc, docDv, persistMap.get(s.psrRef));
+                    if (sRec && sRec.recType === 0x03EE) {
+                        inspectSlideContainer(s, sRec);
+                    }
+                }
+            });
+
+            // Dự phòng nếu tệp .ppt thiếu bảng SlideListWithText: quét trực tiếp tất cả SlideContainer (0x03EE)
+            if (slides.length === 0) {
+                walkContainer(pptDoc, docDv, 0, pptDoc.length, (rec) => {
+                    if (rec.recType === 0x03EE) {
+                        const s = { psrRef: 0, slideId: slides.length + 1, title: '', bodyLines: [], notes: '', images: [] };
+                        inspectSlideContainer(s, rec);
+                        if (s.bodyLines.length > 0 || s.images.length > 0) {
+                            slides.push(s);
+                        }
+                        return false;
+                    }
+                });
+            }
+
+            if (slides.length === 0) {
+                throw new Error('Không trích xuất được slide nào từ tệp .ppt này (tệp có thể bị mã hoá mật khẩu hoặc chỉ chứa định dạng đồ họa đặc thù).');
+            }
+
+            // Chuẩn hoá tiêu đề cho những slide không gắn placeholder Title
+            return slides.map((s, idx) => {
+                let title = (s.title || '').trim();
+                let bodyLines = s.bodyLines.filter(Boolean);
+                if (!title && bodyLines.length > 0) {
+                    const first = bodyLines[0];
+                    if (first.length <= 120) {
+                        title = first;
+                        bodyLines = bodyLines.slice(1);
+                    } else {
+                        title = `Slide ${idx + 1}`;
+                    }
+                }
+                return {
+                    index: idx + 1,
+                    title: title || `Slide ${idx + 1}`,
+                    bodyLines,
+                    notes: (s.notes || '').trim(),
+                    images: s.images.slice(0, 4)
+                };
+            });
+        }
+
+        // Tạo tệp .PPTX chuẩn OOXML hoàn chỉnh (mở mượt trên Microsoft PowerPoint iPhone/Windows/macOS & Google Slides)
+        async function buildCleanPptxBlobFromSlides(slides, options = {}) {
+            const JSZipLib = await ensureJSZipReady();
+            const zip = new JSZipLib();
+
+            const aspect = options.aspect || '16:9';
+            const themeChoice = options.theme || 'blue';
+            const slideW = aspect === '4:3' ? 9144000 : 12192000;
+            const slideH = 6858000;
+
+            const palettes = {
+                blue: { accent: '1D4ED8', accentSoft: 'DBEAFE', titleColor: '0F172A', bodyColor: '1E293B', bg: 'FFFFFF', bar: '2563EB' },
+                teal: { accent: '0D9488', accentSoft: 'CCFBF1', titleColor: '0F172A', bodyColor: '1E293B', bg: 'FFFFFF', bar: '0D9488' },
+                minimal: { accent: '334155', accentSoft: 'F1F5F9', titleColor: '0F172A', bodyColor: '1E293B', bg: 'FFFFFF', bar: 'CBD5E1' }
+            };
+            const pal = palettes[themeChoice] || palettes.blue;
+
+            const REL_NS = 'http://schemas.openxmlformats.org/package/2006/relationships';
+            const P_NS = 'http://schemas.openxmlformats.org/presentationml/2006/main';
+            const A_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+            const R_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+            let hasPng = false;
+            let hasJpg = false;
+            let mediaCounter = 0;
+
+            const buildParagraphsXml = (lines, fontSizePt, colorHex, isBold = false, align = 'l', addBullets = false) => {
+                const sz = Math.round(fontSizePt * 100);
+                return lines.map(line => {
+                    const safeLine = escapeXmlAttr(sanitizeXmlText(line));
+                    const bulletXml = addBullets ? '<a:buChar char="•"/>' : '<a:buNone/>';
+                    const pPrAttrs = addBullets
+                        ? ` algn="${align}" marL="285750" indent="-228600"`
+                        : ` algn="${align}"`;
+                    return (
+                        `<a:p>` +
+                            `<a:pPr${pPrAttrs}><a:spcAft><a:spcPts val="600"/></a:spcAft>${bulletXml}</a:pPr>` +
+                            `<a:r>` +
+                                `<a:rPr lang="vi-VN" sz="${sz}" b="${isBold ? '1' : '0'}" dirty="0">` +
+                                    `<a:solidFill><a:srgbClr val="${colorHex}"/></a:solidFill>` +
+                                    `<a:latin typeface="Arial"/><a:ea typeface="Arial"/><a:cs typeface="Arial"/>` +
+                                `</a:rPr>` +
+                                `<a:t>${safeLine}</a:t>` +
+                            `</a:r>` +
+                        `</a:p>`
+                    );
+                }).join('');
+            };
+
+            const buildTextBoxXml = (id, name, x, y, cx, cy, paragraphsXml, anchor = 't') => (
+                `<p:sp>` +
+                    `<p:nvSpPr>` +
+                        `<p:cNvPr id="${id}" name="${escapeXmlAttr(name)}"/>` +
+                        `<p:cNvSpPr txBox="1"/>` +
+                        `<p:nvPr/>` +
+                    `</p:nvSpPr>` +
+                    `<p:spPr>` +
+                        `<a:xfrm><a:off x="${Math.round(x)}" y="${Math.round(y)}"/><a:ext cx="${Math.round(cx)}" cy="${Math.round(cy)}"/></a:xfrm>` +
+                        `<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>` +
+                        `<a:noFill/>` +
+                    `</p:spPr>` +
+                    `<p:txBody>` +
+                        `<a:bodyPr wrap="square" lIns="91440" tIns="45720" rIns="91440" bIns="45720" anchor="${anchor}"><a:normAutofit/></a:bodyPr>` +
+                        `<a:lstStyle/>` +
+                        `${paragraphsXml}` +
+                    `</p:txBody>` +
+                `</p:sp>`
+            );
+
+            const buildRectShapeXml = (id, name, x, y, cx, cy, fillHex) => (
+                `<p:sp>` +
+                    `<p:nvSpPr><p:cNvPr id="${id}" name="${escapeXmlAttr(name)}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>` +
+                    `<p:spPr>` +
+                        `<a:xfrm><a:off x="${Math.round(x)}" y="${Math.round(y)}"/><a:ext cx="${Math.round(cx)}" cy="${Math.round(cy)}"/></a:xfrm>` +
+                        `<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>` +
+                        `<a:solidFill><a:srgbClr val="${fillHex}"/></a:solidFill>` +
+                        `<a:ln><a:noFill/></a:ln>` +
+                    `</p:spPr>` +
+                `</p:sp>`
+            );
+
+            const buildPicShapeXml = (id, name, relId, x, y, cx, cy) => (
+                `<p:pic>` +
+                    `<p:nvPicPr>` +
+                        `<p:cNvPr id="${id}" name="${escapeXmlAttr(name)}"/>` +
+                        `<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>` +
+                        `<p:nvPr/>` +
+                    `</p:nvPicPr>` +
+                    `<p:blipFill><a:blip r:embed="${relId}"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>` +
+                    `<p:spPr>` +
+                        `<a:xfrm><a:off x="${Math.round(x)}" y="${Math.round(y)}"/><a:ext cx="${Math.round(cx)}" cy="${Math.round(cy)}"/></a:xfrm>` +
+                        `<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>` +
+                    `</p:spPr>` +
+                `</p:pic>`
+            );
+
+            // Tạo từng slide
+            let totalEmbeddedImages = 0;
+            for (let i = 0; i < slides.length; i++) {
+                const s = slides[i];
+                const slideNum = i + 1;
+                let shapeId = 2;
+                let shapesXml = '';
+                const slideRels = [
+                    `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>`
+                ];
+                let nextRelId = 2;
+
+                const marginX = Math.round(slideW * 0.055);
+                const contentW = slideW - marginX * 2;
+                const isCoverSlide = (i === 0 && s.images.length === 0 && s.bodyLines.length <= 5);
+
+                // Thanh nhấn màu trên cùng
+                shapesXml += buildRectShapeXml(shapeId++, 'TopBar', 0, 0, slideW, 110000, pal.bar);
+
+                if (isCoverSlide) {
+                    const titleH = 1900000;
+                    const titleY = Math.round(slideH * 0.28);
+                    const titleFontSize = s.title.length > 75 ? 28 : 36;
+                    shapesXml += buildTextBoxXml(
+                        shapeId++, 'CoverTitle', marginX, titleY, contentW, titleH,
+                        buildParagraphsXml([s.title], titleFontSize, pal.accent, true, 'ctr', false),
+                        'ctr'
+                    );
+                    if (s.bodyLines.length > 0) {
+                        shapesXml += buildTextBoxXml(
+                            shapeId++, 'CoverSubtitle', marginX, titleY + titleH + 140000, contentW, 2100000,
+                            buildParagraphsXml(s.bodyLines, 20, pal.bodyColor, false, 'ctr', false),
+                            't'
+                        );
+                    }
+                } else {
+                    // Tiêu đề slide
+                    const titleY = 260000;
+                    const titleH = 920000;
+                    const titleFont = s.title.length > 70 ? 22 : 28;
+                    shapesXml += buildTextBoxXml(
+                        shapeId++, 'SlideTitle', marginX, titleY, contentW, titleH,
+                        buildParagraphsXml([s.title], titleFont, pal.titleColor, true, 'l', false),
+                        'ctr'
+                    );
+                    shapesXml += buildRectShapeXml(shapeId++, 'TitleUnderline', marginX, titleY + titleH + 30000, Math.round(contentW * 0.18), 48000, pal.accent);
+
+                    const bodyY = titleY + titleH + 220000;
+                    const bodyH = slideH - bodyY - 420000;
+                    const hasImages = s.images.length > 0;
+                    const hasBody = s.bodyLines.length > 0;
+
+                    if (hasBody) {
+                        const textBoxW = hasImages ? Math.round(contentW * 0.56) : contentW;
+                        const totalChars = s.bodyLines.join(' ').length;
+                        const bodyFont = totalChars > 650 ? 14 : (totalChars > 350 ? 16 : (totalChars > 180 ? 18 : 21));
+                        shapesXml += buildTextBoxXml(
+                            shapeId++, 'SlideBody', marginX, bodyY, textBoxW, bodyH,
+                            buildParagraphsXml(s.bodyLines, bodyFont, pal.bodyColor, false, 'l', s.bodyLines.length > 1),
+                            't'
+                        );
+                    }
+
+                    if (hasImages) {
+                        const imgs = s.images.slice(0, 4);
+                        const areaX = hasBody ? (marginX + Math.round(contentW * 0.60)) : marginX;
+                        const areaW = hasBody ? Math.round(contentW * 0.40) : contentW;
+                        const areaY = bodyY;
+                        const areaH = bodyH;
+                        const cols = imgs.length >= 2 && !hasBody ? 2 : 1;
+                        const rows = Math.ceil(imgs.length / cols);
+                        const gap = 140000;
+                        const cellW = Math.floor((areaW - gap * (cols - 1)) / cols);
+                        const cellH = Math.floor((areaH - gap * (rows - 1)) / rows);
+
+                        imgs.forEach((img, imgIdx) => {
+                            const ext = img.ext === 'png' ? 'png' : 'jpg';
+                            if (ext === 'png') hasPng = true;
+                            else hasJpg = true;
+
+                            const mediaName = `image${++mediaCounter}.${ext}`;
+                            zip.file(`ppt/media/${mediaName}`, img.bytes, { compression: 'STORE' });
+                            const relId = `rId${nextRelId++}`;
+                            slideRels.push(`<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${mediaName}"/>`);
+                            totalEmbeddedImages++;
+
+                            const col = imgIdx % cols;
+                            const row = Math.floor(imgIdx / cols);
+                            const boxX = areaX + col * (cellW + gap);
+                            const boxY = areaY + row * (cellH + gap);
+
+                            // Giữ đúng tỉ lệ gốc của ảnh trong ô
+                            const ratio = (img.width > 0 && img.height > 0) ? (img.width / img.height) : (4 / 3);
+                            let drawW = cellW;
+                            let drawH = Math.round(drawW / ratio);
+                            if (drawH > cellH) {
+                                drawH = cellH;
+                                drawW = Math.round(drawH * ratio);
+                            }
+                            const finalX = boxX + Math.round((cellW - drawW) / 2);
+                            const finalY = boxY + Math.round((cellH - drawH) / 2);
+
+                            shapesXml += buildPicShapeXml(shapeId++, `Picture ${imgIdx + 1}`, relId, finalX, finalY, drawW, drawH);
+                        });
+                    }
+                }
+
+                // Số trang gọn ở góc dưới phải
+                shapesXml += buildTextBoxXml(
+                    shapeId++, 'SlideNumber', slideW - 950000, slideH - 360000, 650000, 260000,
+                    buildParagraphsXml([String(slideNum)], 11, '64748B', false, 'r', false),
+                    'ctr'
+                );
+
+                const slideXml =
+                    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                    `<p:sld xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}">` +
+                        `<p:cSld>` +
+                            `<p:bg><p:bgPr><a:solidFill><a:srgbClr val="${pal.bg}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>` +
+                            `<p:spTree>` +
+                                `<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>` +
+                                `<p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>` +
+                                `${shapesXml}` +
+                            `</p:spTree>` +
+                        `</p:cSld>` +
+                        `<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>` +
+                    `</p:sld>`;
+
+                const slideRelsXml =
+                    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                    `<Relationships xmlns="${REL_NS}">${slideRels.join('')}</Relationships>`;
+
+                assertValidOoxmlXml(slideXml, `Converted Slide ${slideNum}`);
+                zip.file(`ppt/slides/slide${slideNum}.xml`, slideXml);
+                zip.file(`ppt/slides/_rels/slide${slideNum}.xml.rels`, slideRelsXml);
+            }
+
+            // [Content_Types].xml
+            const slideOverrides = slides.map((_, i) =>
+                `<Override PartName="/ppt/slides/slide${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`
+            ).join('');
+            const contentTypesXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+                    `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
+                    `<Default Extension="xml" ContentType="application/xml"/>` +
+                    `${hasPng ? '<Default Extension="png" ContentType="image/png"/>' : ''}` +
+                    `${hasJpg ? '<Default Extension="jpg" ContentType="image/jpeg"/><Default Extension="jpeg" ContentType="image/jpeg"/>' : ''}` +
+                    `<Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>` +
+                    `<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>` +
+                    `<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>` +
+                    `<Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>` +
+                    `<Override PartName="/ppt/presProps.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presProps+xml"/>` +
+                    `<Override PartName="/ppt/viewProps.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.viewProps+xml"/>` +
+                    `<Override PartName="/ppt/tableStyles.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.tableStyles+xml"/>` +
+                    `<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>` +
+                    `<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>` +
+                    `${slideOverrides}` +
+                `</Types>`;
+
+            const rootRelsXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<Relationships xmlns="${REL_NS}">` +
+                    `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>` +
+                    `<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>` +
+                    `<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>` +
+                `</Relationships>`;
+
+            const presSlideRels = slides.map((_, i) =>
+                `<Relationship Id="rId${6 + i}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i + 1}.xml"/>`
+            ).join('');
+            const presRelsXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<Relationships xmlns="${REL_NS}">` +
+                    `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>` +
+                    `<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/presProps" Target="presProps.xml"/>` +
+                    `<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/viewProps" Target="viewProps.xml"/>` +
+                    `<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>` +
+                    `<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/tableStyles" Target="tableStyles.xml"/>` +
+                    `${presSlideRels}` +
+                `</Relationships>`;
+
+            const sldIdListXml = slides.map((_, i) => `<p:sldId id="${256 + i}" r:id="rId${6 + i}"/>`).join('');
+            const sldSzTypeAttr = aspect === '4:3' ? ' type="screen4x3"' : '';
+            const presentationXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<p:presentation xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}" saveSubsetFonts="1">` +
+                    `<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst>` +
+                    `<p:sldIdLst>${sldIdListXml}</p:sldIdLst>` +
+                    `<p:sldSz cx="${slideW}" cy="${slideH}"${sldSzTypeAttr}/>` +
+                    `<p:notesSz cx="6858000" cy="9144000"/>` +
+                `</p:presentation>`;
+
+            const slideMasterXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<p:sldMaster xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}">` +
+                    `<p:cSld>` +
+                        `<p:bg><p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef></p:bg>` +
+                        `<p:spTree>` +
+                            `<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>` +
+                            `<p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>` +
+                        `</p:spTree>` +
+                    `</p:cSld>` +
+                    `<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>` +
+                    `<p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst>` +
+                `</p:sldMaster>`;
+
+            const slideMasterRelsXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<Relationships xmlns="${REL_NS}">` +
+                    `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>` +
+                    `<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/>` +
+                `</Relationships>`;
+
+            const slideLayoutXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<p:sldLayout xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}" type="blank" preserve="1">` +
+                    `<p:cSld name="Blank">` +
+                        `<p:spTree>` +
+                            `<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>` +
+                            `<p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>` +
+                        `</p:spTree>` +
+                    `</p:cSld>` +
+                    `<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>` +
+                `</p:sldLayout>`;
+
+            const slideLayoutRelsXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<Relationships xmlns="${REL_NS}">` +
+                    `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/>` +
+                `</Relationships>`;
+
+            const themeXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<a:theme xmlns:a="${A_NS}" name="PhucNguyenTheme">` +
+                    `<a:themeElements>` +
+                        `<a:clrScheme name="Office">` +
+                            `<a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1>` +
+                            `<a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1>` +
+                            `<a:dk2><a:srgbClr val="1E293B"/></a:dk2>` +
+                            `<a:lt2><a:srgbClr val="F8FAFC"/></a:lt2>` +
+                            `<a:accent1><a:srgbClr val="${pal.accent}"/></a:accent1>` +
+                            `<a:accent2><a:srgbClr val="0D9488"/></a:accent2>` +
+                            `<a:accent3><a:srgbClr val="F59E0B"/></a:accent3>` +
+                            `<a:accent4><a:srgbClr val="6366F1"/></a:accent4>` +
+                            `<a:accent5><a:srgbClr val="EC4899"/></a:accent5>` +
+                            `<a:accent6><a:srgbClr val="10B981"/></a:accent6>` +
+                            `<a:hlink><a:srgbClr val="2563EB"/></a:hlink>` +
+                            `<a:folHlink><a:srgbClr val="7C3AED"/></a:folHlink>` +
+                        `</a:clrScheme>` +
+                        `<a:fontScheme name="Office">` +
+                            `<a:majorFont><a:latin typeface="Arial"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>` +
+                            `<a:minorFont><a:latin typeface="Arial"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont>` +
+                        `</a:fontScheme>` +
+                        `<a:fmtScheme name="Office">` +
+                            `<a:fillStyleLst>` +
+                                `<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>` +
+                                `<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>` +
+                                `<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>` +
+                            `</a:fillStyleLst>` +
+                            `<a:lnStyleLst>` +
+                                `<a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln>` +
+                                `<a:ln w="25400"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln>` +
+                                `<a:ln w="38100"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln>` +
+                            `</a:lnStyleLst>` +
+                            `<a:effectStyleLst>` +
+                                `<a:effectStyle><a:effectLst/></a:effectStyle>` +
+                                `<a:effectStyle><a:effectLst/></a:effectStyle>` +
+                                `<a:effectStyle><a:effectLst/></a:effectStyle>` +
+                            `</a:effectStyleLst>` +
+                            `<a:bgFillStyleLst>` +
+                                `<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>` +
+                                `<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>` +
+                                `<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>` +
+                            `</a:bgFillStyleLst>` +
+                        `</a:fmtScheme>` +
+                    `</a:themeElements>` +
+                `</a:theme>`;
+
+            const presPropsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentationPr xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}"/>`;
+            const viewPropsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:viewPr xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}"><p:normalViewPr><p:restoredLeft sz="15620"/><p:restoredTop sz="94660"/></p:normalViewPr><p:slideViewPr><p:cSldViewPr><p:cViewPr varScale="1"><p:scale><a:sx n="100" d="100"/><a:sy n="100" d="100"/></p:scale><p:origin x="0" y="0"/></p:cViewPr></p:cSldViewPr></p:slideViewPr></p:viewPr>`;
+            const tableStylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:tblStyleLst xmlns:a="${A_NS}" def="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}"/>`;
+            const nowIso = new Date().toISOString();
+            const safeDocTitle = escapeXmlAttr(sanitizeXmlText(options.docTitle || slides[0]?.title || 'Bài Giảng PowerPoint'));
+            const coreXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">` +
+                    `<dc:title>${safeDocTitle}</dc:title>` +
+                    `<dc:creator>Phuc Nguyen Vlog</dc:creator>` +
+                    `<dcterms:created xsi:type="dcterms:W3CDTF">${nowIso}</dcterms:created>` +
+                    `<dcterms:modified xsi:type="dcterms:W3CDTF">${nowIso}</dcterms:modified>` +
+                `</cp:coreProperties>`;
+            const appXml =
+                `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+                `<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">` +
+                    `<Application>Phuc Nguyen Vlog PPT Converter</Application>` +
+                    `<Slides>${slides.length}</Slides>` +
+                `</Properties>`;
+
+            zip.file('[Content_Types].xml', contentTypesXml);
+            zip.file('_rels/.rels', rootRelsXml);
+            zip.file('docProps/core.xml', coreXml);
+            zip.file('docProps/app.xml', appXml);
+            zip.file('ppt/presentation.xml', presentationXml);
+            zip.file('ppt/_rels/presentation.xml.rels', presRelsXml);
+            zip.file('ppt/slideMasters/slideMaster1.xml', slideMasterXml);
+            zip.file('ppt/slideMasters/_rels/slideMaster1.xml.rels', slideMasterRelsXml);
+            zip.file('ppt/slideLayouts/slideLayout1.xml', slideLayoutXml);
+            zip.file('ppt/slideLayouts/_rels/slideLayout1.xml.rels', slideLayoutRelsXml);
+            zip.file('ppt/theme/theme1.xml', themeXml);
+            zip.file('ppt/presProps.xml', presPropsXml);
+            zip.file('ppt/viewProps.xml', viewPropsXml);
+            zip.file('ppt/tableStyles.xml', tableStylesXml);
+
+            const pptxBlob = await zip.generateAsync({
+                type: 'blob',
+                mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                compression: 'DEFLATE',
+                compressionOptions: { level: 6 }
+            });
+            const pptxArrayBuffer = await pptxBlob.arrayBuffer();
+            return { pptxBlob, pptxArrayBuffer, totalEmbeddedImages };
+        }
+
+        async function convertLegacyPptFileToPptx(file, options = {}) {
+            const rawBuffer = await file.arrayBuffer();
+            const slides = extractSlidesFromLegacyPpt(rawBuffer, options.includeImages !== false);
+            const baseName = (file.name || 'bai_giang.ppt').replace(/\.pptx?$/i, '');
+            const pptxFileName = `${getSafeFilenameSlug(baseName, 'bai_giang')}.pptx`;
+
+            const built = await buildCleanPptxBlobFromSlides(slides, {
+                aspect: options.aspect || '16:9',
+                theme: options.theme || 'blue',
+                docTitle: baseName
+            });
+
+            const notesByIndex = {};
+            slides.forEach(s => {
+                if (s.notes) notesByIndex[s.index] = s.notes;
+            });
+
+            return {
+                originalName: file.name || 'bai_giang.ppt',
+                pptxFileName,
+                pptxBlob: built.pptxBlob,
+                pptxArrayBuffer: built.pptxArrayBuffer,
+                slideCount: slides.length,
+                imageCount: built.totalEmbeddedImages,
+                sizeKB: Math.max(1, Math.round(built.pptxBlob.size / 1024)),
+                previewTitles: slides.slice(0, 3).map(s => s.title),
+                notesByIndex
+            };
+        }
+
+        async function handlePptConvertFilesSelected(fileList) {
+            if (!fileList || fileList.length === 0 || pptConvertState.isBusy) return;
+            const files = Array.from(fileList);
+            const aspect = document.getElementById('pptConvertAspectSelect')?.value || '16:9';
+            const theme = document.getElementById('pptConvertThemeSelect')?.value || 'blue';
+            const includeImages = Boolean(document.getElementById('pptConvertIncludeImages')?.checked);
+
+            pptConvertState.isBusy = true;
+            setPptConvertProgress(true, 10, `Đang chuyển đổi ${files.length} tệp .PPT sang .PPTX...`);
+
+            let successCount = 0;
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    setPptConvertProgress(
+                        true,
+                        Math.round(((i + 0.3) / files.length) * 90),
+                        `Đang chuyển "${file.name}" (${i + 1}/${files.length})...`
+                    );
+
+                    const lower = (file.name || '').toLowerCase();
+                    const headBuf = new Uint8Array((await file.slice(0, 8).arrayBuffer()));
+                    const isZipPptx = headBuf.length >= 4 && headBuf[0] === 0x50 && headBuf[1] === 0x4B;
+
+                    if (isZipPptx && lower.endsWith('.pptx')) {
+                        showToast(`"${file.name}" đã là định dạng .pptx mới rồi — bạn có thể dùng thẳng trong Lồng Tiếng PowerPoint!`);
+                        continue;
+                    }
+
+                    try {
+                        const item = await convertLegacyPptFileToPptx(file, { aspect, theme, includeImages });
+                        pptConvertState.results.unshift(item);
+                        successCount++;
+                    } catch (err) {
+                        pptConvertState.results.unshift({
+                            originalName: file.name || 'Tệp không hợp lệ',
+                            error: err.message || 'Không thể chuyển đổi tệp này.'
+                        });
+                    }
+                    renderPptConvertResults();
+                }
+
+                if (successCount > 0) {
+                    showToast(`Đã chuyển đổi thành công ${successCount}/${files.length} tệp .PPT sang .PPTX!`);
+                }
+            } finally {
+                pptConvertState.isBusy = false;
+                setPptConvertProgress(false);
+                const inp = document.getElementById('pptConvertFileInput');
+                if (inp) inp.value = '';
+                renderPptConvertResults();
+            }
+        }
+
+        function renderPptConvertResults() {
+            const sec = document.getElementById('pptConvertResultsSection');
+            const list = document.getElementById('pptConvertResultsList');
+            const clearBtn = document.getElementById('btnPptConvertClearAll');
+            const dlAllBtn = document.getElementById('btnDownloadAllConvertedPptx');
+            if (!sec || !list) return;
+
+            const hasItems = pptConvertState.results.length > 0;
+            const validItems = pptConvertState.results.filter(r => r.pptxBlob);
+            sec.classList.toggle('hidden', !hasItems);
+            if (clearBtn) clearBtn.classList.toggle('hidden', !hasItems);
+            if (dlAllBtn) dlAllBtn.classList.toggle('hidden', validItems.length < 2);
+
+            list.innerHTML = pptConvertState.results.map((item, idx) => {
+                if (item.error) {
+                    return `
+                        <div class="bg-rose-50 rounded-2xl border border-rose-200 p-3.5 flex items-start justify-between gap-2 text-xs">
+                            <div class="min-w-0">
+                                <div class="font-black text-rose-900 truncate">${escapeHtml(item.originalName)}</div>
+                                <div class="text-rose-700 font-semibold mt-0.5"><i class="fa-solid fa-circle-exclamation mr-1"></i>${escapeHtml(item.error)}</div>
+                            </div>
+                            <button type="button" onclick="removePptConvertItem(${idx})" class="text-rose-600 font-bold shrink-0">Xoá</button>
+                        </div>
+                    `;
+                }
+                const previews = (item.previewTitles || []).map((t, ti) =>
+                    `<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-semibold truncate max-w-[200px]">Slide ${ti + 1}: ${escapeHtml(t)}</span>`
+                ).join('');
+                return `
+                    <div class="bg-white rounded-2xl border border-emerald-200 shadow-2xs p-3.5 sm:p-4 space-y-2.5">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg shrink-0">
+                                    <i class="fa-solid fa-file-powerpoint"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-xs sm:text-sm font-black text-slate-900 truncate">${escapeHtml(item.pptxFileName)}</div>
+                                    <div class="text-[11px] text-emerald-700 font-bold">
+                                        ${item.slideCount} slide • ${item.imageCount} hình ảnh • ${item.sizeKB.toLocaleString('vi-VN')} KB
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold shrink-0">
+                                <i class="fa-solid fa-circle-check mr-1"></i>Chuyển xong
+                            </span>
+                        </div>
+                        ${previews ? `<div class="flex flex-wrap gap-1.5">${previews}</div>` : ''}
+                        <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+                            <button type="button" onclick="downloadConvertedPptx(${idx})" class="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition flex items-center justify-center gap-1.5 shadow-2xs">
+                                <i class="fa-solid fa-download"></i>
+                                <span>Tải file .PPTX</span>
+                            </button>
+                            <button type="button" onclick="sendConvertedPptxToAudioStudio(${idx})" class="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-volume-high text-orange-600"></i>
+                                <span>Đưa sang Lồng Tiếng AI →</span>
+                            </button>
+                            <button type="button" onclick="removePptConvertItem(${idx})" class="ml-auto px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 text-xs font-bold transition" title="Xoá khỏi danh sách">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function downloadConvertedPptx(idx) {
+            const item = pptConvertState.results[idx];
+            if (!item?.pptxBlob) return;
+            triggerBlobFileDownload(item.pptxBlob, item.pptxFileName);
+            showToast(`Đang tải "${item.pptxFileName}" về máy!`);
+        }
+
+        function downloadAllConvertedPptx() {
+            const valid = pptConvertState.results.filter(r => r.pptxBlob);
+            valid.forEach((item, i) => {
+                setTimeout(() => triggerBlobFileDownload(item.pptxBlob, item.pptxFileName), i * 350);
+            });
+            showToast(`Đang tải ${valid.length} tệp .PPTX về máy!`);
+        }
+
+        function removePptConvertItem(idx) {
+            pptConvertState.results.splice(idx, 1);
+            renderPptConvertResults();
+        }
+
+        function clearPptConvertResults() {
+            pptConvertState.results = [];
+            renderPptConvertResults();
+        }
+
+        async function sendConvertedPptxToAudioStudio(idx) {
+            const item = pptConvertState.results[idx];
+            if (!item?.pptxArrayBuffer) return;
+            closePptConverterModal();
+            openPptxAudioStudio();
+            try {
+                const JSZipLib = await ensureJSZipReady();
+                const zip = await JSZipLib.loadAsync(item.pptxArrayBuffer.slice(0));
+                const slides = await parsePptxSlidesFromZip(zip);
+                slides.forEach(s => {
+                    const legacyNote = (item.notesByIndex?.[s.index] || '').trim();
+                    if (legacyNote && !s.notesText) {
+                        s.notesText = legacyNote;
+                        if (!s.script.trim()) {
+                            s.script = legacyNote;
+                            s.sourceMode = 'notes';
+                            s.enabled = true;
+                        }
+                    }
+                });
+
+                revokePptxSlideAudioUrls();
+                pptxState.fileName = item.pptxFileName;
+                pptxState.originalArrayBuffer = item.pptxArrayBuffer.slice(0);
+                pptxState.convertedFromLegacyPpt = true;
+                pptxState.slides = slides;
+                pptxState.cancelRequested = false;
+
+                document.getElementById('pptxDropzone')?.classList.add('hidden');
+                document.getElementById('btnPptxChangeFile')?.classList.remove('hidden');
+                document.getElementById('pptxFileInfoBar')?.classList.remove('hidden');
+                document.getElementById('pptxControlsSection')?.classList.remove('hidden');
+                document.getElementById('pptxSlidesSection')?.classList.remove('hidden');
+                document.getElementById('btnPptxDownloadConvertedRaw')?.classList.remove('hidden');
+
+                document.getElementById('pptxLoadedFileName').textContent = item.pptxFileName;
+                const withText = slides.filter(s => s.script.trim()).length;
+                document.getElementById('pptxLoadedFileMeta').textContent =
+                    `Tổng ${slides.length} slide • ${withText} slide có nội dung chữ • Đã chuyển từ .PPT cũ`;
+
+                populatePptxVoiceSelect();
+                updatePptxSummaryBadges();
+                renderPptxSlidesList();
+                showToast(`Đã đưa "${item.pptxFileName}" (${slides.length} slide) sang Lồng Tiếng AI!`);
+            } catch (err) {
+                showToast(`Lỗi nạp bản chuyển đổi: ${err.message}`);
+            }
+        }
+
+        function downloadConvertedRawPptxFromAudioStudio() {
+            if (!pptxState.originalArrayBuffer) return;
+            const blob = new Blob([pptxState.originalArrayBuffer], {
+                type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+            });
+            triggerBlobFileDownload(blob, pptxState.fileName || 'bai_giang.pptx');
+            showToast(`Đang tải tệp "${pptxState.fileName}" về máy!`);
+        }
+
+        function bindPptConvertDropzoneEvents() {
+            const dz = document.getElementById('pptConvertDropzone');
+            if (!dz) return;
+            ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => {
+                e.preventDefault();
+                dz.classList.add('dropzone-active');
+            }));
+            ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => {
+                e.preventDefault();
+                dz.classList.remove('dropzone-active');
+            }));
+            dz.addEventListener('drop', e => {
+                if (e.dataTransfer?.files?.length) handlePptConvertFilesSelected(e.dataTransfer.files);
+            });
+        }
+
+        // =========================================================================
         // 10. KHỞI TẠO TOÀN BỘ ỨNG DỤNG (INIT APP & SỰ KIỆN KÉO THẢ / DÁN ẢNH)
         // =========================================================================
         function bindDropzoneAndPasteEvents() {
@@ -5122,6 +6531,7 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
         async function initApp() {
             bindDropzoneAndPasteEvents();
             bindPptxDropzoneEvents();
+            bindPptConvertDropzoneEvents();
             switchActiveAIBot('tutor');
             renderTTSVoiceCards();
             startExamTimer();
