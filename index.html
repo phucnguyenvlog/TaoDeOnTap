@@ -4697,6 +4697,7 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             const mediaRelId = `rId${++maxRid}`;
             const iconRelId = `rId${++maxRid}`;
 
+            // Chuẩn Microsoft OOXML: p14:media BẮT BUỘC dùng schemas.microsoft.com/office/2007/relationships/media
             const newRelsXml =
                 `<Relationship Id="${audioRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/audio" Target="../media/${escapeXmlAttr(audioMediaFileName)}"/>` +
                 `<Relationship Id="${mediaRelId}" Type="http://schemas.microsoft.com/office/2007/relationships/media" Target="../media/${escapeXmlAttr(audioMediaFileName)}"/>` +
@@ -4738,7 +4739,6 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             });
 
             // Tách rõ phần nội dung slide (<= </p:cSld>) và phần đuôi trực tiếp của <p:sld> (> </p:cSld>)
-            // Tuyệt đối không bao giờ chèn <p:transition> hay <p:timing> nhầm vào <p:extLst> bên trong <p:cSld>
             const cSldCloseMatch = normalizedSlideXml.match(/<\/p:cSld\s*>/i);
             if (!cSldCloseMatch) {
                 throw new Error(`Cấu trúc slide ${slideNumber} thiếu thẻ đóng cSld.`);
@@ -4749,15 +4749,15 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
 
             const iconSize = 520000;
             const margin = 180000;
-            const iconX = Math.max(margin, (slideWidthEmu || 12192000) - iconSize - margin);
-            const iconY = Math.max(margin, (slideHeightEmu || 6858000) - iconSize - margin);
+            const iconX = Math.round(Math.max(margin, (slideWidthEmu || 12192000) - iconSize - margin));
+            const iconY = Math.round(Math.max(margin, (slideHeightEmu || 6858000) - iconSize - margin));
 
-            // Không gắn r:id="" rỗng trên <a:hlinkClick> để tránh lỗi kiểm tra quan hệ trên PowerPoint iOS
+            // Thẻ đối tượng âm thanh chuẩn 100% Microsoft PowerPoint (Desktop & iOS)
             const picXml =
                 `<p:pic>` +
                     `<p:nvPicPr>` +
-                        `<p:cNvPr id="${shapeId}" name="AmThanhSlide${slideNumber}">` +
-                            `<a:hlinkClick action="ppaction://media"/>` +
+                        `<p:cNvPr id="${shapeId}" name="Audio ${slideNumber}">` +
+                            `<a:hlinkClick r:id="" action="ppaction://media"/>` +
                         `</p:cNvPr>` +
                         `<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>` +
                         `<p:nvPr>` +
@@ -4809,13 +4809,13 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                 }
             }
 
-            // 2. Tạo khối điều khiển phát âm thanh chuẩn PowerPoint
-            const showStoppedVal = hideIcon ? '0' : '1';
+            // 2. Tạo khối điều khiển phát âm thanh chuẩn gốc Microsoft PowerPoint
             const idAudio = nextTnId();
+            const showStoppedAttr = hideIcon ? ' showWhenStopped="0"' : '';
             const audioNodeXml =
                 `<p:audio>` +
-                    `<p:cMediaNode vol="80000" showWhenStopped="${showStoppedVal}">` +
-                        `<p:cTn id="${idAudio}" fill="hold">` +
+                    `<p:cMediaNode vol="80000"${showStoppedAttr}>` +
+                        `<p:cTn id="${idAudio}" display="0" masterRel="sameClick">` +
                             `<p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>` +
                             `<p:endCondLst><p:cond evt="onStopAudio" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:endCondLst>` +
                         `</p:cTn>` +
@@ -4823,15 +4823,18 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     `</p:cMediaNode>` +
                 `</p:audio>`;
 
-            const buildAutoPlayParXml = () => {
+            const buildAutoPlayParXml = (mainSeqId) => {
                 const idP1 = nextTnId();
                 const idP2 = nextTnId();
                 const idP3 = nextTnId();
                 const idCmd = nextTnId();
+                const startCondXml = mainSeqId
+                    ? `<p:cond delay="indefinite"/><p:cond evt="onBegin" delay="0"><p:tn val="${mainSeqId}"/></p:cond>`
+                    : `<p:cond delay="0"/>`;
                 return (
                     `<p:par>` +
                         `<p:cTn id="${idP1}" fill="hold">` +
-                            `<p:stCondLst><p:cond delay="0"/></p:stCondLst>` +
+                            `<p:stCondLst>${startCondXml}</p:stCondLst>` +
                             `<p:childTnLst>` +
                                 `<p:par>` +
                                     `<p:cTn id="${idP2}" fill="hold">` +
@@ -4862,7 +4865,7 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             const buildFreshTimingXml = () => {
                 const idRoot = nextTnId();
                 const idSeq = nextTnId();
-                const autoPlayXml = autoPlay ? buildAutoPlayParXml() : '';
+                const autoPlayXml = autoPlay ? buildAutoPlayParXml(idSeq) : '';
                 const seqChildXml = autoPlayXml ? `<p:childTnLst>${autoPlayXml}</p:childTnLst>` : '';
                 return (
                     `<p:timing>` +
@@ -4913,17 +4916,20 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     } else {
                         timingBlock = rootRes.xml;
                         if (autoPlay) {
-                            const autoPlayXml = buildAutoPlayParXml();
-                            const mainSeqRes = insertIntoCTnChildList(
-                                timingBlock,
-                                /<p:cTn\b[^>]*\bnodeType\s*=\s*["']mainSeq["'][^>]*>/i,
-                                autoPlayXml,
-                                true
-                            );
-                            if (mainSeqRes.ok) {
-                                timingBlock = mainSeqRes.xml;
+                            const mainSeqOpenMatch = timingBlock.match(/<p:cTn\b[^>]*\bnodeType\s*=\s*["']mainSeq["'][^>]*>/i);
+                            const mainSeqIdMatch = mainSeqOpenMatch ? mainSeqOpenMatch[0].match(/\bid\s*=\s*["'](\d+)["']/i) : null;
+                            if (mainSeqOpenMatch) {
+                                const autoPlayXml = buildAutoPlayParXml(mainSeqIdMatch ? mainSeqIdMatch[1] : null);
+                                const mainSeqRes = insertIntoCTnChildList(
+                                    timingBlock,
+                                    /<p:cTn\b[^>]*\bnodeType\s*=\s*["']mainSeq["'][^>]*>/i,
+                                    autoPlayXml,
+                                    true
+                                );
+                                if (mainSeqRes.ok) timingBlock = mainSeqRes.xml;
                             } else {
                                 const idSeq = nextTnId();
+                                const autoPlayXml = buildAutoPlayParXml(idSeq);
                                 const newMainSeqXml =
                                     `<p:seq concurrent="1" nextAc="seek">` +
                                         `<p:cTn id="${idSeq}" dur="indefinite" nodeType="mainSeq"><p:childTnLst>${autoPlayXml}</p:childTnLst></p:cTn>` +
@@ -4991,25 +4997,35 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     }
                 } catch (_) {}
 
+                // Tìm số thứ tự media & image lớn nhất hiện có để đặt tên chuẩn PowerPoint (mediaN.mp3, imageN.png) không trùng lặp
+                let maxMediaIdx = 0;
+                let maxImageIdx = 0;
+                zip.forEach((relPath) => {
+                    const mMedia = relPath.match(/^ppt\/media\/media(\d+)\./i);
+                    if (mMedia) maxMediaIdx = Math.max(maxMediaIdx, parseInt(mMedia[1], 10));
+                    const mImg = relPath.match(/^ppt\/media\/image(\d+)\./i);
+                    if (mImg) maxImageIdx = Math.max(maxImageIdx, parseInt(mImg[1], 10));
+                });
+
                 const ctEntry = zip.file('[Content_Types].xml');
                 if (ctEntry) {
                     const updatedCt = ensureContentTypesForAudio(await ctEntry.async('string'));
+                    assertValidOoxmlXml(updatedCt, '[Content_Types].xml');
                     zip.file('[Content_Types].xml', updatedCt);
                 }
 
-                const iconMediaFileName = `pnvlog_speaker_${Date.now().toString().slice(-4)}.png`;
+                const iconMediaFileName = `image${++maxImageIdx}.png`;
                 const iconPngBytes = createSpeakerIconPngUint8Array();
                 zip.file(`ppt/media/${iconMediaFileName}`, iconPngBytes, { compression: 'STORE' });
 
                 const autoPlay = Boolean(document.getElementById('pptxOptAutoPlay')?.checked);
                 const hideIcon = Boolean(document.getElementById('pptxOptHideIcon')?.checked);
                 const autoAdvance = Boolean(document.getElementById('pptxOptAutoAdvance')?.checked);
-                const stamp = Date.now().toString().slice(-4);
 
                 for (let i = 0; i < audioSlides.length; i++) {
                     const s = audioSlides[i];
                     setPptxProgress(true, 25 + Math.round(((i + 1) / audioSlides.length) * 55), `Đang gắn âm thanh vào Slide ${s.index}...`);
-                    const audioMediaFileName = `pnvlog_slide_${s.index}_${stamp}.mp3`;
+                    const audioMediaFileName = `media${++maxMediaIdx}.mp3`;
                     const audioBytes = new Uint8Array(await s.audioBlob.arrayBuffer());
                     zip.file(`ppt/media/${audioMediaFileName}`, audioBytes, { compression: 'STORE' });
 
