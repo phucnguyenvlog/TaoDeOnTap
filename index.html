@@ -1177,7 +1177,8 @@
                 .replace(/[^a-zA-Z0-9]+/g, '_')
                 .replace(/^_+|_+$/g, '')
                 .toLowerCase()
-                .slice(0, 48);
+                .slice(0, 48)
+                .replace(/_+$/g, '');
             return cleaned || fallback;
         }
 
@@ -4547,7 +4548,118 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             if (/<Types\b[^>]*\/>/i.test(xmlString)) {
                 return xmlString.replace(/<Types\b([^>]*)\/>/i, `<Types$1>${toInsert}</Types>`);
             }
-            return xmlString.replace(/<\/Types\s*>/i, `${toInsert}</Types>`);
+            // Đặt các thẻ <Default> ngay đầu <Types> (trước <Override>) theo đúng chuẩn PowerPoint
+            return xmlString.replace(/<Types\b([^>]*)>/i, `<Types$1>${toInsert}`);
+        }
+
+        // Tìm vị trí thẻ con trực tiếp (depth = 0) trong đoạn XML, bỏ qua hoàn toàn các thẻ lồng bên trong
+        function findDirectChildTagIndex(xmlFragment, targetTagName) {
+            const targetLower = targetTagName.toLowerCase();
+            const tokenRe = /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<(\/?)([a-zA-Z0-9_:-]+)([^<>]*?)(\/?)>/g;
+            let depth = 0;
+            let m;
+            while ((m = tokenRe.exec(xmlFragment)) !== null) {
+                const tagName = m[2];
+                if (!tagName) continue;
+                const isClose = m[1] === '/';
+                const isSelf = m[4] === '/';
+                if (isClose) {
+                    if (depth === 0) return -1;
+                    depth--;
+                } else {
+                    if (depth === 0 && tagName.toLowerCase() === targetLower) {
+                        return m.index;
+                    }
+                    if (!isSelf) depth++;
+                }
+            }
+            return -1;
+        }
+
+        // Tìm trọn vẹn cặp thẻ mở–đóng cân bằng (hoặc thẻ tự đóng) bắt đầu từ regex hoặc vị trí chỉ định
+        function findBalancedXmlElement(xmlStr, startMatchRegex, searchFromIndex = 0) {
+            const sub = searchFromIndex > 0 ? xmlStr.slice(searchFromIndex) : xmlStr;
+            const m = sub.match(startMatchRegex);
+            if (!m) return null;
+            const start = searchFromIndex + m.index;
+            const openTagEnd = start + m[0].length;
+            if (m[0].endsWith('/>')) {
+                return { start, openTagEnd, closeTagStart: openTagEnd, end: openTagEnd, selfClosing: true };
+            }
+            const tokenRe = /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<(\/?)([a-zA-Z0-9_:-]+)([^<>]*?)(\/?)>/g;
+            tokenRe.lastIndex = openTagEnd;
+            let depth = 1;
+            let tok;
+            while ((tok = tokenRe.exec(xmlStr)) !== null) {
+                if (!tok[2]) continue;
+                const isClose = tok[1] === '/';
+                const isSelf = tok[4] === '/';
+                if (isClose) {
+                    depth--;
+                    if (depth === 0) {
+                        return { start, openTagEnd, closeTagStart: tok.index, end: tok.index + tok[0].length, selfClosing: false };
+                    }
+                } else if (!isSelf) {
+                    depth++;
+                }
+            }
+            return null;
+        }
+
+        // Chèn an toàn một phần tử con vào <p:childTnLst> trực tiếp của một thẻ <p:cTn> bất kỳ
+        function insertIntoCTnChildList(timingXml, cTnOpenRegex, childSnippet, insertAtStart = false) {
+            const cTnInfo = findBalancedXmlElement(timingXml, cTnOpenRegex);
+            if (!cTnInfo) return { ok: false, xml: timingXml };
+
+            if (cTnInfo.selfClosing) {
+                const opened = timingXml.slice(cTnInfo.start, cTnInfo.end - 2) +
+                    `><p:childTnLst>${childSnippet}</p:childTnLst></p:cTn>`;
+                return {
+                    ok: true,
+                    xml: timingXml.slice(0, cTnInfo.start) + opened + timingXml.slice(cTnInfo.end)
+                };
+            }
+
+            const inner = timingXml.slice(cTnInfo.openTagEnd, cTnInfo.closeTagStart);
+            const childLstRelIdx = findDirectChildTagIndex(inner, 'p:childTnLst');
+
+            let updatedInner = inner;
+            if (childLstRelIdx >= 0) {
+                const lstInfo = findBalancedXmlElement(inner, /<p:childTnLst\b[^>]*>/i, childLstRelIdx);
+                if (lstInfo) {
+                    if (lstInfo.selfClosing) {
+                        updatedInner =
+                            inner.slice(0, lstInfo.start) +
+                            `<p:childTnLst>${childSnippet}</p:childTnLst>` +
+                            inner.slice(lstInfo.end);
+                    } else {
+                        const pos = insertAtStart ? lstInfo.openTagEnd : lstInfo.closeTagStart;
+                        updatedInner = inner.slice(0, pos) + childSnippet + inner.slice(pos);
+                    }
+                }
+            } else {
+                // Theo chuẩn ECMA-376, <p:childTnLst> phải nằm trước <p:subTnLst>
+                const subLstRelIdx = findDirectChildTagIndex(inner, 'p:subTnLst');
+                const block = `<p:childTnLst>${childSnippet}</p:childTnLst>`;
+                if (subLstRelIdx >= 0) {
+                    updatedInner = inner.slice(0, subLstRelIdx) + block + inner.slice(subLstRelIdx);
+                } else {
+                    updatedInner = inner + block;
+                }
+            }
+
+            return {
+                ok: true,
+                xml: timingXml.slice(0, cTnInfo.openTagEnd) + updatedInner + timingXml.slice(cTnInfo.closeTagStart)
+            };
+        }
+
+        function assertValidOoxmlXml(xmlStr, label) {
+            const parsed = new DOMParser().parseFromString(xmlStr, 'application/xml');
+            const errNode = parsed.getElementsByTagName('parsererror')[0];
+            if (errNode) {
+                throw new Error(`XML không hợp lệ ở ${label}: ${(errNode.textContent || '').slice(0, 120)}`);
+            }
         }
 
         function embedAudioIntoSlideXml(slideXmlStr, relsXmlStr, options) {
@@ -4616,9 +4728,8 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                 });
             const nextTnId = () => ++maxTnId;
 
-            let updatedSlideXml = slideXmlStr;
-
-            updatedSlideXml = updatedSlideXml.replace(/<p:sld\b([^>]*)>/i, (fullTag, attrs) => {
+            // Đảm bảo đầy đủ namespace chuẩn trên thẻ gốc <p:sld>
+            let normalizedSlideXml = slideXmlStr.replace(/<p:sld\b([^>]*)>/i, (fullTag, attrs) => {
                 let nextAttrs = attrs;
                 if (!/\bxmlns:p\s*=/.test(nextAttrs)) nextAttrs += ` xmlns:p="${P_NS}"`;
                 if (!/\bxmlns:a\s*=/.test(nextAttrs)) nextAttrs += ` xmlns:a="${A_NS}"`;
@@ -4626,17 +4737,27 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                 return `<p:sld${nextAttrs}>`;
             });
 
+            // Tách rõ phần nội dung slide (<= </p:cSld>) và phần đuôi trực tiếp của <p:sld> (> </p:cSld>)
+            // Tuyệt đối không bao giờ chèn <p:transition> hay <p:timing> nhầm vào <p:extLst> bên trong <p:cSld>
+            const cSldCloseMatch = normalizedSlideXml.match(/<\/p:cSld\s*>/i);
+            if (!cSldCloseMatch) {
+                throw new Error(`Cấu trúc slide ${slideNumber} thiếu thẻ đóng cSld.`);
+            }
+            const splitPoint = cSldCloseMatch.index + cSldCloseMatch[0].length;
+            let headPart = normalizedSlideXml.slice(0, splitPoint);
+            let tailPart = normalizedSlideXml.slice(splitPoint);
+
             const iconSize = 520000;
             const margin = 180000;
             const iconX = Math.max(margin, (slideWidthEmu || 12192000) - iconSize - margin);
             const iconY = Math.max(margin, (slideHeightEmu || 6858000) - iconSize - margin);
 
-            // Thuộc tính r:id="" trên a:hlinkClick là bắt buộc theo lược đồ ECMA-376 CT_Hyperlink
+            // Không gắn r:id="" rỗng trên <a:hlinkClick> để tránh lỗi kiểm tra quan hệ trên PowerPoint iOS
             const picXml =
                 `<p:pic>` +
                     `<p:nvPicPr>` +
                         `<p:cNvPr id="${shapeId}" name="AmThanhSlide${slideNumber}">` +
-                            `<a:hlinkClick r:id="" action="ppaction://media"/>` +
+                            `<a:hlinkClick action="ppaction://media"/>` +
                         `</p:cNvPr>` +
                         `<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>` +
                         `<p:nvPr>` +
@@ -4658,37 +4779,42 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     `</p:spPr>` +
                 `</p:pic>`;
 
-            if (!/<\/p:spTree\s*>/i.test(updatedSlideXml)) {
+            const lastSpTreeClose = headPart.toLowerCase().lastIndexOf('</p:sptree>');
+            if (lastSpTreeClose === -1) {
                 throw new Error(`Cấu trúc slide ${slideNumber} thiếu thẻ đóng spTree.`);
             }
-            updatedSlideXml = updatedSlideXml.replace(/<\/p:spTree\s*>/i, `${picXml}</p:spTree>`);
+            headPart = headPart.slice(0, lastSpTreeClose) + picXml + headPart.slice(lastSpTreeClose);
 
+            // 1. Gắn tự chuyển slide (<p:transition>) CHỈ trong phần đuôi tailPart
             if (autoAdvance && audioDurationSec > 0) {
                 const advMs = Math.max(1500, Math.round((audioDurationSec + 1.0) * 1000));
-                if (/<p:transition\b/i.test(updatedSlideXml)) {
-                    updatedSlideXml = updatedSlideXml.replace(/<p:transition\b([^>]*?)(\/?)>/i, (m, attrs, selfClose) => {
-                        let cleanAttrs = attrs
+                if (/<p:transition\b/i.test(tailPart)) {
+                    tailPart = tailPart.replace(/<p:transition\b([^>]*?)(\/?)>/gi, (m, attrs, selfClose) => {
+                        const cleanAttrs = attrs
                             .replace(/\s*\badvClick\s*=\s*"[^"]*"/gi, '')
                             .replace(/\s*\badvTm\s*=\s*"[^"]*"/gi, '');
                         return `<p:transition${cleanAttrs} advClick="1" advTm="${advMs}"${selfClose}>`;
                     });
                 } else {
                     const transXml = `<p:transition advClick="1" advTm="${advMs}"/>`;
-                    if (/<p:timing\b/i.test(updatedSlideXml)) {
-                        updatedSlideXml = updatedSlideXml.replace(/<p:timing\b/i, `${transXml}<p:timing`);
-                    } else if (/<p:extLst\b/i.test(updatedSlideXml)) {
-                        updatedSlideXml = updatedSlideXml.replace(/<p:extLst\b/i, `${transXml}<p:extLst`);
+                    const timingIdx = findDirectChildTagIndex(tailPart, 'p:timing');
+                    const extIdx = findDirectChildTagIndex(tailPart, 'p:extLst');
+                    if (timingIdx >= 0) {
+                        tailPart = tailPart.slice(0, timingIdx) + transXml + tailPart.slice(timingIdx);
+                    } else if (extIdx >= 0) {
+                        tailPart = tailPart.slice(0, extIdx) + transXml + tailPart.slice(extIdx);
                     } else {
-                        updatedSlideXml = updatedSlideXml.replace(/<\/p:sld\s*>/i, `${transXml}</p:sld>`);
+                        tailPart = tailPart.replace(/<\/p:sld\s*>/i, `${transXml}</p:sld>`);
                     }
                 }
             }
 
+            // 2. Tạo khối điều khiển phát âm thanh chuẩn PowerPoint
             const showStoppedVal = hideIcon ? '0' : '1';
             const idAudio = nextTnId();
             const audioNodeXml =
                 `<p:audio>` +
-                    `<p:cMediaNode showWhenStopped="${showStoppedVal}">` +
+                    `<p:cMediaNode vol="80000" showWhenStopped="${showStoppedVal}">` +
                         `<p:cTn id="${idAudio}" fill="hold">` +
                             `<p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>` +
                             `<p:endCondLst><p:cond evt="onStopAudio" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:endCondLst>` +
@@ -4733,14 +4859,12 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                 );
             };
 
-            const hasExistingTiming = /<p:timing\b/i.test(updatedSlideXml);
-            if (!hasExistingTiming) {
+            const buildFreshTimingXml = () => {
                 const idRoot = nextTnId();
                 const idSeq = nextTnId();
                 const autoPlayXml = autoPlay ? buildAutoPlayParXml() : '';
                 const seqChildXml = autoPlayXml ? `<p:childTnLst>${autoPlayXml}</p:childTnLst>` : '';
-
-                const timingXml =
+                return (
                     `<p:timing>` +
                         `<p:tnLst>` +
                             `<p:par>` +
@@ -4756,43 +4880,73 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                                 `</p:cTn>` +
                             `</p:par>` +
                         `</p:tnLst>` +
-                    `</p:timing>`;
+                    `</p:timing>`
+                );
+            };
 
-                if (/<p:extLst\b/i.test(updatedSlideXml)) {
-                    updatedSlideXml = updatedSlideXml.replace(/<p:extLst\b/i, `${timingXml}<p:extLst`);
+            const existingTimingIdx = findDirectChildTagIndex(tailPart, 'p:timing');
+            if (existingTimingIdx === -1) {
+                const timingXml = buildFreshTimingXml();
+                const directExtIdx = findDirectChildTagIndex(tailPart, 'p:extLst');
+                if (directExtIdx >= 0) {
+                    tailPart = tailPart.slice(0, directExtIdx) + timingXml + tailPart.slice(directExtIdx);
                 } else {
-                    updatedSlideXml = updatedSlideXml.replace(/<\/p:sld\s*>/i, `${timingXml}</p:sld>`);
+                    tailPart = tailPart.replace(/<\/p:sld\s*>/i, `${timingXml}</p:sld>`);
                 }
             } else {
-                // Xử lý cả thẻ <p:seq .../> tự đóng lẫn cặp thẻ </p:seq> để luôn gắn được <p:audio>
-                if (/<\/p:seq\s*>/i.test(updatedSlideXml)) {
-                    const lastSeqCloseIdx = updatedSlideXml.toLowerCase().lastIndexOf('</p:seq>');
-                    updatedSlideXml =
-                        updatedSlideXml.slice(0, lastSeqCloseIdx + 8) +
-                        audioNodeXml +
-                        updatedSlideXml.slice(lastSeqCloseIdx + 8);
-                } else if (/<p:seq\b[^>]*\/>/i.test(updatedSlideXml)) {
-                    updatedSlideXml = updatedSlideXml.replace(/<p:seq\b[^>]*\/>/i, m => `${m}${audioNodeXml}`);
-                } else if (/<\/p:tnLst\s*>/i.test(updatedSlideXml)) {
-                    updatedSlideXml = updatedSlideXml.replace(/<\/p:tnLst\s*>/i, `${audioNodeXml}</p:tnLst>`);
-                }
-
-                if (autoPlay && /nodeType="mainSeq"/i.test(updatedSlideXml)) {
-                    const autoPlayXml = buildAutoPlayParXml();
-                    updatedSlideXml = updatedSlideXml.replace(
-                        /(<p:cTn\b[^>]*nodeType="mainSeq"[^>]*>)([\s\S]*?)(<\/p:cTn\s*>)/i,
-                        (full, openCtn, innerCtn, closeCtn) => {
-                            if (/<p:childTnLst\s*\/>/i.test(innerCtn)) {
-                                return openCtn + innerCtn.replace(/<p:childTnLst\s*\/>/i, `<p:childTnLst>${autoPlayXml}</p:childTnLst>`) + closeCtn;
-                            }
-                            if (/<p:childTnLst\b[^>]*>/i.test(innerCtn)) {
-                                return openCtn + innerCtn.replace(/<p:childTnLst\b[^>]*>/i, m => `${m}${autoPlayXml}`) + closeCtn;
-                            }
-                            return `${openCtn}<p:childTnLst>${autoPlayXml}</p:childTnLst>${innerCtn}${closeCtn}`;
-                        }
+                const timingInfo = findBalancedXmlElement(tailPart, /<p:timing\b[^>]*>/i, existingTimingIdx);
+                if (!timingInfo || timingInfo.selfClosing) {
+                    const fresh = buildFreshTimingXml();
+                    if (timingInfo) {
+                        tailPart = tailPart.slice(0, timingInfo.start) + fresh + tailPart.slice(timingInfo.end);
+                    }
+                } else {
+                    let timingBlock = tailPart.slice(timingInfo.start, timingInfo.end);
+                    const rootRes = insertIntoCTnChildList(
+                        timingBlock,
+                        /<p:cTn\b[^>]*\bnodeType\s*=\s*["']tmRoot["'][^>]*>/i,
+                        audioNodeXml,
+                        false
                     );
+                    if (!rootRes.ok) {
+                        timingBlock = buildFreshTimingXml();
+                    } else {
+                        timingBlock = rootRes.xml;
+                        if (autoPlay) {
+                            const autoPlayXml = buildAutoPlayParXml();
+                            const mainSeqRes = insertIntoCTnChildList(
+                                timingBlock,
+                                /<p:cTn\b[^>]*\bnodeType\s*=\s*["']mainSeq["'][^>]*>/i,
+                                autoPlayXml,
+                                true
+                            );
+                            if (mainSeqRes.ok) {
+                                timingBlock = mainSeqRes.xml;
+                            } else {
+                                const idSeq = nextTnId();
+                                const newMainSeqXml =
+                                    `<p:seq concurrent="1" nextAc="seek">` +
+                                        `<p:cTn id="${idSeq}" dur="indefinite" nodeType="mainSeq"><p:childTnLst>${autoPlayXml}</p:childTnLst></p:cTn>` +
+                                        `<p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>` +
+                                        `<p:nextCondLst><p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst>` +
+                                    `</p:seq>`;
+                                const fallbackSeqRes = insertIntoCTnChildList(
+                                    timingBlock,
+                                    /<p:cTn\b[^>]*\bnodeType\s*=\s*["']tmRoot["'][^>]*>/i,
+                                    newMainSeqXml,
+                                    true
+                                );
+                                if (fallbackSeqRes.ok) timingBlock = fallbackSeqRes.xml;
+                            }
+                        }
+                    }
+                    tailPart = tailPart.slice(0, timingInfo.start) + timingBlock + tailPart.slice(timingInfo.end);
                 }
             }
+
+            const updatedSlideXml = headPart + tailPart;
+            assertValidOoxmlXml(updatedSlideXml, `Slide ${slideNumber}`);
+            assertValidOoxmlXml(updatedRelsXml, `Rels Slide ${slideNumber}`);
 
             return {
                 slideXml: updatedSlideXml,
