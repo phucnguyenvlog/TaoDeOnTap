@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="referrer" content="no-referrer">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>Công Cụ Tạo Soạn Sửa Đề Ôn Tập & Siêu Trợ Lý AI Đa Năng</title>
     <!-- Favicon tích hợp trực tiếp Logo Phúc nguyên Vlog (không cần tệp Icon.png rời khi lên Vercel) -->
     <link id="appFavicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23fde68a'/%3E%3Cstop offset='52%25' stop-color='%237de2c7'/%3E%3Cstop offset='100%25' stop-color='%23d9f99d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='120' height='120' rx='26' fill='url(%23bg)'/%3E%3Ccircle cx='46' cy='60' r='39' fill='%23ffffff'/%3E%3Cpath d='M51 35c-3-4-7-5-10-4 1 4 4 7 9 7 1 0 1-2 1-3z' fill='%234ade80'/%3E%3Cpath d='M55 34c1-5 4-8 8-9 0 5-2 8-6 10-1 0-2 0-2-1z' fill='%2322c55e'/%3E%3Cpath d='M58 40c4-3 8-4 11-3-2 4-5 6-10 6-1 0-2-2-1-3z' fill='%2316a34a'/%3E%3Cpath d='M18 79c4 0 8 2 10 6-4 1-8-1-10-5z' fill='%234ade80'/%3E%3Ctext x='45' y='52' text-anchor='middle' font-family='Arial,sans-serif' font-weight='900' font-size='19' fill='%2315803d'%3EPh%C3%BAc%3C/text%3E%3Ctext x='45' y='67' text-anchor='middle' font-family='Arial,sans-serif' font-weight='900' font-size='15.5' fill='%2315803d'%3Enguy%C3%AAn%3C/text%3E%3Ctext x='46' y='85' text-anchor='middle' font-family='Arial,sans-serif' font-weight='900' font-size='21' fill='%2316a34a'%3EVlog%3C/text%3E%3Cg transform='rotate(6 92 60)'%3E%3Crect x='77' y='30' width='31' height='58' rx='7' fill='none' stroke='%230c2d57' stroke-width='3.6'/%3E%3Cline x1='89' y1='35' x2='96' y2='35' stroke='%230c2d57' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M85 61h15a4.5 4.5 0 0 0 .5-8.9A6.5 6.5 0 0 0 88 50a5 5 0 0 0-3 11z' fill='none' stroke='%230c2d57' stroke-width='2.6' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(63 68) rotate(5)'%3E%3Crect x='5' y='5' width='22' height='22' rx='4' fill='%237de2c7' stroke='%230c2d57' stroke-width='2.8'/%3E%3Crect x='11' y='11' width='10' height='10' rx='1.5' fill='none' stroke='%230c2d57' stroke-width='2.2'/%3E%3Cpath d='M10 1v4M16 1v4M22 1v4M10 27v4M16 27v4M22 27v4M1 10h4M1 16h4M1 22h4M27 10h4M27 16h4M27 22h4' stroke='%230c2d57' stroke-width='2.2' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
@@ -1296,7 +1296,7 @@
         }
 
         // =========================================================================
-        // 1. KẾT NỐI HỆ THỐNG AI DÙNG CHUNG (HỖ TRỢ ĐẦY ĐỦ KHÓA AQ.* & AIza*)
+        // 1. KẾT NỐI HỆ THỐNG AI DÙNG CHUNG (CHUẨN GOOGLE AI STUDIO CHO KHÓA AQ.*)
         // =========================================================================
         function getEmbeddedPublicKey() {
             try {
@@ -1330,13 +1330,62 @@
             }
         }
 
+        let cachedDiscoveredGeminiModels = null;
+
+        // Tự động hỏi Google AI Studio danh sách model generateContent đang mở cho đúng khóa AQ.* hiện tại
+        async function discoverLiveGeminiModels(keyVal) {
+            if (Array.isArray(cachedDiscoveredGeminiModels) && cachedDiscoveredGeminiModels.length > 0) {
+                return cachedDiscoveredGeminiModels;
+            }
+            try {
+                const res = await fetchWithTimeout('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100', {
+                    method: 'GET',
+                    headers: { 'x-goog-api-key': keyVal }
+                }, 12000);
+                if (!res.ok) return [];
+                const data = await res.json();
+                const rawList = Array.isArray(data?.models) ? data.models : [];
+                const eligible = rawList
+                    .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+                    .map(m => String(m.name || '').replace(/^models\//, ''))
+                    .filter(id => id && !/(tts|image|live|transcribe|embedding|aqa|robotics|computer-use|deep-research|antigravity|omni)/i.test(id));
+
+                // Xếp ưu tiên các model Flash đời mới (3.x -> 2.5 -> các bản flash khác -> gemma)
+                const scoreModel = (id) => {
+                    if (/^gemini-3\.8-flash$/i.test(id)) return 100;
+                    if (/^gemini-3\.6-flash$/i.test(id)) return 95;
+                    if (/^gemini-3\.5-flash-lite$/i.test(id)) return 90;
+                    if (/^gemini-3\.1-flash-lite$/i.test(id)) return 85;
+                    if (/^gemini-3.*flash/i.test(id)) return 80;
+                    if (/^gemini-2\.5-flash$/i.test(id)) return 70;
+                    if (/^gemini-.*flash/i.test(id)) return 60;
+                    if (/^gemma-4/i.test(id)) return 40;
+                    return 20;
+                };
+                eligible.sort((a, b) => scoreModel(b) - scoreModel(a));
+                cachedDiscoveredGeminiModels = eligible.slice(0, 8);
+                return cachedDiscoveredGeminiModels;
+            } catch (_) {
+                return [];
+            }
+        }
+
         function parseGoogleApiErrorText(errText, statusCode) {
             try {
                 const parsed = JSON.parse(errText);
                 const msg = parsed?.error?.message || '';
                 if (msg) {
+                    if (/API_KEY_SERVICE_BLOCKED|Requests to this API generativelanguage\.googleapis\.com.*are blocked/i.test(errText)) {
+                        return 'Khóa API đang bị giới hạn nhầm quyền dịch vụ trong Google Cloud Console (mục API restrictions cần chọn Generative Language API).';
+                    }
+                    if (/API_KEY_INVALID|API key not valid/i.test(errText)) {
+                        return 'Khóa API không hợp lệ hoặc đã bị thu hồi trên Google AI Studio.';
+                    }
+                    if (/referer|HTTP_REFERRER_BLOCKED/i.test(errText)) {
+                        return `Khóa API đang chặn tên miền trang web này (${statusCode}): ${msg}`;
+                    }
                     if (statusCode === 429) {
-                        return `Hệ thống AI dùng chung đang tạm quá tải lượt truy cập (429): ${msg}`;
+                        return `Hệ thống AI dùng chung đang tạm quá tải lượt truy cập (429). Vui lòng đợi 15–30 giây rồi bấm thử lại!`;
                     }
                     return `Lỗi AI (${statusCode}): ${msg}`;
                 }
@@ -1348,20 +1397,66 @@
         }
 
         async function callGeminiTextOrMultimodal(parts, systemInstruction = '', expectJson = false, maxOutputTokens = 8192) {
-            const models = [
-                'gemini-2.5-flash',
-                'gemini-2.5-flash-lite',
-                'gemini-flash-latest',
-                'gemini-2.0-flash'
+            // Danh sách model miễn phí mới nhất trên Google AI Studio (loại bỏ hoàn toàn gemini-2.0-flash đã đóng cửa và không rơi sang cổng Vertex AI)
+            const baseModels = [
+                'gemini-3.8-flash',
+                'gemini-3.6-flash',
+                'gemini-3.5-flash-lite',
+                'gemini-3.1-flash-lite',
+                'gemini-2.5-flash'
             ];
             const keys = getCandidateApiKeys();
-            let lastError = 'Hệ thống AI dùng chung đang tạm bận, bạn vui lòng thử lại sau vài giây.';
+            let lastError = '';
             let sawQuota429 = false;
 
-            const endpoints = [
-                (model, k) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(k)}`,
-                (model, k) => `https://aiplatform.googleapis.com/v1beta1/publishers/google/models/${model}:generateContent?key=${encodeURIComponent(k)}`
-            ];
+            const mergedParts = [];
+            if (systemInstruction && systemInstruction.trim()) {
+                mergedParts.push({ text: `[HƯỚNG DẪN VAI TRÒ BẮT BUỘC]\n${systemInstruction.trim()}\n\n[NỘI DUNG YÊU CẦU]` });
+            }
+            parts.forEach(p => mergedParts.push(p));
+
+            const tryInvokeModel = async (keyVal, modelName, useQueryParam = false) => {
+                const isGemma = /^gemma/i.test(modelName);
+                const genConfig = {
+                    temperature: expectJson ? 0.35 : 0.75,
+                    maxOutputTokens
+                };
+                if (expectJson && !isGemma) {
+                    genConfig.responseMimeType = 'application/json';
+                }
+
+                const body = {
+                    contents: [{ role: 'user', parts: mergedParts }],
+                    generationConfig: genConfig
+                };
+
+                const url = useQueryParam
+                    ? `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(keyVal)}`
+                    : `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+
+                const headers = { 'Content-Type': 'application/json' };
+                if (!useQueryParam) {
+                    headers['x-goog-api-key'] = keyVal;
+                }
+
+                const res = await fetchWithTimeout(url, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(body)
+                }, 45000);
+
+                if (!res.ok) {
+                    const errText = await res.text().catch(() => '');
+                    return { ok: false, status: res.status, errText };
+                }
+
+                const data = await res.json();
+                const textOut = data?.candidates?.[0]?.content?.parts
+                    ?.filter(p => typeof p.text === 'string' && !p.thought)
+                    .map(p => p.text)
+                    .join('') || '';
+                return { ok: Boolean(textOut.trim()), status: 200, text: textOut.trim(), errText: '' };
+            };
 
             for (let pass = 0; pass < 2; pass++) {
                 if (pass === 1) {
@@ -1369,57 +1464,39 @@
                     await new Promise(r => setTimeout(r, 2500));
                 }
                 for (const keyVal of keys) {
-                    for (const modelName of models) {
-                        const isGemini25 = modelName.startsWith('gemini-2.5');
-                        const genConfig = {
-                            temperature: expectJson ? 0.35 : 0.75,
-                            maxOutputTokens
-                        };
-                        if (isGemini25) {
-                            genConfig.thinkingConfig = { thinkingBudget: 0 };
-                        }
-                        if (expectJson) {
-                            genConfig.responseMimeType = 'application/json';
-                        }
+                    const discovered = await discoverLiveGeminiModels(keyVal);
+                    const modelCandidates = [...new Set([...discovered, ...baseModels])];
+                    let keyHardBlocked = false;
 
-                        const body = {
-                            contents: [{ role: 'user', parts }],
-                            generationConfig: genConfig
-                        };
-                        if (systemInstruction) {
-                            body.systemInstruction = { parts: [{ text: systemInstruction }] };
-                        }
-
-                        for (const buildUrl of endpoints) {
-                            const url = buildUrl(modelName, keyVal);
-                            try {
-                                const res = await fetchWithTimeout(url, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify(body)
-                                }, 45000);
-
-                                if (!res.ok) {
-                                    const errText = await res.text().catch(() => '');
-                                    if (res.status === 429) sawQuota429 = true;
-                                    lastError = parseGoogleApiErrorText(errText, res.status);
-                                    continue;
-                                }
-                                const data = await res.json();
-                                const textOut = data?.candidates?.[0]?.content?.parts
-                                    ?.filter(p => typeof p.text === 'string' && !p.thought)
-                                    .map(p => p.text)
-                                    .join('') || '';
-                                if (textOut.trim()) return textOut.trim();
-                                lastError = 'AI chưa trả về nội dung văn bản, bạn hãy thử lại nhé.';
-                            } catch (err) {
-                                lastError = `Lỗi kết nối tới máy chủ AI: ${err.message || 'Mạng không ổn định'}`;
+                    for (const modelName of modelCandidates) {
+                        if (keyHardBlocked) break;
+                        try {
+                            let attempt = await tryInvokeModel(keyVal, modelName, false);
+                            // Nếu trình duyệt/mạng chặn header tuỳ chỉnh (401), tự thử lại 1 lần qua ?key=
+                            if (!attempt.ok && attempt.status === 401) {
+                                const fallbackAttempt = await tryInvokeModel(keyVal, modelName, true);
+                                if (fallbackAttempt.ok) attempt = fallbackAttempt;
                             }
+
+                            if (attempt.ok && attempt.text) {
+                                return attempt.text;
+                            }
+
+                            if (attempt.status === 429) sawQuota429 = true;
+                            if (attempt.status === 403 && /API_KEY_INVALID|API_KEY_SERVICE_BLOCKED|API_KEY_HTTP_REFERRER_BLOCKED|SERVICE_DISABLED/i.test(attempt.errText || '')) {
+                                keyHardBlocked = true;
+                            }
+                            lastError = attempt.status === 200
+                                ? 'AI chưa trả về nội dung văn bản, bạn hãy thử lại nhé.'
+                                : parseGoogleApiErrorText(attempt.errText || '', attempt.status);
+                        } catch (err) {
+                            lastError = `Lỗi kết nối tới máy chủ AI: ${err.message || 'Mạng không ổn định'}`;
                         }
                     }
                 }
             }
-            const finalErr = new Error(lastError);
+
+            const finalErr = new Error(lastError || 'Hệ thống AI dùng chung đang tạm bận, bạn vui lòng thử lại sau vài giây.');
             finalErr.isQuota429 = sawQuota429;
             throw finalErr;
         }
@@ -2261,7 +2338,7 @@ ${combinedText ? `\nNỘI DUNG VĂN BẢN TRÍCH XUẤT TỪ FILE:\n${combinedTe
         }
 
         // =========================================================================
-        // 5. BƯỚC 3: TRÌNH SỬA ĐỀ THỦ CÔNG (EDITOR)
+        // 5. BƯỚC 3: TRÌNH SỬA ĐỀ THỦ CÔNG (ĐẦY ĐỦ TRẮC NGHIỆM + ĐÚNG/SAI + TỰ LUẬN)
         // =========================================================================
         function updateExamTitleFromEditor(val) {
             EXAM_DATA.title = String(val || '').trim() || 'ĐỀ ÔN TẬP';
@@ -2286,11 +2363,44 @@ ${combinedText ? `\nNỘI DUNG VĂN BẢN TRÍCH XUẤT TỪ FILE:\n${combinedTe
                 question: 'Nội dung câu dẫn Đúng/Sai mới...',
                 statements: [
                     { label: 'a', text: 'Mệnh đề a', isTrue: true, explanation: '' },
-                    { label: 'b', text: 'Mệnh đề b', isTrue: false, explanation: '' }
+                    { label: 'b', text: 'Mệnh đề b', isTrue: false, explanation: '' },
+                    { label: 'c', text: 'Mệnh đề c', isTrue: true, explanation: '' },
+                    { label: 'd', text: 'Mệnh đề d', isTrue: false, explanation: '' }
                 ]
             });
             buildActiveExamList();
             renderManualEditor();
+        }
+
+        function addNewTFStatement(qIdx) {
+            const q = EXAM_DATA.partB[qIdx];
+            if (!q) return;
+            const nextLabel = String.fromCharCode(97 + q.statements.length);
+            q.statements.push({ label: nextLabel, text: `Mệnh đề ${nextLabel}`, isTrue: true, explanation: '' });
+            buildActiveExamList();
+            renderManualEditor();
+        }
+
+        function deleteTFStatement(qIdx, sIdx) {
+            const q = EXAM_DATA.partB[qIdx];
+            if (!q || q.statements.length <= 1) return;
+            q.statements.splice(sIdx, 1);
+            q.statements.forEach((st, i) => { st.label = String.fromCharCode(97 + i); });
+            buildActiveExamList();
+            renderManualEditor();
+        }
+
+        function updateEditorTFField(qIdx, field, val, sIdx = -1) {
+            const q = EXAM_DATA.partB[qIdx];
+            if (!q) return;
+            if (field === 'question') {
+                q.question = val;
+            } else if (sIdx >= 0 && q.statements[sIdx]) {
+                if (field === 'isTrue') q.statements[sIdx].isTrue = Boolean(val);
+                else q.statements[sIdx][field] = val;
+            }
+            buildActiveExamList();
+            if (field === 'isTrue') renderManualEditor();
         }
 
         function addNewEssayItem() {
@@ -2355,7 +2465,7 @@ ${combinedText ? `\nNỘI DUNG VĂN BẢN TRÍCH XUẤT TỪ FILE:\n${combinedTe
                 html += `
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-blue-700">Phần A • Câu ${idx + 1}</span>
+                            <span class="text-xs font-black text-blue-700">Phần I (Trắc nghiệm) • Câu ${idx + 1}</span>
                             <button type="button" onclick="deleteEditorItem('A', ${idx})" class="text-xs font-bold text-rose-600 hover:underline"><i class="fa-solid fa-trash-can mr-1"></i>Xoá</button>
                         </div>
                         <textarea rows="2" oninput="updateEditorMCQField(${idx}, 'question', this.value)" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold">${escapeHtml(q.question)}</textarea>
@@ -2379,11 +2489,42 @@ ${combinedText ? `\nNỘI DUNG VĂN BẢN TRÍCH XUẤT TỪ FILE:\n${combinedTe
                 `;
             });
 
+            EXAM_DATA.partB.forEach((q, idx) => {
+                html += `
+                    <div class="p-4 rounded-2xl bg-indigo-50/40 border border-indigo-200 space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-black text-indigo-800">Phần II (Đúng / Sai) • Câu ${idx + 1}</span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="addNewTFStatement(${idx})" class="px-2.5 py-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-[11px] font-extrabold">+ Thêm ý</button>
+                                <button type="button" onclick="deleteEditorItem('B', ${idx})" class="text-xs font-bold text-rose-600 hover:underline"><i class="fa-solid fa-trash-can mr-1"></i>Xoá</button>
+                            </div>
+                        </div>
+                        <textarea rows="2" oninput="updateEditorTFField(${idx}, 'question', this.value)" placeholder="Câu dẫn chung cho câu hỏi Đúng/Sai..." class="w-full p-2.5 rounded-xl border border-indigo-200 bg-white text-xs sm:text-sm font-semibold">${escapeHtml(q.question)}</textarea>
+                        <div class="space-y-2">
+                            ${q.statements.map((st, si) => `
+                                <div class="p-2.5 rounded-xl bg-white border border-indigo-100 space-y-1.5">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="font-black text-xs text-indigo-700 w-5">${escapeHtml(st.label || String.fromCharCode(97 + si))})</span>
+                                        <input type="text" value="${escapeHtml(st.text)}" oninput="updateEditorTFField(${idx}, 'text', this.value, ${si})" placeholder="Nội dung mệnh đề..." class="flex-1 min-w-[180px] px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs">
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" onclick="updateEditorTFField(${idx}, 'isTrue', true, ${si})" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold border ${st.isTrue ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-600 border-slate-200'}">Đúng</button>
+                                            <button type="button" onclick="updateEditorTFField(${idx}, 'isTrue', false, ${si})" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold border ${!st.isTrue ? 'bg-rose-600 text-white border-rose-600' : 'bg-slate-50 text-slate-600 border-slate-200'}">Sai</button>
+                                            ${q.statements.length > 1 ? `<button type="button" onclick="deleteTFStatement(${idx}, ${si})" class="w-6 h-6 rounded-lg text-slate-400 hover:text-rose-600 text-xs" title="Xoá ý này"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                                        </div>
+                                    </div>
+                                    <input type="text" value="${escapeHtml(st.explanation || '')}" oninput="updateEditorTFField(${idx}, 'explanation', this.value, ${si})" placeholder="Giải thích ý ${escapeHtml(st.label || String.fromCharCode(97 + si))} (tuỳ chọn)..." class="w-full px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 text-[11px]">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
             EXAM_DATA.partC.forEach((q, idx) => {
                 html += `
                     <div class="p-4 rounded-2xl bg-amber-50/40 border border-amber-200 space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-amber-800">Phần C (Tự luận) • Câu ${idx + 1}</span>
+                            <span class="text-xs font-black text-amber-800">Phần III (Tự luận) • Câu ${idx + 1}</span>
                             <button type="button" onclick="deleteEditorItem('C', ${idx})" class="text-xs font-bold text-rose-600 hover:underline"><i class="fa-solid fa-trash-can mr-1"></i>Xoá</button>
                         </div>
                         <textarea rows="2" oninput="updateEditorEssayField(${idx}, 'question', this.value)" class="w-full p-2.5 rounded-xl border border-amber-200 bg-white text-xs sm:text-sm font-semibold">${escapeHtml(q.question)}</textarea>
@@ -4347,7 +4488,7 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             }
         }
 
-        async function createSpeakerIconPngUint8Array() {
+        function createSpeakerIconPngUint8Array() {
             const canvas = document.createElement('canvas');
             canvas.width = 128;
             canvas.height = 128;
@@ -4384,8 +4525,13 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             ctx.arc(68, 64, 26, -Math.PI / 3.5, Math.PI / 3.5);
             ctx.stroke();
 
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-            return new Uint8Array(await blob.arrayBuffer());
+            // Chuyển đồng bộ qua DataURL (tránh canvas.toBlob trả về null trên một số bản Safari iOS)
+            const dataUrl = canvas.toDataURL('image/png');
+            const base64 = dataUrl.split(',')[1] || '';
+            const bin = atob(base64);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return bytes;
         }
 
         function ensureContentTypesForAudio(xmlString) {
@@ -4485,11 +4631,12 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
             const iconX = Math.max(margin, (slideWidthEmu || 12192000) - iconSize - margin);
             const iconY = Math.max(margin, (slideHeightEmu || 6858000) - iconSize - margin);
 
+            // Thuộc tính r:id="" trên a:hlinkClick là bắt buộc theo lược đồ ECMA-376 CT_Hyperlink
             const picXml =
                 `<p:pic>` +
                     `<p:nvPicPr>` +
                         `<p:cNvPr id="${shapeId}" name="AmThanhSlide${slideNumber}">` +
-                            `<a:hlinkClick action="ppaction://media"/>` +
+                            `<a:hlinkClick r:id="" action="ppaction://media"/>` +
                         `</p:cNvPr>` +
                         `<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>` +
                         `<p:nvPr>` +
@@ -4617,9 +4764,19 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                     updatedSlideXml = updatedSlideXml.replace(/<\/p:sld\s*>/i, `${timingXml}</p:sld>`);
                 }
             } else {
+                // Xử lý cả thẻ <p:seq .../> tự đóng lẫn cặp thẻ </p:seq> để luôn gắn được <p:audio>
                 if (/<\/p:seq\s*>/i.test(updatedSlideXml)) {
-                    updatedSlideXml = updatedSlideXml.replace(/<\/p:seq\s*>/i, `</p:seq>${audioNodeXml}`);
+                    const lastSeqCloseIdx = updatedSlideXml.toLowerCase().lastIndexOf('</p:seq>');
+                    updatedSlideXml =
+                        updatedSlideXml.slice(0, lastSeqCloseIdx + 8) +
+                        audioNodeXml +
+                        updatedSlideXml.slice(lastSeqCloseIdx + 8);
+                } else if (/<p:seq\b[^>]*\/>/i.test(updatedSlideXml)) {
+                    updatedSlideXml = updatedSlideXml.replace(/<p:seq\b[^>]*\/>/i, m => `${m}${audioNodeXml}`);
+                } else if (/<\/p:tnLst\s*>/i.test(updatedSlideXml)) {
+                    updatedSlideXml = updatedSlideXml.replace(/<\/p:tnLst\s*>/i, `${audioNodeXml}</p:tnLst>`);
                 }
+
                 if (autoPlay && /nodeType="mainSeq"/i.test(updatedSlideXml)) {
                     const autoPlayXml = buildAutoPlayParXml();
                     updatedSlideXml = updatedSlideXml.replace(
@@ -4687,7 +4844,7 @@ Trả về DUY NHẤT JSON hợp lệ theo cấu trúc:
                 }
 
                 const iconMediaFileName = `pnvlog_speaker_${Date.now().toString().slice(-4)}.png`;
-                const iconPngBytes = await createSpeakerIconPngUint8Array();
+                const iconPngBytes = createSpeakerIconPngUint8Array();
                 zip.file(`ppt/media/${iconMediaFileName}`, iconPngBytes, { compression: 'STORE' });
 
                 const autoPlay = Boolean(document.getElementById('pptxOptAutoPlay')?.checked);
