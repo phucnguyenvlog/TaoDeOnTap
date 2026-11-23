@@ -862,9 +862,9 @@
         </div>
     </div>
 
-    <!-- HỘP THOẠI CHIA SẺ LINK & MÃ QR CHO HỌC SINH -->
-    <div id="shareLinkModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg p-5 space-y-4 animate-fade-in">
+    <!-- HỘP THOẠI CHIA SẺ LINK & MÃ QR CHO HỌC SINH (HỖ TRỢ LINK TRỰC TIẾP GỌN + LINK GOOGLE DRIVE SIÊU NGẮN) -->
+    <div id="shareLinkModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-3 sm:p-4">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg max-h-[94vh] overflow-y-auto p-4 sm:p-5 space-y-3.5 animate-fade-in">
             <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2.5 min-w-0">
                     <div class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center text-lg shrink-0">
@@ -872,21 +872,73 @@
                     </div>
                     <div class="min-w-0">
                         <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Chia Sẻ Link &amp; Mã QR Ôn Tập</h3>
-                        <p class="text-[11px] text-slate-500 truncate">Học sinh bấm link hoặc quét mã QR sẽ vào thẳng giao diện làm bài</p>
+                        <p class="text-[11px] text-slate-500 truncate">Học sinh quét QR hoặc bấm link sẽ vào thẳng giao diện làm bài</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeShareLinkModal()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold shrink-0">Đóng</button>
             </div>
 
-            <div class="flex flex-col items-center gap-2.5 py-2">
-                <div class="p-3 rounded-2xl bg-white border-2 border-purple-200 shadow-xs">
-                    <canvas id="shareQrCanvas" width="200" height="200" class="block rounded-lg"></canvas>
-                </div>
-                <p id="shareQrNote" class="text-[11px] font-semibold text-slate-500 text-center">Quét mã QR bằng camera điện thoại hoặc Zalo để mở bài ôn tập</p>
+            <!-- Chuyển 2 chế độ chia sẻ: Link trực tiếp gọn / Link Google Drive siêu ngắn -->
+            <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200/80">
+                <button type="button" id="tabShareDirect" onclick="switchShareModalTab('direct')" class="py-2 px-2.5 rounded-xl text-xs font-extrabold bg-purple-600 text-white shadow-2xs transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Link Trực Tiếp</span>
+                </button>
+                <button type="button" id="tabShareDrive" onclick="switchShareModalTab('drive')" class="py-2 px-2.5 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-white transition flex items-center justify-center gap-1.5">
+                    <i class="fa-brands fa-google-drive text-emerald-600"></i>
+                    <span>Link Google Drive</span>
+                </button>
             </div>
 
+            <!-- Khu vực Google Drive (tạo link ~60 ký tự + Mã QR ít ô vuông cho mọi đề dài) -->
+            <div id="shareDriveHelperBox" class="hidden p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-2.5 text-xs">
+                <div class="font-extrabold text-emerald-950 flex items-center gap-1.5">
+                    <i class="fa-brands fa-google-drive text-emerald-600"></i>
+                    <span>Tạo Link Siêu Ngắn &amp; Mã QR Gọn Nhẹ qua Google Drive:</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" onclick="downloadExamJsonForDrive()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-extrabold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-download text-emerald-600"></i>
+                        <span>1. Tải file đề (.json)</span>
+                    </button>
+                    <a href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>2. Mở Google Drive tải lên</span>
+                    </a>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-bold text-emerald-900">3. Dán link Google Drive (đã bật <em>"Bất kỳ ai có đường liên kết"</em>):</label>
+                    <div class="flex gap-1.5">
+                        <input type="text" id="gdriveLinkInput" oninput="buildGoogleDriveShareLink(this.value, false)" placeholder="https://drive.google.com/file/d/.../view?usp=sharing" class="flex-1 px-3 py-2 rounded-xl bg-white border border-emerald-300 text-xs text-slate-800 outline-none focus:border-emerald-600">
+                        <button type="button" onclick="buildGoogleDriveShareLink(document.getElementById('gdriveLinkInput').value, true)" class="px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold shrink-0">Tạo QR</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Khung hiển thị Mã QR sắc nét + Tải ảnh QR -->
+            <div class="flex flex-col items-center gap-2 py-1">
+                <div class="p-3 rounded-2xl bg-white border-2 border-purple-200 shadow-xs">
+                    <canvas id="shareQrCanvas" width="210" height="210" class="block rounded-lg"></canvas>
+                </div>
+                <div class="flex flex-wrap items-center justify-center gap-2">
+                    <button type="button" id="btnDownloadQrPng" onclick="downloadShareQrPng()" class="px-3 py-1 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-[11px] font-extrabold transition flex items-center gap-1">
+                        <i class="fa-solid fa-image"></i>
+                        <span>Tải ảnh Mã QR (.PNG)</span>
+                    </button>
+                    <button type="button" id="btnShortenShareUrl" onclick="shortenCurrentShareLink()" class="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-extrabold transition flex items-center gap-1">
+                        <i class="fa-solid fa-compress"></i>
+                        <span>Rút gọn link &amp; thu nhỏ QR</span>
+                    </button>
+                </div>
+                <p id="shareQrNote" class="text-[11px] font-semibold text-slate-500 text-center px-2">Quét mã QR bằng camera điện thoại hoặc Zalo để mở bài ôn tập</p>
+            </div>
+
+            <!-- Đường link chia sẻ -->
             <div class="space-y-1.5">
-                <label class="block text-xs font-extrabold text-slate-700">Đường link chia sẻ trực tiếp:</label>
+                <div class="flex items-center justify-between text-xs">
+                    <label class="font-extrabold text-slate-700">Đường link chia sẻ cho học sinh:</label>
+                    <span id="shareLinkLengthBadge" class="text-[10px] font-mono font-bold text-slate-400">0 ký tự</span>
+                </div>
                 <div class="flex gap-2">
                     <input type="text" id="shareLinkUrlInput" readonly class="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono text-slate-700 outline-none">
                     <button type="button" onclick="copyShareLink()" class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold transition shrink-0 flex items-center gap-1.5">
@@ -3244,14 +3296,139 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             switchMainWorkspace('study');
         }
 
+        // Nén tối giản dữ liệu đề thi giúp giảm ~50% độ dài link trực tiếp & làm Mã QR thưa, dễ quét hơn
+        function encodeCompactExamPayload(examObj) {
+            const norm = normalizeExamData(examObj);
+            const compact = {
+                t: norm.title,
+                a: norm.partA.map(q => [q.question, q.options, q.answer, q.explanation || '', q.tableHtml || '']),
+                b: norm.partB.map(q => [
+                    q.question,
+                    q.statements.map(s => [s.label, s.text, s.isTrue ? 1 : 0, s.explanation || '']),
+                    q.tableHtml || ''
+                ]),
+                c: norm.partC.map(q => [q.question, q.guide || ''])
+            };
+            return typeof LZString !== 'undefined'
+                ? LZString.compressToEncodedURIComponent(JSON.stringify(compact))
+                : '';
+        }
+
+        function decodeCompactExamPayload(rawObj) {
+            if (!rawObj || typeof rawObj !== 'object') return normalizeExamData({});
+            if (Array.isArray(rawObj.partA) || Array.isArray(rawObj.partB) || Array.isArray(rawObj.partC)) {
+                return normalizeExamData(rawObj);
+            }
+            return normalizeExamData({
+                title: rawObj.t || 'ĐỀ ÔN TẬP',
+                partA: (Array.isArray(rawObj.a) ? rawObj.a : []).map((row, idx) => ({
+                    id: `A${idx + 1}`,
+                    question: row[0] || '',
+                    options: Array.isArray(row[1]) ? row[1] : [],
+                    answer: row[2] ?? 0,
+                    explanation: row[3] || '',
+                    tableHtml: row[4] || ''
+                })),
+                partB: (Array.isArray(rawObj.b) ? rawObj.b : []).map((row, idx) => ({
+                    id: `B${idx + 1}`,
+                    question: row[0] || '',
+                    statements: (Array.isArray(row[1]) ? row[1] : []).map((st, si) => ({
+                        label: st[0] || String.fromCharCode(97 + si),
+                        text: st[1] || '',
+                        isTrue: Boolean(st[2]),
+                        explanation: st[3] || ''
+                    })),
+                    tableHtml: row[2] || ''
+                })),
+                partC: (Array.isArray(rawObj.c) ? rawObj.c : []).map((row, idx) => ({
+                    id: `C${idx + 1}`,
+                    question: row[0] || '',
+                    guide: row[1] || ''
+                }))
+            });
+        }
+
+        function extractGoogleDriveFileId(input) {
+            const s = String(input || '').trim();
+            if (!s) return '';
+            if (/^[a-zA-Z0-9_-]{20,}$/.test(s)) return s;
+            const m1 = s.match(/\/d\/([a-zA-Z0-9_-]{15,})/);
+            if (m1) return m1[1];
+            const m2 = s.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
+            if (m2) return m2[1];
+            return '';
+        }
+
+        function parseExamTextFromDriveContent(rawText) {
+            const text = String(rawText || '').replace(/^\uFEFF/, '').trim();
+            if (!text) return null;
+            // Trường hợp 1: Tệp JSON đề ôn tập
+            if (text.startsWith('{')) {
+                return decodeCompactExamPayload(JSON.parse(text));
+            }
+            // Trường hợp 2: Tệp Web HTML độc lập đã xuất từ công cụ
+            const m = text.match(/\/\* __EXAM_DATA_START__ \*\/\s*let\s+EXAM_DATA\s*=\s*(\{[\s\S]*?\});\s*\/\* __EXAM_DATA_END__ \*\//);
+            if (m) {
+                return decodeCompactExamPayload(JSON.parse(m[1]));
+            }
+            return null;
+        }
+
+        async function loadExamFromGoogleDriveId(fileId) {
+            const keys = getCandidateApiKeys();
+            const candidateUrls = [];
+            if (keys[0]) {
+                candidateUrls.push(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&key=${encodeURIComponent(keys[0])}`);
+            }
+            const directExport = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+            candidateUrls.push(`https://api.allorigins.win/raw?url=${encodeURIComponent(directExport)}`);
+            candidateUrls.push(`https://corsproxy.io/?${encodeURIComponent(directExport)}`);
+            candidateUrls.push(`https://drive.usercontent.google.com/download?id=${encodeURIComponent(fileId)}&export=download&confirm=t`);
+
+            for (const url of candidateUrls) {
+                try {
+                    const res = await fetchWithTimeout(url, { method: 'GET' }, 12000);
+                    if (!res.ok) continue;
+                    const body = await res.text();
+                    const parsed = parseExamTextFromDriveContent(body);
+                    if (parsed && (parsed.partA.length + parsed.partB.length + parsed.partC.length) > 0) {
+                        return parsed;
+                    }
+                } catch (_) {}
+            }
+            return null;
+        }
+
         async function tryLoadSharedExamFromUrl() {
             try {
                 const hash = String(window.location.hash || '');
-                const m = hash.match(/exam=([^&]+)/);
-                if (!m || typeof LZString === 'undefined') return false;
-                const jsonStr = LZString.decompressFromEncodedURIComponent(m[1]);
+
+                // 1. Nạp từ link Google Drive siêu ngắn (#gdrive=FILE_ID)
+                const driveMatch = hash.match(/(?:gdrive|drive)=([a-zA-Z0-9_-]{15,})/);
+                if (driveMatch) {
+                    showToast('Đang tải đề ôn tập từ Google Drive...');
+                    const loadedDriveExam = await loadExamFromGoogleDriveId(driveMatch[1]);
+                    if (loadedDriveExam) {
+                        EXAM_DATA = loadedDriveExam;
+                        IS_STANDALONE_STUDENT_APP = true;
+                        buildActiveExamList();
+                        applyStudentStandaloneModeUI();
+                        showToast(`Đã mở đề "${EXAM_DATA.title}"!`);
+                        return true;
+                    } else {
+                        showToast('Không tải được đề từ Google Drive — hãy kiểm tra tệp đã bật quyền "Bất kỳ ai có đường liên kết" chưa nhé!');
+                    }
+                }
+
+                // 2. Nạp từ link trực tiếp nén gọn (#e=...) hoặc bản đầy đủ (#exam=...)
+                const compactMatch = hash.match(/(?:^#|&)e=([^&]+)/);
+                const fullMatch = hash.match(/(?:^#|&)exam=([^&]+)/);
+                const encoded = compactMatch ? compactMatch[1] : (fullMatch ? fullMatch[1] : '');
+                if (!encoded || typeof LZString === 'undefined') return false;
+
+                const jsonStr = LZString.decompressFromEncodedURIComponent(encoded);
                 if (!jsonStr) return false;
-                EXAM_DATA = normalizeExamData(JSON.parse(jsonStr));
+                EXAM_DATA = decodeCompactExamPayload(JSON.parse(jsonStr));
                 IS_STANDALONE_STUDENT_APP = true;
                 buildActiveExamList();
                 applyStudentStandaloneModeUI();
@@ -3261,36 +3438,160 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             }
         }
 
-        function openShareLinkModal() {
-            if (!hasAnyQuestions()) { showToast('Hãy tạo ít nhất 1 câu hỏi trước khi chia sẻ!'); return; }
-            const compressed = typeof LZString !== 'undefined' ? LZString.compressToEncodedURIComponent(JSON.stringify(EXAM_DATA)) : '';
-            const baseUrl = window.location.href.split('#')[0];
-            latestSelfContainedShareLink = `${baseUrl}#exam=${compressed}`;
+        function renderShareQrCodeForUrl(targetUrl, customNote = '') {
             const inp = document.getElementById('shareLinkUrlInput');
-            if (inp) inp.value = latestSelfContainedShareLink;
+            const badge = document.getElementById('shareLinkLengthBadge');
             const canvas = document.getElementById('shareQrCanvas');
             const note = document.getElementById('shareQrNote');
-            if (canvas && typeof QRious !== 'undefined') {
-                if (latestSelfContainedShareLink.length <= 2200) {
-                    try {
-                        new QRious({ element: canvas, value: latestSelfContainedShareLink, size: 200 });
-                        if (note) note.textContent = 'Quét mã QR bằng camera điện thoại hoặc Zalo để mở bài ôn tập';
-                    } catch (_) {
-                        if (note) note.textContent = 'Đề có nhiều câu hỏi — hãy dùng nút Sao chép đường link bên dưới để gửi cho học sinh!';
+            const dlQrBtn = document.getElementById('btnDownloadQrPng');
+
+            if (inp) inp.value = targetUrl;
+            if (badge) badge.textContent = `${targetUrl.length} ký tự`;
+            if (!canvas || typeof QRious === 'undefined') return;
+
+            // QRious level 'L' hỗ trợ tới ~2.900 ký tự; link ngắn (< 300 ký tự) sẽ tự động ra QR ít ô vuông siêu sắc nét
+            if (targetUrl.length <= 2750) {
+                try {
+                    new QRious({
+                        element: canvas,
+                        value: targetUrl,
+                        size: 210,
+                        level: 'L',
+                        padding: 10,
+                        background: '#ffffff',
+                        foreground: '#0f172a'
+                    });
+                    if (dlQrBtn) dlQrBtn.classList.remove('hidden');
+                    if (note) {
+                        note.textContent = customNote || (targetUrl.length <= 180
+                            ? 'Mã QR siêu gọn, ít ô vuông — Quét 0,2 giây bằng Camera hoặc Zalo là mở ngay!'
+                            : 'Quét mã QR bằng Camera điện thoại hoặc Zalo (bấm "Rút gọn link" hoặc dùng Google Drive để QR nhỏ hơn nữa)');
                     }
-                } else {
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = '#f8fafc';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = '#475569';
-                    ctx.font = 'bold 12px Inter, Arial, sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('Đề dài vượt giới hạn QR', 100, 95);
-                    ctx.fillText('Hãy copy Link bên dưới', 100, 115);
-                    if (note) note.textContent = 'Đề nhiều câu vượt dung lượng mã QR — bạn hãy bấm Sao chép link hoặc tải file Web (.HTML)!';
+                } catch (_) {
+                    if (dlQrBtn) dlQrBtn.classList.add('hidden');
+                    if (note) note.textContent = 'Đề dài vượt giới hạn Mã QR — hãy chuyển sang tab "Link Google Drive" để tạo QR siêu gọn!';
                 }
+            } else {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#334155';
+                ctx.font = 'bold 12px Inter, Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Đề dài vượt giới hạn QR trực tiếp', 105, 88);
+                ctx.fillStyle = '#059669';
+                ctx.fillText('Bấm tab "Link Google Drive"', 105, 110);
+                ctx.fillText('để tạo Mã QR siêu gọn nhẹ!', 105, 130);
+                if (dlQrBtn) dlQrBtn.classList.add('hidden');
+                if (note) note.textContent = 'Đề nhiều câu vượt giới hạn QR trực tiếp — hãy dùng tab "Link Google Drive" ở trên để có link ~60 ký tự và Mã QR ít ô vuông!';
             }
+        }
+
+        function switchShareModalTab(tab) {
+            const isDrive = tab === 'drive';
+            const tDirect = document.getElementById('tabShareDirect');
+            const tDrive = document.getElementById('tabShareDrive');
+            const driveBox = document.getElementById('shareDriveHelperBox');
+
+            const onCls = 'py-2 px-2.5 rounded-xl text-xs font-extrabold bg-purple-600 text-white shadow-2xs transition flex items-center justify-center gap-1.5';
+            const offCls = 'py-2 px-2.5 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-white transition flex items-center justify-center gap-1.5';
+            if (tDirect) tDirect.className = !isDrive ? onCls : offCls;
+            if (tDrive) tDrive.className = isDrive ? onCls : offCls;
+            if (driveBox) driveBox.classList.toggle('hidden', !isDrive);
+
+            if (!isDrive && latestSelfContainedShareLink) {
+                renderShareQrCodeForUrl(latestShortShareLink || latestSelfContainedShareLink);
+            } else if (isDrive) {
+                const driveInput = document.getElementById('gdriveLinkInput')?.value || '';
+                if (driveInput.trim()) buildGoogleDriveShareLink(driveInput, false);
+            }
+        }
+
+        function downloadExamJsonForDrive() {
+            if (!hasAnyQuestions()) { showToast('Chưa có câu hỏi nào trong đề!'); return; }
+            const blob = new Blob([JSON.stringify(EXAM_DATA, null, 2)], { type: 'application/json;charset=utf-8' });
+            triggerBlobFileDownload(blob, `${getSafeFilenameSlug(EXAM_DATA.title, 'de_on_tap')}.json`);
+            showToast('Đã tải file đề (.json)! Bạn tải file này lên Google Drive rồi dán link vào bước 3 nhé.');
+        }
+
+        function buildGoogleDriveShareLink(rawDriveInput, showFeedback = true) {
+            const fileId = extractGoogleDriveFileId(rawDriveInput);
+            if (!fileId) {
+                if (showFeedback) showToast('Chưa nhận diện được ID tệp Google Drive — hãy dán đầy đủ đường link chia sẻ từ Google Drive nhé!');
+                return;
+            }
+            const baseUrl = window.location.href.split('#')[0];
+            const driveShareUrl = `${baseUrl}#gdrive=${fileId}`;
+            renderShareQrCodeForUrl(driveShareUrl, 'Đã tạo Link Google Drive siêu ngắn & Mã QR ít ô vuông sắc nét!');
+            if (showFeedback) showToast('Đã tạo Link Google Drive ngắn & Mã QR gọn nhẹ!');
+        }
+
+        async function shortenCurrentShareLink() {
+            const target = latestSelfContainedShareLink || document.getElementById('shareLinkUrlInput')?.value || '';
+            if (!target) return;
+            const btn = document.getElementById('btnShortenShareUrl');
+            if (btn) btn.disabled = true;
+            showToast('Đang rút gọn link & thu nhỏ Mã QR...');
+            try {
+                const endpoints = [
+                    `https://is.gd/create.php?format=simple&url=${encodeURIComponent(target)}`,
+                    `https://v.gd/create.php?format=simple&url=${encodeURIComponent(target)}`,
+                    `https://clck.ru/--?url=${encodeURIComponent(target)}`
+                ];
+                let shortUrl = '';
+                for (const ep of endpoints) {
+                    try {
+                        const res = await fetchWithTimeout(ep, { method: 'GET' }, 8000);
+                        if (!res.ok) continue;
+                        const txt = (await res.text()).trim();
+                        if (/^https?:\/\/\S+$/i.test(txt) && txt.length < target.length) {
+                            shortUrl = txt;
+                            break;
+                        }
+                    } catch (_) {}
+                }
+                if (shortUrl) {
+                    latestShortShareLink = shortUrl;
+                    renderShareQrCodeForUrl(shortUrl, 'Đã rút gọn link thành công — Mã QR đã thu nhỏ siêu dễ quét!');
+                    showToast('Đã rút gọn link & thu nhỏ Mã QR thành công!');
+                } else {
+                    showToast('Đề hơi dài cho dịch vụ rút gọn tự động — bạn hãy dùng tab "Link Google Drive" để có link siêu ngắn nhé!');
+                    switchShareModalTab('drive');
+                }
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function downloadShareQrPng() {
+            const canvas = document.getElementById('shareQrCanvas');
+            if (!canvas) return;
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `ma_qr_${getSafeFilenameSlug(EXAM_DATA.title, 'de_on_tap')}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Đã tải ảnh Mã QR (.PNG) về máy!');
+        }
+
+        function openShareLinkModal() {
+            if (!hasAnyQuestions()) { showToast('Hãy tạo ít nhất 1 câu hỏi trước khi chia sẻ!'); return; }
+            const compactEncoded = encodeCompactExamPayload(EXAM_DATA);
+            const baseUrl = window.location.href.split('#')[0];
+            latestSelfContainedShareLink = `${baseUrl}#e=${compactEncoded}`;
+            latestShortShareLink = '';
+
+            // Nếu đề gọn (<= 2750 ký tự) thì mở sẵn tab Link Trực Tiếp + Mã QR; nếu đề quá dài thì gợi ý sang tab Link Google Drive
+            if (latestSelfContainedShareLink.length <= 2750) {
+                switchShareModalTab('direct');
+                renderShareQrCodeForUrl(latestSelfContainedShareLink);
+            } else {
+                renderShareQrCodeForUrl(latestSelfContainedShareLink);
+                switchShareModalTab('drive');
+            }
+
             const modal = document.getElementById('shareLinkModal');
             if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
         }
@@ -3301,7 +3602,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
         }
 
         function copyShareLink() {
-            const val = document.getElementById('shareLinkUrlInput')?.value || latestSelfContainedShareLink;
+            const val = document.getElementById('shareLinkUrlInput')?.value || latestShortShareLink || latestSelfContainedShareLink;
             if (copyTextToClipboardFallback(val)) showToast('Đã sao chép đường link cho học sinh!');
             else showToast('Hãy bôi đen đường link để sao chép nhé!');
         }
