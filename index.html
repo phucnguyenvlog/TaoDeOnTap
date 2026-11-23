@@ -829,175 +829,175 @@
             </div>
         </section>
     </main>
-
-    <!-- NÚT NỔI GÓC DƯỚI PHẢI (GỌN SẠCH • CHỈ GIỮ AI TẠO ĐỀ & SIÊU AI TRONG KHU VỰC 1) -->
-    <div id="floatingTeacherDock" class="hidden fixed bottom-4 right-4 z-30 items-center gap-1.5 bg-white/95 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-slate-200">
-        <button type="button" id="btnFloatingAIBuilder" onclick="openAssistantWithBot('builder')" class="w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-xs flex items-center justify-center text-sm transition" title="AI Tạo & Sửa Đề Ôn">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-        </button>
-        <button type="button" id="btnFloatingSuperAI" onclick="openAssistantWithBot('tutor')" class="px-3.5 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center gap-1.5 text-xs font-extrabold transition" title="Siêu AI Hỏi Mọi Thứ">
-            <i class="fa-solid fa-robot text-sm"></i>
-            <span>Siêu AI</span>
-        </button>
-    </div>
-
-    <!-- =================================================================== -->
-    <!-- NGĂN KÉO CHAT SIÊU AI & AI SOẠN SỬA ĐỀ (GIAO DIỆN TRẮNG SÁNG)       -->
-    <!-- =================================================================== -->
-    <div id="customModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[65] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-md p-5 space-y-4">
-            <div>
-                <div id="modalSubtitle" class="text-[11px] font-black uppercase tracking-wider text-blue-600"></div>
-                <h3 id="modalTitle" class="text-base font-black text-slate-900 mt-0.5">Xác nhận</h3>
-            </div>
-            <p id="modalMessage" class="text-xs sm:text-sm text-slate-600 leading-relaxed"></p>
-            <div class="flex items-center justify-end gap-2 pt-2">
-                <button type="button" onclick="closeCustomModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold transition">Huỷ</button>
-                <button type="button" id="modalConfirmBtn" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold transition">Đồng ý</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="aiChatDrawer" class="fixed inset-0 bg-slate-900/45 backdrop-blur-xs z-50 hidden justify-end">
-        <div id="aiChatDrawerPanel" class="bg-white w-full max-w-xl h-full flex flex-col shadow-2xl border-l border-slate-200">
-            <div class="px-4 py-3.5 border-b border-slate-200 flex items-center justify-between gap-2 bg-white">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-9 h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-robot"></i>
+    <!-- KHU VỰC 4A: HỘP THOẠI LỒNG TIẾNG POWERPOINT (.PPTX) ĐẦY ĐỦ 3 BƯỚC -->
+    <div id="pptxAudioModal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-sm z-50 hidden items-center justify-center p-2 sm:p-4">
+        <div class="bg-slate-50 text-slate-800 rounded-3xl border border-slate-200 shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="bg-white px-4 sm:px-5 py-3.5 border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+                        <i class="fa-solid fa-file-powerpoint"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-black text-slate-900 truncate">Trợ Lý AI Đa Năng</h3>
-                        <p id="botRoleDescription" class="text-[11px] text-slate-500 truncate">Hỏi đáp mọi kiến thức, gửi ảnh/Word/PDF để giải chi tiết</p>
+                        <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Lồng Tiếng PowerPoint Tự Động (.PPTX)</h3>
+                        <p class="text-[11px] sm:text-xs text-slate-500 truncate">Phân tích từng slide • AI viết lời giảng truyền cảm • Nhúng MP3 trực tiếp &amp; tải file .pptx hoàn chỉnh</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <button type="button" onclick="toggleAIChatFullscreen()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs" title="Phóng to / Thu gọn"><i class="fa-solid fa-expand"></i></button>
-                    <button type="button" onclick="clearActiveChatHistory()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 text-xs" title="Xoá cuộc trò chuyện"><i class="fa-solid fa-trash-can"></i></button>
-                    <button type="button" onclick="closeAssistantDrawer()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition">Đóng</button>
-                </div>
-            </div>
-
-            <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 grid grid-cols-2 gap-1.5">
-                <button type="button" id="tabBotTutor" onclick="switchActiveAIBot('tutor')" class="py-2 px-3 rounded-xl text-xs font-extrabold bg-emerald-600 text-white transition">Siêu AI Hỏi Mọi Thứ</button>
-                <button type="button" id="tabBotBuilder" onclick="switchActiveAIBot('builder')" class="py-2 px-3 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-white transition">AI Tạo &amp; Sửa Đề Ôn</button>
-            </div>
-
-            <div id="aiChatMessagesBox" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/60"></div>
-
-            <div class="p-3 bg-white border-t border-slate-200 space-y-2">
-                <div id="chatAttachedPreview" class="hidden items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-bold text-blue-800">
-                    <span id="chatAttachedFileName" class="truncate"></span>
-                    <button type="button" onclick="clearChatFileAttach()" class="text-rose-600 hover:underline shrink-0">Bỏ tệp</button>
-                </div>
-                <div class="flex items-end gap-2">
-                    <input type="file" id="chatAttachFileInput" accept="image/*,.doc,.docx,.pdf,.txt" class="sr-only" onchange="handleChatFileAttach(this.files)">
-                    <label for="chatAttachFileInput" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center cursor-pointer shrink-0 transition" title="Đính kèm ảnh / Word / PDF">
-                        <i class="fa-solid fa-paperclip"></i>
-                    </label>
-                    <textarea id="aiChatInput" rows="2" placeholder="Nhập câu hỏi hoặc yêu cầu tạo/sửa đề..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIChatMessage();}" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 focus:border-blue-500 outline-none text-xs sm:text-sm resize-none"></textarea>
-                    <button type="button" id="btnSendAIChat" onclick="sendAIChatMessage()" class="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shrink-0 transition disabled:opacity-50">
-                        <i class="fa-solid fa-paper-plane"></i>
+                    <button type="button" onclick="closePptxAudioModal(); openPptConvertModal();" class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-xs font-extrabold transition">
+                        <i class="fa-solid fa-file-export"></i>
+                        <span>Đổi .PPT cũ</span>
+                    </button>
+                    <button type="button" onclick="closePptxAudioModal()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition flex items-center gap-1">
+                        <i class="fa-solid fa-xmark"></i>
+                        <span>Đóng</span>
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- HỘP THOẠI CHIA SẺ LINK & MÃ QR -->
-    <div id="shareLinkModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-lg p-5 space-y-4">
-            <div class="flex items-center justify-between gap-2">
-                <h3 class="text-base font-black text-slate-900"><i class="fa-solid fa-qrcode text-purple-600 mr-2"></i>Chia Sẻ Link &amp; Mã QR Cho Học Sinh</h3>
-                <button type="button" onclick="closeShareLinkModal()" class="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold">Đóng</button>
-            </div>
-            <div class="flex flex-col items-center gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <canvas id="shareQrCanvas" class="rounded-xl bg-white p-2 border border-slate-200"></canvas>
-                <input type="text" id="shareLinkUrlInput" readonly class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-mono text-slate-700">
-                <button type="button" onclick="copyShareLink()" class="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold transition">
-                    <i class="fa-regular fa-copy mr-1.5"></i>Sao Chép Đường Link Học Sinh
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- HỘP THOẠI XUẤT WORD / PDF -->
-    <div id="wordExportModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-md p-5 space-y-4">
-            <div class="flex items-center justify-between gap-2">
-                <h3 class="text-base font-black text-slate-900"><i class="fa-solid fa-file-word text-blue-600 mr-2"></i>Xuất Đề Ra File Word / PDF</h3>
-                <button type="button" onclick="closeWordExportModal()" class="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold">Đóng</button>
-            </div>
-            <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <input type="checkbox" id="optExportIncludeAnswers" checked class="w-4 h-4 accent-blue-600">
-                <span>Kèm bảng đáp án &amp; lời giải chi tiết ở cuối đề</span>
-            </label>
-            <div class="grid grid-cols-2 gap-2.5">
-                <button type="button" onclick="exportExamToWordDoc()" class="py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold transition"><i class="fa-solid fa-file-word mr-1.5"></i>Tải Word (.doc)</button>
-                <button type="button" onclick="exportExamToPdf()" class="py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold transition"><i class="fa-solid fa-file-pdf mr-1.5"></i>Tải PDF (.pdf)</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- KHU VỰC 3: HỘP THOẠI PHÒNG THU VĂN BẢN -> ÂM THANH (.MP3) -->
-    <div id="ttsStudioModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-3 sm:p-4">
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
-            <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between gap-2">
-                <h3 class="text-sm sm:text-base font-black text-slate-900"><i class="fa-solid fa-volume-high text-teal-600 mr-2"></i>Phòng Thu Văn Bản → Âm Thanh (.MP3)</h3>
-                <button type="button" onclick="closeTTSStudioModal()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition">Đóng</button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <label class="text-xs font-extrabold text-slate-700">Nội dung văn bản cần chuyển sang giọng đọc:</label>
-                    <button type="button" onclick="loadCurrentExamToTTS()" class="px-3 py-1 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-bold">Nạp từ đề đang mở</button>
-                </div>
-                <textarea id="ttsTextInput" rows="5" placeholder="Nhập hoặc dán đoạn văn bản muốn chuyển thành giọng đọc MP3..." class="w-full p-3.5 rounded-2xl border border-slate-300 focus:border-teal-500 outline-none text-xs sm:text-sm"></textarea>
-                <div class="space-y-2">
-                    <div class="text-xs font-extrabold text-slate-700">Chọn giọng đọc AI:</div>
-                    <div id="ttsVoiceCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
-                </div>
-                <div class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
-                    <div class="flex items-center gap-2 flex-1 min-w-[180px]">
-                        <span class="font-bold text-slate-700">Tốc độ:</span>
-                        <input type="range" id="ttsSpeedRange" min="0.75" max="1.4" step="0.05" value="1.0" oninput="document.getElementById('ttsSpeedVal').textContent=parseFloat(this.value).toFixed(2)+'x'" class="flex-1 accent-teal-600">
-                        <span id="ttsSpeedVal" class="font-mono font-extrabold text-teal-700">1.00x</span>
+            <!-- Vùng cuộn chính -->
+            <div class="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4">
+                <!-- BƯỚC 1: CHỌN FILE POWERPOINT -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">1</span>
+                            <span>Chọn tệp PowerPoint cần lồng tiếng (.pptx hoặc .ppt)</span>
+                        </div>
+                        <label for="pptxAudioFileInput" id="btnPptxChangeFile" class="hidden cursor-pointer px-3 py-1 rounded-xl bg-slate-100 hover:bg-orange-50 text-slate-700 hover:text-orange-700 border border-slate-200 text-xs font-extrabold transition">
+                            <i class="fa-solid fa-folder-open pointer-events-none mr-1"></i><span class="pointer-events-none">Đổi file khác</span>
+                        </label>
                     </div>
-                    <button type="button" id="btnGenerateTTS" onclick="generateTTSAudio()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold transition disabled:opacity-50">
-                        <i class="fa-solid fa-waveform-lines mr-1.5"></i>Tạo Giọng Đọc MP3
-                    </button>
-                </div>
-                <div id="ttsResultArea" class="hidden p-4 rounded-2xl bg-teal-50 border border-teal-200 space-y-2.5">
-                    <audio id="ttsAudioPlayer" controls class="w-full"></audio>
-                    <button type="button" onclick="downloadLatestTTSMp3()" class="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-extrabold transition"><i class="fa-solid fa-download mr-1.5"></i>Tải Tệp Âm Thanh (.MP3)</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- KHU VỰC 4A: HỘP THOẠI LỒNG TIẾNG POWERPOINT (.PPTX) -->
-    <div id="pptxAudioModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-2 sm:p-4">
-        <div class="bg-slate-50 rounded-3xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[94vh] flex flex-col overflow-hidden">
-            <div class="bg-white px-5 py-3.5 border-b border-slate-200 flex items-center justify-between gap-2">
-                <h3 class="text-sm sm:text-base font-black text-slate-900 truncate"><i class="fa-solid fa-file-powerpoint text-orange-500 mr-2"></i>Lồng Tiếng PowerPoint Tự Động (.PPTX)</h3>
-                <button type="button" onclick="closePptxAudioModal()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition shrink-0">Đóng</button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-4 space-y-4">
-                <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
-                    <input type="file" id="pptxAudioFileInput" accept=".pptx,.ppt" class="sr-only" onchange="handlePptxFileSelected(this.files)">
-                    <label for="pptxAudioFileInput" id="pptxDropzone" class="block cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50 p-6 text-center space-y-2 transition">
-                        <div class="pointer-events-none text-2xl text-orange-500"><i class="fa-solid fa-file-powerpoint"></i></div>
-                        <div class="pointer-events-none text-sm font-black text-slate-900">Bấm chọn tệp PowerPoint (.pptx hoặc .ppt)</div>
-                        <div class="pointer-events-none text-xs text-slate-500">AI đọc từng slide, viết lời giảng tự nhiên, tạo MP3 và đóng gói chuẩn OOXML</div>
+                    <input type="file" id="pptxAudioFileInput" accept=".pptx,.ppt,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint" class="sr-only" onchange="handlePptxFileSelected(this.files)">
+
+                    <label for="pptxAudioFileInput" id="pptxDropzone" class="block cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/70 hover:bg-orange-50/40 p-6 sm:p-7 text-center space-y-2 transition">
+                        <div class="pointer-events-none w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center text-2xl mx-auto shadow-sm">
+                            <i class="fa-solid fa-file-powerpoint"></i>
+                        </div>
+                        <div class="pointer-events-none text-sm sm:text-base font-black text-slate-900">Bấm chọn hoặc kéo thả tệp PowerPoint (.pptx / .ppt)</div>
+                        <div class="pointer-events-none text-xs text-slate-500">Giữ nguyên 100% bố cục, hình ảnh, hiệu ứng gốc của file .pptx • Tự động chuyển đổi nếu là file .ppt cũ</div>
                     </label>
-                    <div id="pptxFileInfoBar" class="hidden flex-wrap items-center justify-between gap-2 text-xs p-3 rounded-xl bg-orange-50 border border-orange-200">
-                        <span id="pptxFileNameText" class="font-extrabold text-orange-950 truncate"></span>
-                        <div class="flex flex-wrap gap-1.5">
-                            <button type="button" onclick="aiPolishAllPptxSlides()" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-extrabold">AI Viết Lời Giảng Tất Cả</button>
-                            <button type="button" onclick="generateAllPptxMp3()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-extrabold">Tạo MP3 Tất Cả</button>
-                            <button type="button" onclick="exportPptxWithAudio()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold">Tải .PPTX Có Âm Thanh</button>
+
+                    <!-- Thanh thông tin file đã nạp -->
+                    <div id="pptxFileInfoBar" class="hidden p-3 sm:p-3.5 rounded-2xl bg-orange-50/80 border border-orange-200 flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-file-powerpoint"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div id="pptxFileNameText" class="font-black text-slate-900 truncate">bai_giang.pptx</div>
+                                <div id="pptxFileSubMeta" class="text-[11px] font-semibold text-slate-600 truncate">Tổng 0 slide • 0 slide có nội dung chữ</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 shrink-0">
+                            <span id="pptxDubbedCounterBadge" class="px-3 py-1 rounded-full bg-white text-emerald-700 border border-emerald-200 font-extrabold text-[11px]">Đã lồng tiếng: 0/0 slide</span>
                         </div>
                     </div>
                 </div>
-                <div id="pptxSlidesList" class="space-y-2.5"></div>
+
+                <!-- BƯỚC 2: CẤU HÌNH GIỌNG ĐỌC, LỜI GIẢNG AI & XUẤT TỆP -->
+                <div id="pptxStep2Box" class="hidden bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3.5">
+                    <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">2</span>
+                        <span>Cấu hình giọng đọc, lời giảng AI &amp; xuất tệp PowerPoint có âm thanh</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                        <div>
+                            <label class="block font-bold text-slate-600 mb-1">Giọng đọc (Vercel TTS)</label>
+                            <select id="pptxVoiceSelect" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-800 outline-none focus:border-orange-500"></select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-600 mb-1">Phong cách AI viết lời giảng</label>
+                            <select id="pptxStyleSelect" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-800 outline-none focus:border-orange-500">
+                                <option value="teacher" selected>Giáo viên giảng bài truyền cảm</option>
+                                <option value="presenter">Thuyết trình súc tích, chuyên nghiệp</option>
+                                <option value="story">Kể chuyện sinh động, cuốn hút</option>
+                                <option value="student">Học sinh thuyết trình tự nhiên</option>
+                            </select>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="font-bold text-slate-600">Tốc độ đọc</label>
+                                <span id="pptxSpeedVal" class="font-mono font-extrabold text-orange-600">1.00x</span>
+                            </div>
+                            <input type="range" id="pptxSpeedRange" min="0.75" max="1.40" step="0.05" value="1.00" oninput="document.getElementById('pptxSpeedVal').textContent=parseFloat(this.value).toFixed(2)+'x'" class="w-full accent-orange-500 mt-1.5">
+                        </div>
+                    </div>
+
+                    <!-- 4 tuỳ chọn đồng bộ hiệu ứng & trình chiếu -->
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs font-bold text-slate-700">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pptxOptAutoPlay" checked class="w-4 h-4 rounded accent-orange-500">
+                            <span>Tự động phát âm thanh khi mở slide</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pptxOptSyncAnim" checked class="w-4 h-4 rounded accent-orange-500">
+                            <span>Hiệu ứng slide chạy cùng lúc với âm thanh</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pptxOptHideIcon" checked class="w-4 h-4 rounded accent-orange-500">
+                            <span>Ẩn biểu tượng loa khi chiếu</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="pptxOptAutoAdvance" onchange="if(this.checked){document.getElementById('pptxOptAutoPlay').checked=true;document.getElementById('pptxOptSyncAnim').checked=true;}" class="w-4 h-4 rounded accent-orange-500">
+                            <span>Tự chuyển slide khi đọc xong</span>
+                        </label>
+                    </div>
+
+                    <!-- 3 nút hành động chính -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <button type="button" id="btnPptxAiAll" onclick="aiPolishAllPptxSlides()" class="py-3 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs sm:text-sm font-extrabold transition flex items-center justify-center gap-1.5 disabled:opacity-50">
+                            <i class="fa-solid fa-wand-magic-sparkles text-amber-600"></i>
+                            <span>AI Viết Lời Giảng Hay Tất Cả</span>
+                        </button>
+                        <button type="button" id="btnPptxMp3All" onclick="generateAllPptxMp3()" class="py-3 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white text-xs sm:text-sm font-extrabold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span>Tạo Âm Thanh Tất Cả Slide</span>
+                        </button>
+                        <button type="button" id="btnPptxExport" onclick="exportPptxWithAudio()" class="py-3 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white text-xs sm:text-sm font-extrabold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Tải File PowerPoint (.PPTX)</span>
+                        </button>
+                    </div>
+
+                    <!-- Thanh tiến trình xử lý PowerPoint -->
+                    <div id="pptxProgressBox" class="hidden p-3 rounded-2xl bg-blue-50 border border-blue-200 space-y-2">
+                        <div class="flex items-center justify-between gap-2 text-xs font-extrabold text-blue-900">
+                            <span id="pptxProgressLabel" class="flex items-center gap-2 min-w-0">
+                                <i class="fa-solid fa-spinner fa-spin text-blue-600 shrink-0"></i>
+                                <span class="truncate">Đang xử lý...</span>
+                            </span>
+                            <span id="pptxProgressPct" class="px-2 py-0.5 rounded-full bg-blue-600 text-white font-mono text-[11px]">0%</span>
+                        </div>
+                        <div class="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
+                            <div id="pptxProgressBar" class="h-full progress-bar-animated rounded-full transition-all duration-300" style="width: 10%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Báo lỗi PowerPoint -->
+                    <div id="pptxErrorBox" class="hidden p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-start gap-2">
+                        <i class="fa-solid fa-circle-exclamation text-rose-600 mt-0.5 shrink-0"></i>
+                        <span id="pptxErrorText" class="flex-1 break-words"></span>
+                    </div>
+                </div>
+
+                <!-- BƯỚC 3: NỘI DUNG PHÂN TÍCH TỪNG SLIDE -->
+                <div id="pptxStep3Box" class="hidden space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+                        <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-black flex items-center justify-center">3</span>
+                            <span>Nội dung phân tích từng Slide (Bạn có thể sửa lời đọc &amp; nghe thử từng trang)</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs font-extrabold">
+                            <button type="button" onclick="toggleSelectAllPptxSlides(true)" class="text-teal-700 hover:underline">Chọn tất cả</button>
+                            <span class="text-slate-300">|</span>
+                            <button type="button" onclick="toggleSelectAllPptxSlides(false)" class="text-slate-500 hover:underline">Bỏ chọn hết</button>
+                        </div>
+                    </div>
+                    <div id="pptxSlidesList" class="space-y-3"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -1196,7 +1196,7 @@
                             </div>
                         </div>
 
-                        <input type="file" id="vidDubFileInput" accept="video/*" multiple class="sr-only" onchange="handleVideoDubFileSelected(this.files)">
+                        <input type="file" id="vidDubFileInput" accept="video/*,.mp4,.mov,.m4v,.webm,.3gp" multiple class="sr-only" onchange="handleVideoDubFileSelected(this.files)">
 
                         <label for="vidDubFileInput" id="vidDubDropzone" class="block cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 hover:border-purple-500 bg-slate-50/70 hover:bg-purple-50/40 p-6 sm:p-8 text-center space-y-2.5 transition">
                             <div class="pointer-events-none w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center text-2xl mx-auto shadow-sm">
@@ -3296,6 +3296,8 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                         badge: v.badge || v.Locale || 'AI Voice'
                     }));
                     renderTTSVoiceCards();
+                    populatePptxVoiceSelect();
+                    populateVideoStudioVoiceSelects();
                 }
             } catch (_) {}
         }
@@ -3372,23 +3374,86 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
         const pptxState = {
             zip: null,
             filename: '',
-            slides: [], // [{ index, path, rawText, script, mp3Blob }]
+            slides: [], // [{ index, slideNum, path, title, rawText, notesText, script, selected, mp3Blob, mp3Url, durationSec, status, errorMsg }]
+            isBusy: false,
             convertedBlob: null,
             convertedName: ''
         };
+
+        function populatePptxVoiceSelect() {
+            const sel = document.getElementById('pptxVoiceSelect');
+            if (!sel) return;
+            const prev = sel.value || selectedTTSVoiceId || 'vi-VN-HoaiMyNeural';
+            sel.innerHTML = ttsVoicesList.map(v =>
+                `<option value="${escapeHtml(v.id)}" ${v.id === prev ? 'selected' : ''}>${escapeHtml(v.name)} (${escapeHtml(v.badge)})</option>`
+            ).join('');
+        }
 
         function openPptxAudioModal() {
             const modal = document.getElementById('pptxAudioModal');
             if (!modal) return;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            populatePptxVoiceSelect();
+            if (!ttsVoicesSyncedOnce) syncVoicesFromVercelSilent();
         }
 
         function closePptxAudioModal() {
             const modal = document.getElementById('pptxAudioModal');
             if (!modal) return;
+            modal.querySelectorAll('audio').forEach(a => { try { a.pause(); } catch (_) {} });
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+        }
+
+        function setPptxError(msg) {
+            const box = document.getElementById('pptxErrorBox');
+            const txt = document.getElementById('pptxErrorText');
+            if (!box || !txt) return;
+            if (!msg) {
+                box.classList.add('hidden');
+                txt.textContent = '';
+            } else {
+                txt.textContent = msg;
+                box.classList.remove('hidden');
+            }
+        }
+
+        function setPptxProgress(visible, pct = 0, label = '') {
+            const box = document.getElementById('pptxProgressBox');
+            if (!box) return;
+            if (!visible) {
+                box.classList.add('hidden');
+                return;
+            }
+            box.classList.remove('hidden');
+            const clamped = Math.max(4, Math.min(100, Math.round(pct)));
+            const pctEl = document.getElementById('pptxProgressPct');
+            const barEl = document.getElementById('pptxProgressBar');
+            const lblEl = document.getElementById('pptxProgressLabel');
+            if (pctEl) pctEl.textContent = `${clamped}%`;
+            if (barEl) barEl.style.width = `${clamped}%`;
+            if (lblEl && label) {
+                lblEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-blue-600 shrink-0"></i><span class="truncate">${escapeHtml(label)}</span>`;
+            }
+        }
+
+        function setPptxButtonsDisabled(disabled) {
+            pptxState.isBusy = disabled;
+            ['btnPptxAiAll', 'btnPptxMp3All', 'btnPptxExport'].forEach(id => {
+                const b = document.getElementById(id);
+                if (b) b.disabled = disabled;
+            });
+        }
+
+        function updatePptxDubbedStats() {
+            const total = pptxState.slides.length;
+            const withText = pptxState.slides.filter(s => (s.rawText || '').trim().length > 0).length;
+            const dubbed = pptxState.slides.filter(s => Boolean(s.mp3Blob)).length;
+            const sub = document.getElementById('pptxFileSubMeta');
+            const badge = document.getElementById('pptxDubbedCounterBadge');
+            if (sub) sub.textContent = `Tổng ${total} slide • ${withText} slide có nội dung chữ`;
+            if (badge) badge.textContent = `Đã lồng tiếng: ${dubbed}/${total} slide`;
         }
 
         function bindPptxDropzoneEvents() {
@@ -3399,121 +3464,763 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             dz.addEventListener('drop', e => { if (e.dataTransfer?.files?.length) handlePptxFileSelected(e.dataTransfer.files); });
         }
 
+        // Trích xuất văn bản sạch 100% bằng DOMParser (loại bỏ hoàn toàn lỗi dính thẻ XML <a:latin ...>)
+        function extractCleanTextLinesFromSlideXml(xmlStr) {
+            const lines = [];
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(xmlStr, 'application/xml');
+                if (!doc.querySelector('parsererror')) {
+                    const paragraphs = doc.getElementsByTagName('*');
+                    for (let i = 0; i < paragraphs.length; i++) {
+                        const node = paragraphs[i];
+                        if (node.localName === 'p' && (node.namespaceURI || '').includes('drawingml')) {
+                            const runTexts = [];
+                            const descendants = node.getElementsByTagName('*');
+                            for (let j = 0; j < descendants.length; j++) {
+                                const child = descendants[j];
+                                if (child.localName === 't' && (child.namespaceURI || '').includes('drawingml')) {
+                                    if (child.textContent) runTexts.push(child.textContent);
+                                } else if (child.localName === 'br' && (child.namespaceURI || '').includes('drawingml')) {
+                                    runTexts.push('\n');
+                                }
+                            }
+                            const line = runTexts.join('').replace(/[ \t]+/g, ' ').trim();
+                            if (line) lines.push(line);
+                        }
+                    }
+                    if (lines.length > 0) return lines;
+                }
+            } catch (_) {}
+
+            // Dự phòng nghiêm ngặt: chỉ khớp đúng thẻ <a:t> hoặc <a:t ...> (KHÔNG bao giờ khớp <a:txBody> hay <a:tbl>)
+            const fallback = [];
+            const re = /<a:t(?:\s+[^>]*)?>([\s\S]*?)<\/a:t>/g;
+            let m;
+            while ((m = re.exec(xmlStr)) !== null) {
+                const decoded = m[1]
+                    .replace(/&amp;/g, '&')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&quot;/g, '"')
+                    .replace(/&#39;/g, "'")
+                    .trim();
+                if (decoded) fallback.push(decoded);
+            }
+            return fallback;
+        }
+
+        function findZipFileCaseInsensitive(zip, targetPath) {
+            const direct = zip.file(targetPath);
+            if (direct) return { path: targetPath, entry: direct };
+            const lower = targetPath.toLowerCase();
+            const matchedKey = Object.keys(zip.files).find(k => k.toLowerCase() === lower);
+            return matchedKey ? { path: matchedKey, entry: zip.file(matchedKey) } : null;
+        }
+
         async function handlePptxFileSelected(fileList) {
             if (!fileList || !fileList.length) return;
             const file = fileList[0];
-            if (file.name.toLowerCase().endsWith('.ppt')) {
-                const blob = await convertOldPptBufferToPptxBlob(await file.arrayBuffer(), file.name);
-                await loadPptxBlobIntoAudioStudio(blob, file.name.replace(/\.ppt$/i, '.pptx'));
-                return;
+            setPptxError('');
+            try {
+                if ((file.name || '').toLowerCase().endsWith('.ppt')) {
+                    showToast('Đang tự động chuyển file .ppt cũ sang .pptx...');
+                    const blob = await convertOldPptBufferToPptxBlob(await file.arrayBuffer(), file.name);
+                    await loadPptxBlobIntoAudioStudio(blob, file.name.replace(/\.ppt$/i, '.pptx'));
+                } else {
+                    await loadPptxBlobIntoAudioStudio(file, file.name);
+                }
+            } catch (err) {
+                setPptxError(`Không mở được tệp PowerPoint: ${err.message}`);
+            } finally {
+                const inp = document.getElementById('pptxAudioFileInput');
+                if (inp) inp.value = '';
             }
-            await loadPptxBlobIntoAudioStudio(file, file.name);
         }
 
         async function loadPptxBlobIntoAudioStudio(blobOrFile, filename) {
-            try {
-                const zip = await JSZip.loadAsync(blobOrFile);
-                const slidePaths = Object.keys(zip.files)
-                    .filter(p => /^ppt\/slides\/slide\d+\.xml$/i.test(p))
-                    .sort((a, b) => parseInt(a.match(/\d+/)[0], 10) - parseInt(b.match(/\d+/)[0], 10));
-                const slides = [];
-                for (let i = 0; i < slidePaths.length; i++) {
-                    const xml = await zip.file(slidePaths[i]).async('string');
-                    const texts = Array.from(xml.matchAll(/<a:t[^>]*>([\s\S]*?)<\/a:t>/g)).map(m => m[1]).join(' ').replace(/\s+/g, ' ').trim();
-                    slides.push({ index: i + 1, path: slidePaths[i], rawText: texts, script: texts, mp3Blob: null });
-                }
-                pptxState.zip = zip;
-                pptxState.filename = filename || 'bai_giang.pptx';
-                pptxState.slides = slides;
+            // Thu hồi URL audio cũ nếu có
+            pptxState.slides.forEach(s => { if (s.mp3Url) { try { URL.revokeObjectURL(s.mp3Url); } catch (_) {} } });
 
-                const bar = document.getElementById('pptxFileInfoBar');
-                if (bar) { bar.classList.remove('hidden'); bar.classList.add('flex'); }
-                const fnEl = document.getElementById('pptxFileNameText');
-                if (fnEl) fnEl.textContent = `${pptxState.filename} (${slides.length} slide)`;
-                renderPptxSlidesList();
-                showToast(`Đã đọc xong ${slides.length} slide từ tệp PowerPoint!`);
-            } catch (err) {
-                showToast(`Không đọc được tệp PowerPoint: ${err.message}`);
+            const zip = await JSZip.loadAsync(blobOrFile);
+            const slidePaths = Object.keys(zip.files)
+                .filter(p => /^ppt\/slides\/slide\d+\.xml$/i.test(p))
+                .sort((a, b) => parseInt(a.match(/\d+/)[0], 10) - parseInt(b.match(/\d+/)[0], 10));
+
+            if (slidePaths.length === 0) {
+                throw new Error('Không tìm thấy trang slide nào trong tệp .pptx này.');
             }
+
+            const slides = [];
+            for (let i = 0; i < slidePaths.length; i++) {
+                const sp = slidePaths[i];
+                const slideNum = parseInt(sp.match(/\d+/)[0], 10);
+                const xml = await zip.file(sp).async('string');
+                const lines = extractCleanTextLinesFromSlideXml(xml);
+                const rawText = lines.join('\n').trim();
+                const titleLine = (lines[0] || `Slide ${i + 1}`).slice(0, 68);
+
+                // Đọc thêm ghi chú diễn giả (Speaker Notes) nếu có
+                let notesText = '';
+                const notesMatch = findZipFileCaseInsensitive(zip, `ppt/notesSlides/notesSlide${slideNum}.xml`);
+                if (notesMatch && notesMatch.entry) {
+                    try {
+                        const nXml = await notesMatch.entry.async('string');
+                        const nLines = extractCleanTextLinesFromSlideXml(nXml).filter(l => !/^\d+$/.test(l));
+                        notesText = nLines.join('\n').trim();
+                    } catch (_) {}
+                }
+
+                const initialScript = notesText || rawText;
+                slides.push({
+                    index: i + 1,
+                    slideNum,
+                    path: sp,
+                    title: titleLine,
+                    rawText,
+                    notesText,
+                    script: initialScript,
+                    selected: Boolean(initialScript.trim()),
+                    mp3Blob: null,
+                    mp3Url: '',
+                    durationSec: 0,
+                    status: 'idle', // 'idle' | 'working' | 'done' | 'error'
+                    errorMsg: ''
+                });
+            }
+
+            pptxState.zip = zip;
+            pptxState.filename = filename || 'bai_giang.pptx';
+            pptxState.slides = slides;
+
+            document.getElementById('pptxDropzone')?.classList.add('hidden');
+            document.getElementById('btnPptxChangeFile')?.classList.remove('hidden');
+            const bar = document.getElementById('pptxFileInfoBar');
+            if (bar) { bar.classList.remove('hidden'); bar.classList.add('flex'); }
+            document.getElementById('pptxStep2Box')?.classList.remove('hidden');
+            document.getElementById('pptxStep3Box')?.classList.remove('hidden');
+
+            const fnEl = document.getElementById('pptxFileNameText');
+            if (fnEl) fnEl.textContent = pptxState.filename;
+            populatePptxVoiceSelect();
+            updatePptxDubbedStats();
+            renderPptxSlidesList();
+            showToast(`Đã phân tích sạch ${slides.length} slide từ "${pptxState.filename}"!`);
+        }
+
+        function toggleSelectAllPptxSlides(checked) {
+            pptxState.slides.forEach(s => { s.selected = Boolean(checked); });
+            renderPptxSlidesList();
+        }
+
+        function onPptxSlideScriptInput(idx, val) {
+            const s = pptxState.slides[idx];
+            if (!s) return;
+            s.script = val;
+            const cnt = document.getElementById(`pptxCharCount_${idx}`);
+            if (cnt) cnt.textContent = `${val.trim().length} ký tự`;
         }
 
         function renderPptxSlidesList() {
             const list = document.getElementById('pptxSlidesList');
             if (!list) return;
-            list.innerHTML = pptxState.slides.map((s, idx) => `
-                <div class="bg-white rounded-2xl border border-slate-200 p-3.5 space-y-2 text-xs">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <span class="px-2.5 py-0.5 rounded-lg bg-orange-100 text-orange-800 font-black">Slide ${s.index}</span>
-                        <div class="flex items-center gap-1.5">
-                            ${s.mp3Blob ? '<span class="text-emerald-600 font-bold"><i class="fa-solid fa-check mr-1"></i>Đã có MP3</span>' : ''}
-                            <button type="button" onclick="aiPolishSinglePptxSlide(${idx})" class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold">AI Viết Lời Hay</button>
-                            <button type="button" onclick="generatePptxSlideMp3(${idx})" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold">Tạo MP3</button>
+            updatePptxDubbedStats();
+            list.innerHTML = pptxState.slides.map((s, idx) => {
+                let statusPill = `<span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">Chưa có âm thanh</span>`;
+                if (s.status === 'working') {
+                    statusPill = `<span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-extrabold"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang xử lý...</span>`;
+                } else if (s.mp3Blob) {
+                    const durTxt = s.durationSec > 0 ? ` (${Math.round(s.durationSec)}s)` : '';
+                    statusPill = `<span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold"><i class="fa-solid fa-circle-check mr-1"></i>Đã có MP3${durTxt}</span>`;
+                } else if (s.status === 'error') {
+                    statusPill = `<span class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-extrabold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Tạm gián đoạn</span>`;
+                }
+
+                return `
+                    <div class="bg-white rounded-2xl border ${s.selected ? 'border-slate-200' : 'border-slate-200/60 opacity-75'} shadow-2xs p-3.5 sm:p-4 space-y-2.5 text-xs">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0 flex-1">
+                                <input type="checkbox" ${s.selected ? 'checked' : ''} onchange="pptxState.slides[${idx}].selected=this.checked; renderPptxSlidesList();" class="w-4 h-4 rounded accent-orange-500 shrink-0 cursor-pointer">
+                                <span class="px-2.5 py-0.5 rounded-lg bg-orange-100 text-orange-800 font-black shrink-0">Slide ${s.index}</span>
+                                <span class="font-extrabold text-slate-800 truncate">${escapeHtml(s.title)}</span>
+                            </div>
+                            <div class="shrink-0">${statusPill}</div>
+                        </div>
+
+                        <textarea rows="3" oninput="onPptxSlideScriptInput(${idx}, this.value)" placeholder="Nhập hoặc bấm AI viết lời giảng cho Slide ${s.index}..." class="w-full p-3 rounded-xl bg-slate-50 focus:bg-white border border-slate-200 focus:border-orange-500 text-xs sm:text-sm leading-relaxed text-slate-900 outline-none resize-y">${escapeHtml(s.script)}</textarea>
+
+                        ${s.errorMsg ? `<div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-semibold flex items-center gap-1.5"><i class="fa-solid fa-circle-exclamation shrink-0"></i><span>${escapeHtml(s.errorMsg)}</span></div>` : ''}
+
+                        ${s.mp3Url ? `<audio controls src="${s.mp3Url}" class="w-full h-9"></audio>` : ''}
+
+                        <div class="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                            <span id="pptxCharCount_${idx}" class="text-[11px] font-bold text-slate-500">${(s.script || '').trim().length} ký tự</span>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="aiPolishSinglePptxSlide(${idx})" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-extrabold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-amber-600"></i>
+                                    <span>AI viết lời hay</span>
+                                </button>
+                                <button type="button" onclick="generatePptxSlideMp3(${idx})" class="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                    <span>Tạo MP3 slide này</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <textarea rows="3" oninput="pptxState.slides[${idx}].script=this.value" class="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-300 outline-none focus:border-orange-500">${escapeHtml(s.script)}</textarea>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+        }
+
+        function getPptxStyleInstruction() {
+            const val = document.getElementById('pptxStyleSelect')?.value || 'teacher';
+            if (val === 'presenter') return 'phong cách thuyết trình chuyên nghiệp, súc tích, rõ ý, mạch lạc';
+            if (val === 'story') return 'phong cách kể chuyện sinh động, giàu hình ảnh và cảm xúc, lôi cuốn người nghe';
+            if (val === 'student') return 'phong cách học sinh thuyết trình tự nhiên, lễ phép, dễ hiểu';
+            return 'phong cách giáo viên giảng bài truyền cảm, thân thiện, dẫn dắt học sinh dễ hiểu';
         }
 
         async function aiPolishSinglePptxSlide(idx) {
             const s = pptxState.slides[idx];
             if (!s) return;
-            showToast(`AI đang viết lời giảng cho Slide ${s.index}...`);
+            setPptxError('');
+            s.status = 'working';
+            s.errorMsg = '';
+            renderPptxSlidesList();
             try {
+                const sourceContent = (s.rawText || s.script || s.title).trim();
                 const res = await callGeminiTextOrMultimodal([{
-                    text: `Viết 1 đoạn lời giảng tiếng Việt ngắn gọn, tự nhiên, truyền cảm (khoảng 35-60 từ, không dùng markdown ** hay #) cho Slide ${s.index} có nội dung: "${s.rawText || s.script}"`
+                    text: `Bạn là chuyên gia biên soạn lời giảng thuyết trình tiếng Việt theo ${getPptxStyleInstruction()}.
+Đây là Slide ${s.index}/${pptxState.slides.length} của bài "${pptxState.filename}".
+Nội dung gốc trên slide:
+"""
+${sourceContent}
+"""
+Hãy viết 1 đoạn lời giảng nói tự nhiên (khoảng 35–75 từ) để đọc trực tiếp thành giọng nói MP3.
+Quy tắc: không dùng markdown (**, #, gạch đầu dòng), không đọc ký hiệu thừa, viết câu văn trôi chảy có dấu chấm phẩy rõ ràng.`
                 }], '', false, 1024);
                 s.script = res.replace(/[*#_`]+/g, '').trim();
+                s.selected = true;
+                s.status = s.mp3Blob ? 'done' : 'idle';
                 renderPptxSlidesList();
-                showToast(`Đã viết xong lời giảng Slide ${s.index}!`);
+                showToast(`AI đã viết xong lời giảng hay cho Slide ${s.index}!`);
             } catch (err) {
-                showToast(`Lỗi AI: ${err.message}`);
+                s.status = 'error';
+                s.errorMsg = err.message || 'Không gọi được AI lúc này.';
+                renderPptxSlidesList();
             }
+        }
+
+        async function aiPolishBatchSlidesTogether(slideBatch) {
+            const styleDesc = getPptxStyleInstruction();
+            const blockText = slideBatch.map(s =>
+                `[[[SLIDE ${s.index}]]]\n${(s.rawText || s.script || s.title || '').slice(0, 1200)}`
+            ).join('\n\n');
+
+            const prompt = `Bạn là chuyên gia soạn lời giảng thuyết trình tiếng Việt theo ${styleDesc}.
+Hãy viết lại nội dung các slide dưới đây thành lời giảng nói tự nhiên, mạch lạc, truyền cảm để chuyển sang giọng đọc MP3 (mỗi slide khoảng 35–75 từ).
+QUY TẮC BẮT BUỘC:
+- Giữ đúng thẻ phân cách [[[SLIDE N]]] cho từng slide theo đúng số thứ tự.
+- Không dùng markdown (**, #, dấu sao, gạch đầu dòng), chỉ viết văn nói tự nhiên.
+
+DỮ LIỆU CÁC SLIDE:
+${blockText}`;
+
+            const raw = await callGeminiTextOrMultimodal([{ text: prompt }], '', false, 4096);
+            const cleaned = String(raw || '').replace(/\r\n/g, '\n');
+            const re = /(?:^|\n)\s*\[\[\[\s*SLIDE\s*(\d+)\s*\]\]\]/gi;
+            const matches = [];
+            let m;
+            while ((m = re.exec(cleaned)) !== null) {
+                matches.push({ num: parseInt(m[1], 10), start: m.index + m[0].length, matchStart: m.index });
+            }
+            const resultMap = {};
+            for (let i = 0; i < matches.length; i++) {
+                const next = i + 1 < matches.length ? matches[i + 1].matchStart : cleaned.length;
+                const body = cleaned.slice(matches[i].start, next).replace(/[*#_`]+/g, '').trim();
+                if (body) resultMap[matches[i].num] = body;
+            }
+            return resultMap;
         }
 
         async function aiPolishAllPptxSlides() {
-            for (let i = 0; i < pptxState.slides.length; i++) {
-                await aiPolishSinglePptxSlide(i);
+            const targets = pptxState.slides.filter(s => s.selected || (s.rawText || s.script).trim());
+            if (targets.length === 0) {
+                showToast('Hãy tích chọn ít nhất 1 slide để AI viết lời giảng!');
+                return;
+            }
+            setPptxError('');
+            setPptxButtonsDisabled(true);
+            try {
+                const batchSize = 4;
+                let completed = 0;
+                for (let i = 0; i < targets.length; i += batchSize) {
+                    const batch = targets.slice(i, i + batchSize);
+                    batch.forEach(s => { s.status = 'working'; s.errorMsg = ''; });
+                    renderPptxSlidesList();
+                    setPptxProgress(true, Math.round((completed / targets.length) * 90) + 5, `AI đang viết lời giảng nhóm Slide ${batch[0].index}–${batch[batch.length - 1].index}...`);
+
+                    let map = {};
+                    try {
+                        map = await aiPolishBatchSlidesTogether(batch);
+                    } catch (_) {}
+
+                    for (const s of batch) {
+                        if (map[s.index]) {
+                            s.script = map[s.index];
+                            s.selected = true;
+                            s.status = s.mp3Blob ? 'done' : 'idle';
+                        } else {
+                            // Dự phòng viết riêng nếu slide nào bị sót
+                            try {
+                                const single = await callGeminiTextOrMultimodal([{
+                                    text: `Viết 1 đoạn lời giảng nói tự nhiên tiếng Việt (${getPptxStyleInstruction()}, 35-65 từ, không dùng markdown) cho Slide ${s.index}: "${(s.rawText || s.script || s.title).slice(0, 1000)}"`
+                                }], '', false, 1024);
+                                s.script = single.replace(/[*#_`]+/g, '').trim();
+                                s.selected = true;
+                                s.status = s.mp3Blob ? 'done' : 'idle';
+                            } catch (err) {
+                                s.status = 'error';
+                                s.errorMsg = err.message || 'Lỗi AI';
+                            }
+                        }
+                        completed++;
+                    }
+                    renderPptxSlidesList();
+                }
+                setPptxProgress(true, 100, 'Hoàn tất viết lời giảng AI cho các slide!');
+                showToast(`AI đã hoàn tất viết lời giảng cho ${completed} slide!`);
+            } catch (err) {
+                setPptxError(`Lỗi viết lời giảng AI: ${err.message}`);
+            } finally {
+                setTimeout(() => setPptxProgress(false), 900);
+                setPptxButtonsDisabled(false);
             }
         }
 
-        async function generatePptxSlideMp3(idx) {
-            const s = pptxState.slides[idx];
-            if (!s || !s.script.trim()) return;
+        async function measureAudioBlobDurationSec(blob) {
             try {
-                s.mp3Blob = await fetchVideoTtsMp3(s.script.trim(), selectedTTSVoiceId, 1.0);
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio();
+                audio.preload = 'metadata';
+                audio.src = url;
+                const dur = await new Promise(resolve => {
+                    const t = setTimeout(() => resolve(0), 2500);
+                    audio.onloadedmetadata = () => { clearTimeout(t); resolve(isFinite(audio.duration) ? audio.duration : 0); };
+                    audio.onerror = () => { clearTimeout(t); resolve(0); };
+                });
+                URL.revokeObjectURL(url);
+                if (dur > 0) return dur;
+            } catch (_) {}
+            return Math.max(2, Math.round(blob.size / 6000));
+        }
+
+        async function generatePptxSlideMp3(idx, silent = false) {
+            const s = pptxState.slides[idx];
+            if (!s) return false;
+            const text = (s.script || '').trim();
+            if (!text) {
+                if (!silent) showToast(`Slide ${s.index} chưa có nội dung lời đọc!`);
+                return false;
+            }
+            s.status = 'working';
+            s.errorMsg = '';
+            renderPptxSlidesList();
+            try {
+                const voiceId = document.getElementById('pptxVoiceSelect')?.value || selectedTTSVoiceId || 'vi-VN-HoaiMyNeural';
+                const speed = parseFloat(document.getElementById('pptxSpeedRange')?.value || '1.0') || 1.0;
+                const blob = await fetchVideoTtsMp3(text, voiceId, speed);
+                if (s.mp3Url) { try { URL.revokeObjectURL(s.mp3Url); } catch (_) {} }
+                s.mp3Blob = blob;
+                s.mp3Url = URL.createObjectURL(blob);
+                s.durationSec = await measureAudioBlobDurationSec(blob);
+                s.selected = true;
+                s.status = 'done';
                 renderPptxSlidesList();
-                showToast(`Đã tạo MP3 cho Slide ${s.index}!`);
+                if (!silent) showToast(`Đã tạo giọng đọc MP3 cho Slide ${s.index}!`);
+                return true;
             } catch (err) {
-                showToast(`Lỗi tạo MP3 Slide ${s.index}: ${err.message}`);
+                s.status = 'error';
+                s.errorMsg = err.message || 'Không tạo được MP3.';
+                renderPptxSlidesList();
+                return false;
             }
         }
 
         async function generateAllPptxMp3() {
-            for (let i = 0; i < pptxState.slides.length; i++) {
-                await generatePptxSlideMp3(i);
+            const targets = pptxState.slides
+                .map((s, idx) => ({ s, idx }))
+                .filter(it => it.s.selected && (it.s.script || '').trim().length > 0);
+            if (targets.length === 0) {
+                showToast('Hãy tích chọn ít nhất 1 slide có lời đọc để tạo âm thanh!');
+                return;
+            }
+            setPptxError('');
+            setPptxButtonsDisabled(true);
+            let okCount = 0;
+            try {
+                for (let i = 0; i < targets.length; i++) {
+                    const { s, idx } = targets[i];
+                    setPptxProgress(true, Math.round(((i + 0.3) / targets.length) * 100), `Đang tạo giọng đọc MP3 cho Slide ${s.index} (${i + 1}/${targets.length})...`);
+                    const ok = await generatePptxSlideMp3(idx, true);
+                    if (ok) okCount++;
+                }
+                showToast(`Đã tạo xong âm thanh MP3 cho ${okCount}/${targets.length} slide!`);
+            } finally {
+                setPptxProgress(false);
+                setPptxButtonsDisabled(false);
             }
         }
 
-        async function exportPptxWithAudio() {
-            if (!pptxState.zip) { showToast('Chưa nạp tệp PowerPoint!'); return; }
-            try {
-                let ctXml = await pptxState.zip.file('[Content_Types].xml').async('string');
-                if (!/Extension="mp3"/i.test(ctXml)) {
-                    ctXml = ctXml.replace('</Types>', '<Default Extension="mp3" ContentType="audio/mpeg"/></Types>');
-                    pptxState.zip.file('[Content_Types].xml', ctXml);
-                }
-                for (const s of pptxState.slides) {
-                    if (s.mp3Blob) {
-                        pptxState.zip.file(`ppt/media/media_slide_${s.index}.mp3`, await s.mp3Blob.arrayBuffer(), { createFolders: false });
+        // Tạo ảnh PNG biểu tượng loa đồng bộ an toàn tuyệt đối trên Safari iPhone (không dùng canvas.toBlob)
+        function createSpeakerIconPngUint8Array() {
+            const c = document.createElement('canvas');
+            c.width = 96;
+            c.height = 96;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#f97316';
+            drawRoundedRectPath(ctx, 8, 8, 80, 80, 22);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(26, 38);
+            ctx.lineTo(40, 38);
+            ctx.lineTo(54, 26);
+            ctx.lineTo(54, 70);
+            ctx.lineTo(40, 58);
+            ctx.lineTo(26, 58);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(56, 48, 12, -0.7, 0.7);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(56, 48, 20, -0.7, 0.7);
+            ctx.stroke();
+            const b64 = c.toDataURL('image/png').split(',')[1];
+            const bin = atob(b64);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return bytes;
+        }
+
+        function getNextNumericIdFromXml(xml, attrName, minStart = 2) {
+            const re = new RegExp(`\\b${attrName}="(\\d+)"`, 'g');
+            let maxId = minStart - 1;
+            let m;
+            while ((m = re.exec(xml)) !== null) {
+                const v = parseInt(m[1], 10);
+                if (v > maxId) maxId = v;
+            }
+            return maxId + 1;
+        }
+
+        function getNextRelIdNumber(relsXml) {
+            const re = /\bId="rId(\d+)"/gi;
+            let maxId = 0;
+            let m;
+            while ((m = re.exec(relsXml)) !== null) {
+                const v = parseInt(m[1], 10);
+                if (v > maxId) maxId = v;
+            }
+            return maxId + 1;
+        }
+
+        // Nhúng âm thanh chuẩn OOXML vào từng slide: tương thích PowerPoint iPhone/iPad + Windows/Mac,
+        // giữ nguyên hiệu ứng gốc và hỗ trợ chạy hiệu ứng cùng lúc với âm thanh + tự chuyển slide.
+        function embedAudioIntoSlideXml(slideXml, opts) {
+            const { rIdAudio, rIdMedia, rIdImg, mediaName, autoPlay, syncAnim, hideIcon, autoAdvance, durationSec } = opts;
+
+            // Tách rõ phần thân (đến </p:cSld>) và phần đuôi (từ </p:cSld> đến </p:sld>) để KHÔNG BAO GIỜ chèn nhầm timing vào <p:nvPr>
+            const cSldCloseIdx = slideXml.indexOf('</p:cSld>');
+            if (cSldCloseIdx === -1) return slideXml;
+            let headPart = slideXml.slice(0, cSldCloseIdx + '</p:cSld>'.length);
+            let tailPart = slideXml.slice(cSldCloseIdx + '</p:cSld>'.length);
+
+            const shapeId = getNextNumericIdFromXml(slideXml, 'id', 200);
+            const picXml =
+                `<p:pic>` +
+                    `<p:nvPicPr>` +
+                        `<p:cNvPr id="${shapeId}" name="${escapeXmlAttr(mediaName)}">` +
+                            `<a:hlinkClick r:id="" action="ppaction://media"/>` +
+                        `</p:cNvPr>` +
+                        `<p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>` +
+                        `<p:nvPr>` +
+                            `<a:audioFile r:link="${rIdAudio}"/>` +
+                            `<p:extLst>` +
+                                `<p:ext uri="{DAA4B4D4-6D71-4841-9C94-3DE7FCFB9230}">` +
+                                    `<p14:media xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" r:embed="${rIdMedia}"/>` +
+                                `</p:ext>` +
+                            `</p:extLst>` +
+                        `</p:nvPr>` +
+                    `</p:nvPicPr>` +
+                    `<p:blipFill>` +
+                        `<a:blip r:embed="${rIdImg}"/>` +
+                        `<a:stretch><a:fillRect/></a:stretch>` +
+                    `</p:blipFill>` +
+                    `<p:spPr>` +
+                        `<a:xfrm><a:off x="228600" y="6172200"/><a:ext cx="457200" cy="457200"/></a:xfrm>` +
+                        `<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>` +
+                    `</p:spPr>` +
+                `</p:pic>`;
+
+            const spTreeCloseIdx = headPart.lastIndexOf('</p:spTree>');
+            if (spTreeCloseIdx !== -1) {
+                headPart = headPart.slice(0, spTreeCloseIdx) + picXml + headPart.slice(spTreeCloseIdx);
+            }
+
+            // Tuỳ chọn tự động chuyển slide khi đọc xong (<p:transition advTm="..."/>)
+            if (autoAdvance && durationSec > 0) {
+                const advMs = Math.max(1500, Math.round((durationSec + 0.6) * 1000));
+                if (/<p:transition\b/i.test(tailPart)) {
+                    tailPart = tailPart.replace(/<p:transition\b([^>]*?)(\/?)>/i, (m, attrs, selfClose) => {
+                        let cleanAttrs = attrs.replace(/\badvTm="[^"]*"/gi, '').replace(/\badvClick="[^"]*"/gi, '').trim();
+                        return `<p:transition ${cleanAttrs ? cleanAttrs + ' ' : ''}advClick="1" advTm="${advMs}"${selfClose}>`;
+                    });
+                } else {
+                    const transXml = `<p:transition advClick="1" advTm="${advMs}"/>`;
+                    const timingIdx = tailPart.indexOf('<p:timing');
+                    const extIdx = tailPart.indexOf('<p:extLst');
+                    const endSldIdx = tailPart.lastIndexOf('</p:sld>');
+                    const insertAt = timingIdx !== -1 ? timingIdx : (extIdx !== -1 ? extIdx : endSldIdx);
+                    if (insertAt !== -1) {
+                        tailPart = tailPart.slice(0, insertAt) + transXml + tailPart.slice(insertAt);
                     }
                 }
-                const outBlob = await pptxState.zip.generateAsync({ type: 'blob', compression: 'DEFLATE', platform: 'DOS' });
+            }
+
+            // Tạo/cập nhật <p:timing> giữ nguyên hiệu ứng có sẵn và chạy cùng lúc với âm thanh (dur="1", nodeType="withEffect")
+            let nextTn = getNextNumericIdFromXml(slideXml, 'id', 500);
+            const showWhenStoppedAttr = hideIcon ? ' showWhenStopped="0"' : '';
+            const audioNodeXml =
+                `<p:audio>` +
+                    `<p:cMediaNode vol="80000"${showWhenStoppedAttr}>` +
+                        `<p:cTn id="${nextTn++}" fill="hold" display="0">` +
+                            `<p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>` +
+                            `<p:endCondLst><p:cond evt="onStopAudio" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:endCondLst>` +
+                        `</p:cTn>` +
+                        `<p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>` +
+                    `</p:cMediaNode>` +
+                `</p:audio>`;
+
+            const triggerDelay = autoPlay ? '0' : 'indefinite';
+            const playEffectNodeType = autoPlay ? 'withEffect' : 'clickEffect';
+            const playParXml =
+                `<p:par>` +
+                    `<p:cTn id="${nextTn++}" fill="hold">` +
+                        `<p:stCondLst><p:cond delay="${triggerDelay}"/></p:stCondLst>` +
+                        `<p:childTnLst>` +
+                            `<p:par>` +
+                                `<p:cTn id="${nextTn++}" fill="hold">` +
+                                    `<p:stCondLst><p:cond delay="0"/></p:stCondLst>` +
+                                    `<p:childTnLst>` +
+                                        `<p:par>` +
+                                            `<p:cTn id="${nextTn++}" presetID="1" presetClass="mediacall" presetSubtype="0" fill="hold" nodeType="${playEffectNodeType}">` +
+                                                `<p:stCondLst><p:cond delay="0"/></p:stCondLst>` +
+                                                `<p:childTnLst>` +
+                                                    `<p:cmd type="call" cmd="playFrom(0.0)">` +
+                                                        `<p:cBhvr>` +
+                                                            `<p:cTn id="${nextTn++}" dur="1" fill="hold"/>` +
+                                                            `<p:tgtEl><p:spTgt spid="${shapeId}"/></p:tgtEl>` +
+                                                        `</p:cBhvr>` +
+                                                    `</p:cmd>` +
+                                                `</p:childTnLst>` +
+                                            `</p:cTn>` +
+                                        `</p:par>` +
+                                    `</p:childTnLst>` +
+                                `</p:cTn>` +
+                            `</p:par>` +
+                        `</p:childTnLst>` +
+                    `</p:cTn>` +
+                `</p:par>`;
+
+            const hasExistingTiming = /<p:timing\b/i.test(tailPart);
+            if (!hasExistingTiming) {
+                const freshTiming =
+                    `<p:timing><p:tnLst><p:par>` +
+                        `<p:cTn id="${nextTn++}" dur="indefinite" restart="never" nodeType="tmRoot">` +
+                            `<p:childTnLst>` +
+                                `<p:seq concurrent="1" nextAc="seek">` +
+                                    `<p:cTn id="${nextTn++}" dur="indefinite" nodeType="mainSeq">` +
+                                        `<p:childTnLst>${playParXml}</p:childTnLst>` +
+                                    `</p:cTn>` +
+                                    `<p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>` +
+                                    `<p:nextCondLst><p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst>` +
+                                `</p:seq>` +
+                                `${audioNodeXml}` +
+                            `</p:childTnLst>` +
+                        `</p:cTn>` +
+                    `</p:par></p:tnLst></p:timing>`;
+                const extIdx = tailPart.indexOf('<p:extLst');
+                const endSldIdx = tailPart.lastIndexOf('</p:sld>');
+                const insertAt = extIdx !== -1 ? extIdx : endSldIdx;
+                if (insertAt !== -1) {
+                    tailPart = tailPart.slice(0, insertAt) + freshTiming + tailPart.slice(insertAt);
+                }
+            } else {
+                // Giữ nguyên toàn bộ <p:timing> hiện có của slide
+                const timingStart = tailPart.indexOf('<p:timing');
+                const timingEnd = tailPart.indexOf('</p:timing>');
+                if (timingStart !== -1 && timingEnd !== -1) {
+                    let tBlock = tailPart.slice(timingStart, timingEnd + '</p:timing>'.length);
+
+                    // Nếu chọn "Hiệu ứng slide chạy cùng lúc với âm thanh", đổi các clickEffect thành chạy tự động (withEffect / afterEffect)
+                    if (autoPlay && syncAnim) {
+                        let firstClickDone = false;
+                        tBlock = tBlock.replace(/nodeType="clickEffect"/g, () => {
+                            if (!firstClickDone) {
+                                firstClickDone = true;
+                                return 'nodeType="withEffect"';
+                            }
+                            return 'nodeType="afterEffect"';
+                        });
+                        // Bỏ delay="indefinite" ở các nhóm bước chính để slide chạy mượt ngay cùng tiếng
+                        tBlock = tBlock.replace(/(<p:cTn\b[^>]*?nodeType="mainSeq"[^>]*>[\s\S]*?<p:childTnLst>)([\s\S]*?)(<\/p:childTnLst>)/i, (m, open, inner, close) => {
+                            let stepCount = 0;
+                            const patchedInner = inner.replace(/<p:cond\s+delay="indefinite"\s*\/>/g, () => {
+                                stepCount++;
+                                return stepCount === 1 ? '<p:cond delay="0"/>' : '<p:cond delay="350"/>';
+                            });
+                            return open + playParXml + patchedInner + close;
+                        });
+                    } else if (/<p:cTn\b[^>]*?nodeType="mainSeq"[^>]*>[\s\S]*?<p:childTnLst>/i.test(tBlock)) {
+                        tBlock = tBlock.replace(/(<p:cTn\b[^>]*?nodeType="mainSeq"[^>]*>[\s\S]*?<p:childTnLst>)/i, `$1${playParXml}`);
+                    }
+
+                    // Chèn <p:audio> vào cuối <p:childTnLst> của tmRoot (ngay sau </p:seq>)
+                    const seqCloseIdx = tBlock.lastIndexOf('</p:seq>');
+                    if (seqCloseIdx !== -1) {
+                        tBlock = tBlock.slice(0, seqCloseIdx + '</p:seq>'.length) + audioNodeXml + tBlock.slice(seqCloseIdx + '</p:seq>'.length);
+                    }
+
+                    tailPart = tailPart.slice(0, timingStart) + tBlock + tailPart.slice(timingEnd + '</p:timing>'.length);
+                }
+            }
+
+            return headPart + tailPart;
+        }
+
+        async function exportPptxWithAudio() {
+            if (!pptxState.zip) {
+                showToast('Chưa nạp tệp PowerPoint!');
+                return;
+            }
+            const dubbedSlides = pptxState.slides.filter(s => Boolean(s.mp3Blob));
+            if (dubbedSlides.length === 0) {
+                setPptxError('Bạn cần bấm "Tạo Âm Thanh Tất Cả Slide" (hoặc tạo MP3 ít nhất 1 slide) trước khi tải tệp PowerPoint!');
+                return;
+            }
+
+            setPptxError('');
+            setPptxButtonsDisabled(true);
+            setPptxProgress(true, 15, 'Đang đóng gói âm thanh chuẩn OOXML cho iPhone & Máy tính...');
+
+            try {
+                // Nhân bản gói zip gốc để không làm hỏng phiên hiện tại khi xuất nhiều lần
+                const baseBuf = await pptxState.zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE', platform: 'DOS' });
+                const workZip = await JSZip.loadAsync(baseBuf);
+
+                // Cập nhật [Content_Types].xml cho .mp3 và .png
+                const ctFound = findZipFileCaseInsensitive(workZip, '[Content_Types].xml');
+                if (ctFound && ctFound.entry) {
+                    let ctXml = await ctFound.entry.async('string');
+                    if (!/Extension="mp3"/i.test(ctXml)) {
+                        ctXml = ctXml.replace('</Types>', '<Default Extension="mp3" ContentType="audio/mpeg"/></Types>');
+                    }
+                    if (!/Extension="png"/i.test(ctXml)) {
+                        ctXml = ctXml.replace('</Types>', '<Default Extension="png" ContentType="image/png"/></Types>');
+                    }
+                    workZip.file(ctFound.path, ctXml, { createFolders: false });
+                }
+
+                // Thêm 1 ảnh biểu tượng loa dùng chung
+                const speakerPngBytes = createSpeakerIconPngUint8Array();
+                const iconFilename = `image_speaker_${Date.now()}.png`;
+                workZip.file(`ppt/media/${iconFilename}`, speakerPngBytes, { createFolders: false });
+
+                const autoPlay = Boolean(document.getElementById('pptxOptAutoPlay')?.checked);
+                const syncAnim = Boolean(document.getElementById('pptxOptSyncAnim')?.checked);
+                const hideIcon = Boolean(document.getElementById('pptxOptHideIcon')?.checked);
+                const autoAdvance = Boolean(document.getElementById('pptxOptAutoAdvance')?.checked);
+
+                for (let i = 0; i < dubbedSlides.length; i++) {
+                    const s = dubbedSlides[i];
+                    setPptxProgress(true, 20 + Math.round(((i + 1) / dubbedSlides.length) * 65), `Đang nhúng âm thanh vào Slide ${s.index}...`);
+
+                    const mp3Filename = `media_ai_${s.slideNum}_${Date.now()}_${i}.mp3`;
+                    workZip.file(`ppt/media/${mp3Filename}`, await s.mp3Blob.arrayBuffer(), { createFolders: false });
+
+                    // Đọc hoặc tạo tệp quan hệ .rels cho slide (không phân biệt hoa/thường)
+                    const relsPathDefault = `ppt/slides/_rels/slide${s.slideNum}.xml.rels`;
+                    const relsFound = findZipFileCaseInsensitive(workZip, relsPathDefault);
+                    let relsPath = relsFound ? relsFound.path : relsPathDefault;
+                    let relsXml = relsFound && relsFound.entry
+                        ? await relsFound.entry.async('string')
+                        : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
+
+                    let nextRelNum = getNextRelIdNumber(relsXml);
+                    const rIdAudio = `rId${nextRelNum++}`;
+                    const rIdMedia = `rId${nextRelNum++}`;
+                    const rIdImg = `rId${nextRelNum++}`;
+
+                    const newRels =
+                        `<Relationship Id="${rIdAudio}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/audio" Target="../media/${mp3Filename}"/>` +
+                        `<Relationship Id="${rIdMedia}" Type="http://schemas.microsoft.com/office/2007/relationships/media" Target="../media/${mp3Filename}"/>` +
+                        `<Relationship Id="${rIdImg}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${iconFilename}"/>`;
+
+                    if (/<Relationships\b[^>]*\/>/i.test(relsXml)) {
+                        relsXml = relsXml.replace(/<Relationships\b([^>]*?)\/>/i, `<Relationships$1>${newRels}</Relationships>`);
+                    } else {
+                        relsXml = relsXml.replace('</Relationships>', `${newRels}</Relationships>`);
+                    }
+                    workZip.file(relsPath, relsXml, { createFolders: false });
+
+                    // Nhúng <p:pic> & <p:timing> vào slideN.xml
+                    const slideFound = findZipFileCaseInsensitive(workZip, s.path);
+                    if (slideFound && slideFound.entry) {
+                        const rawSlideXml = await slideFound.entry.async('string');
+                        const updatedSlideXml = embedAudioIntoSlideXml(rawSlideXml, {
+                            rIdAudio,
+                            rIdMedia,
+                            rIdImg,
+                            mediaName: `AmThanh_Slide_${s.index}`,
+                            autoPlay,
+                            syncAnim,
+                            hideIcon,
+                            autoAdvance,
+                            durationSec: s.durationSec || 5
+                        });
+                        // Tự kiểm tra tính hợp lệ XML trước khi ghi
+                        const checkDoc = new DOMParser().parseFromString(updatedSlideXml, 'application/xml');
+                        if (checkDoc.querySelector('parsererror')) {
+                            throw new Error(`Slide ${s.index} phát sinh cấu trúc XML không hợp lệ.`);
+                        }
+                        workZip.file(slideFound.path, updatedSlideXml, { createFolders: false });
+                    }
+                }
+
+                // Loại bỏ toàn bộ thư mục ảo (dir: true) để Microsoft PowerPoint trên iPhone mở sạch không báo lỗi
+                Object.keys(workZip.files).forEach(k => {
+                    if (workZip.files[k].dir) delete workZip.files[k];
+                });
+
+                setPptxProgress(true, 92, 'Đang nén hoàn chỉnh tệp .PPTX...');
+                const outBlob = await workZip.generateAsync({
+                    type: 'blob',
+                    mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                    compression: 'DEFLATE',
+                    platform: 'DOS'
+                });
                 const outName = `${getSafeFilenameSlug(pptxState.filename.replace(/\.pptx?$/i, ''), 'bai_giang')}_co_am_thanh.pptx`;
                 triggerBlobFileDownload(outBlob, outName);
-                showToast(`Đã xuất tệp "${outName}" thành công!`);
+                showToast(`Đã xuất "${outName}" chuẩn OOXML (${dubbedSlides.length} slide có giọng đọc)!`);
             } catch (err) {
-                showToast(`Lỗi đóng gói .PPTX: ${err.message}`);
+                setPptxError(`Lỗi đóng gói .PPTX: ${err.message}`);
+            } finally {
+                setPptxProgress(false);
+                setPptxButtonsDisabled(false);
             }
         }
 
@@ -4610,84 +5317,119 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
             if (mode !== 'manual') applyAutoCutToDubClips(false);
         }
 
-        async function readVideoMetadataAndThumb(url) {
+        // Đọc thời lượng & ảnh đại diện chạy nền không bao giờ treo trên iPhone Safari
+        async function readVideoMetadataAndThumbSafe(url) {
             const v = document.createElement('video');
-            v.src = url;
             v.muted = true;
             v.playsInline = true;
-            v.preload = 'auto';
+            v.setAttribute('playsinline', '');
+            v.setAttribute('webkit-playsinline', '');
+            v.preload = 'metadata';
+            v.src = url;
+            try { v.load(); } catch (_) {}
+
             await new Promise(resolve => {
-                const timer = setTimeout(resolve, 4500);
-                v.onloadedmetadata = () => { clearTimeout(timer); resolve(); };
-                v.onerror = () => { clearTimeout(timer); resolve(); };
+                const timer = setTimeout(resolve, 2200);
+                const done = () => { clearTimeout(timer); resolve(); };
+                v.onloadedmetadata = done;
+                v.onloadeddata = done;
+                v.onerror = done;
             });
-            const duration = isFinite(v.duration) && v.duration > 0 ? v.duration : 10;
-            const width = v.videoWidth || 1280;
-            const height = v.videoHeight || 720;
+
+            const duration = isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
+            const width = v.videoWidth || 0;
+            const height = v.videoHeight || 0;
 
             let thumbUrl = '';
-            try {
-                const seekT = Math.min(Math.max(0.2, duration * 0.25), Math.max(0.2, duration - 0.1));
-                await new Promise(resolve => {
-                    const timer = setTimeout(resolve, 1800);
-                    v.onseeked = () => { clearTimeout(timer); resolve(); };
-                    try { v.currentTime = seekT; } catch (_) { clearTimeout(timer); resolve(); }
-                });
-                const c = document.createElement('canvas');
-                c.width = 240;
-                c.height = Math.max(120, Math.round((height / width) * 240));
-                c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
-                thumbUrl = c.toDataURL('image/jpeg', 0.72);
-            } catch (_) {}
+            if (duration > 0 && width > 0 && height > 0) {
+                try {
+                    const seekT = Math.min(Math.max(0.15, duration * 0.2), Math.max(0.15, duration - 0.1));
+                    await new Promise(resolve => {
+                        const timer = setTimeout(resolve, 1400);
+                        v.onseeked = () => { clearTimeout(timer); resolve(); };
+                        try { v.currentTime = seekT; } catch (_) { clearTimeout(timer); resolve(); }
+                    });
+                    const c = document.createElement('canvas');
+                    c.width = 220;
+                    c.height = Math.max(110, Math.round((height / width) * 220));
+                    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+                    thumbUrl = c.toDataURL('image/jpeg', 0.7);
+                } catch (_) {}
+            }
             return { duration, width, height, thumbUrl };
         }
 
         async function handleVideoDubFileSelected(fileList) {
             if (!fileList || fileList.length === 0) return;
             setVideoStudioError('');
-            const files = Array.from(fileList).filter(f => f.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|mkv|avi)$/i.test(f.name || ''));
+
+            // Sao chép danh sách tệp trước khi reset input (quan trọng trên iOS Safari)
+            const rawFiles = Array.from(fileList);
+            const inp = document.getElementById('vidDubFileInput');
+            if (inp) {
+                try { inp.value = ''; } catch (_) {}
+            }
+
+            // Chấp nhận cả trường hợp iOS trả về file.type rỗng cho video .MOV / thư viện ảnh
+            const files = rawFiles.filter(f =>
+                !f.type ||
+                f.type.startsWith('video/') ||
+                /\.(mp4|mov|webm|m4v|mkv|avi|3gp|qt)$/i.test(f.name || '')
+            );
             if (files.length === 0) {
-                setVideoStudioError('Hãy chọn các tệp định dạng Video (.mp4, .mov, .webm) nhé!');
+                setVideoStudioError('Hãy chọn tệp định dạng Video (.mp4, .mov, .webm) nhé!');
                 return;
             }
 
-            showToast(`Đang nạp ${files.length} tệp video...`);
+            // 1. HIỂN THỊ NGAY LẬP TỨC trên iPhone (không chờ sự kiện loadedmetadata của video ẩn)
+            const newlyAdded = [];
             for (const file of files) {
                 const url = URL.createObjectURL(file);
-                const meta = await readVideoMetadataAndThumb(url);
-                videoStudioState.dubClips.push({
+                const clipObj = {
                     id: 'vclip_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
                     file,
-                    name: file.name || 'video.mp4',
+                    name: file.name || `video_${videoStudioState.dubClips.length + 1}.mp4`,
                     url,
-                    duration: meta.duration,
-                    width: meta.width,
-                    height: meta.height,
+                    duration: 10,
+                    metaLoaded: false,
+                    width: 1280,
+                    height: 720,
                     startSec: 0,
-                    endSec: Number(meta.duration.toFixed(1)),
-                    thumbUrl: meta.thumbUrl
-                });
+                    endSec: 10,
+                    thumbUrl: ''
+                };
+                videoStudioState.dubClips.push(clipObj);
+                newlyAdded.push(clipObj);
             }
 
-            if (videoStudioState.dubClips.length > 0) {
-                document.getElementById('vidDubDropzone')?.classList.add('hidden');
-                document.getElementById('btnVidDubAddMore')?.classList.remove('hidden');
-                document.getElementById('btnVidDubClearAll')?.classList.remove('hidden');
-                document.getElementById('vidDubSourcePreviewBox')?.classList.remove('hidden');
-                document.getElementById('vidDubScriptSection')?.classList.remove('hidden');
+            document.getElementById('vidDubDropzone')?.classList.add('hidden');
+            document.getElementById('btnVidDubAddMore')?.classList.remove('hidden');
+            document.getElementById('btnVidDubClearAll')?.classList.remove('hidden');
+            document.getElementById('vidDubSourcePreviewBox')?.classList.remove('hidden');
+            document.getElementById('vidDubScriptSection')?.classList.remove('hidden');
 
-                // Nếu chọn nhiều clip và đang ở chế độ cắt nhanh thì tự áp dụng cắt luôn
-                const mode = document.getElementById('vidDubAutoCutMode')?.value || 'auto_fit_voice';
-                if (mode === 'auto_short') applyAutoCutToDubClips(false);
+            renderVideoDubClipsList();
+            previewVideoDubClip(Math.min(videoStudioState.dubActivePreviewIdx, videoStudioState.dubClips.length - 1));
+            updateVideoDubScriptStats();
+            showToast(`Đã nhận ${newlyAdded.length} video! Đang cập nhật thời lượng từng clip...`);
 
+            // 2. Đọc thời lượng & ảnh thu nhỏ chạy nền an toàn
+            for (const clip of newlyAdded) {
+                const meta = await readVideoMetadataAndThumbSafe(clip.url);
+                if (meta.duration > 0) {
+                    clip.duration = meta.duration;
+                    clip.endSec = Number(meta.duration.toFixed(1));
+                    clip.metaLoaded = true;
+                }
+                if (meta.width > 0) clip.width = meta.width;
+                if (meta.height > 0) clip.height = meta.height;
+                if (meta.thumbUrl) clip.thumbUrl = meta.thumbUrl;
                 renderVideoDubClipsList();
-                previewVideoDubClip(Math.min(videoStudioState.dubActivePreviewIdx, videoStudioState.dubClips.length - 1));
                 updateVideoDubScriptStats();
-                showToast(`Đã nạp tổng cộng ${videoStudioState.dubClips.length} đoạn video! Bạn có thể cắt tự động hoặc bấm AI viết lời lồng tiếng.`);
             }
 
-            const inp = document.getElementById('vidDubFileInput');
-            if (inp) inp.value = '';
+            const mode = document.getElementById('vidDubAutoCutMode')?.value || 'auto_fit_voice';
+            if (mode === 'auto_short') applyAutoCutToDubClips(false);
         }
 
         function applyAutoCutToDubClips(showMsg = true) {
@@ -4803,8 +5545,21 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
             const player = document.getElementById('vidDubSourcePlayer');
             const lbl = document.getElementById('vidDubActivePreviewLabel');
             if (player) {
+                // Khi iPhone giải mã xong video đang hiện trên màn hình, tự đồng bộ lại đúng thời lượng thật
+                player.onloadedmetadata = () => {
+                    if (isFinite(player.duration) && player.duration > 0 && !c.metaLoaded) {
+                        c.duration = player.duration;
+                        c.endSec = Number(player.duration.toFixed(1));
+                        c.metaLoaded = true;
+                        if (player.videoWidth) c.width = player.videoWidth;
+                        if (player.videoHeight) c.height = player.videoHeight;
+                        renderVideoDubClipsList();
+                        updateVideoDubScriptStats();
+                        if (lbl) lbl.textContent = `Đang xem Clip ${idx + 1}: ${c.name} (Đoạn cắt: ${c.startSec}s → ${c.endSec}s / gốc ${c.duration.toFixed(1)}s)`;
+                    }
+                };
                 player.src = c.url;
-                player.currentTime = c.startSec || 0;
+                try { player.currentTime = c.startSec || 0; } catch (_) {}
                 player.load();
             }
             if (lbl) {
@@ -5631,6 +6386,8 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
             bindVideoStudioDropzoneEvents();
             switchActiveAIBot('tutor');
             renderTTSVoiceCards();
+            populatePptxVoiceSelect();
+            populateVideoStudioVoiceSelects();
             startExamTimer();
 
             const loadedFromLink = await tryLoadSharedExamFromUrl();
