@@ -3,7 +3,8 @@ import json
 import os
 import re
 from http.server import BaseHTTPRequestHandler
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.request import Request, urlopen
 
 import edge_tts
 
@@ -172,6 +173,57 @@ def load_index_html():
     return None
 
 
+def shorten_long_url(target_url: str) -> str:
+    url_str = str(target_url or "").strip()
+    if not re.match(r"^https?://", url_str, flags=re.IGNORECASE):
+        raise ValueError("Đường link cần rút gọn phải bắt đầu bằng http:// hoặc https://")
+
+    ua_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36",
+        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+    }
+
+    providers = [
+        ("https://clck.ru/--", urlencode({"url": url_str}).encode("utf-8"), "text"),
+        ("https://tinyurl.com/api-create.php", urlencode({"url": url_str}).encode("utf-8"), "text"),
+        ("https://is.gd/create.php", urlencode({"format": "simple", "url": url_str}).encode("utf-8"), "text"),
+        ("https://v.gd/create.php", urlencode({"format": "simple", "url": url_str}).encode("utf-8"), "text"),
+        ("https://da.gd/s", urlencode({"url": url_str}).encode("utf-8"), "text"),
+        ("https://spoo.me/", urlencode({"url": url_str}).encode("utf-8"), "spoo_json"),
+    ]
+
+    for endpoint, form_bytes, mode in providers:
+        try:
+            headers = dict(ua_headers)
+            if mode == "spoo_json":
+                headers["Accept"] = "application/json"
+            req = Request(endpoint, data=form_bytes, headers=headers, method="POST")
+            with urlopen(req, timeout=8) as resp:
+                raw_txt = resp.read().decode("utf-8", errors="ignore").strip()
+                if mode == "spoo_json":
+                    parsed = json.loads(raw_txt)
+                    candidate = str(parsed.get("short_url") or "").strip()
+                else:
+                    candidate = raw_txt.splitlines()[0].strip() if raw_txt else ""
+                if re.match(r"^https?://\S+$", candidate, flags=re.IGNORECASE) and len(candidate) < len(url_str):
+                    return candidate
+        except Exception:
+            continue
+
+    if len(url_str) <= 2400:
+        try:
+            get_ep = "https://clck.ru/--?" + urlencode({"url": url_str})
+            req = Request(get_ep, headers={"User-Agent": ua_headers["User-Agent"]}, method="GET")
+            with urlopen(req, timeout=7) as resp:
+                candidate = resp.read().decode("utf-8", errors="ignore").strip()
+                if re.match(r"^https?://\S+$", candidate, flags=re.IGNORECASE) and len(candidate) < len(url_str):
+                    return candidate
+        except Exception:
+            pass
+
+    raise RuntimeError("Các máy chủ rút gọn link đang tạm bận, vui lòng thử lại sau giây lát.")
+
+
 class handler(BaseHTTPRequestHandler):
     def _cors_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -196,6 +248,18 @@ class handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path.rstrip("/") or "/"
         action = parse_qs(parsed.query).get("action", [""])[0]
+
+        if action == "shorten" or path in ("/shorten", "/api/tts/shorten") or path.endswith("/shorten"):
+            target_url = parse_qs(parsed.query).get("url", [""])[0]
+            if not target_url:
+                self._send_json(400, {"error": "Thiếu tham số url cần rút gọn."})
+                return
+            try:
+                short_url = shorten_long_url(target_url)
+                self._send_json(200, {"short_url": short_url})
+            except Exception as exc:
+                self._send_json(502, {"error": str(exc)})
+            return
 
         if action == "voices" or path in ("/voices", "/api/tts/voices") or path.endswith("/voices"):
             self._send_json(200, {"voices": VOICES})
@@ -227,9 +291,23 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
+            parsed = urlparse(self.path)
+            path = parsed.path.rstrip("/") or "/"
+            query_action = parse_qs(parsed.query).get("action", [""])[0]
+
             length = int(self.headers.get("Content-Length", 0))
             raw = self.rfile.read(length) if length > 0 else b"{}"
             data = json.loads(raw.decode("utf-8"))
+
+            action = str(data.get("action") or query_action or "").strip().lower()
+            if action == "shorten" or path in ("/shorten", "/api/tts/shorten") or path.endswith("/shorten"):
+                target_url = str(data.get("url") or "").strip()
+                if not target_url:
+                    self._send_json(400, {"error": "Thiếu đường link cần rút gọn."})
+                    return
+                short_url = shorten_long_url(target_url)
+                self._send_json(200, {"short_url": short_url})
+                return
 
             text = clean_text(str(data.get("text") or ""))
             if not text:

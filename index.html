@@ -905,36 +905,57 @@
                 </div>
             </div>
 
-            <!-- Khung hiển thị Mã QR sắc nét + Tải ảnh QR -->
+            <!-- Khung hiển thị Mã QR sắc nét (căn chuẩn đối xứng 4 cạnh trong khung) -->
             <div class="flex flex-col items-center gap-2 py-1">
-                <div class="p-3 rounded-2xl bg-white border-2 border-purple-200 shadow-xs">
-                    <canvas id="shareQrCanvas" width="210" height="210" class="block rounded-lg"></canvas>
+                <div class="p-3.5 rounded-2xl bg-white border-2 border-purple-200 shadow-xs inline-flex items-center justify-center">
+                    <canvas id="shareQrCanvas" width="420" height="420" class="w-44 h-44 sm:w-48 sm:h-48 block" style="image-rendering: pixelated;"></canvas>
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-2">
                     <button type="button" id="btnDownloadQrPng" onclick="downloadShareQrPng()" class="px-3 py-1 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-[11px] font-extrabold transition flex items-center gap-1">
                         <i class="fa-solid fa-image"></i>
                         <span>Tải ảnh Mã QR (.PNG)</span>
                     </button>
-                    <button type="button" id="btnShortenShareUrl" onclick="shortenCurrentShareLink()" class="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-extrabold transition flex items-center gap-1">
-                        <i class="fa-solid fa-compress"></i>
-                        <span>Rút gọn link &amp; thu nhỏ QR</span>
+                    <button type="button" id="btnShortenShareUrl" onclick="shortenCurrentShareLink(true)" class="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-extrabold transition flex items-center gap-1">
+                        <i class="fa-solid fa-rotate"></i>
+                        <span>Làm mới link rút gọn &amp; QR</span>
                     </button>
                 </div>
-                <p id="shareQrNote" class="text-[11px] font-semibold text-slate-500 text-center px-2">Quét mã QR bằng camera điện thoại hoặc Zalo để mở bài ôn tập</p>
+                <p id="shareQrNote" class="text-[11px] font-semibold text-slate-500 text-center px-2">Hệ thống tự động rút gọn sang Mã QR siêu nét để quét bằng Camera hoặc Zalo</p>
             </div>
 
-            <!-- Đường link chia sẻ -->
-            <div class="space-y-1.5">
-                <div class="flex items-center justify-between text-xs">
-                    <label class="font-extrabold text-slate-700">Đường link chia sẻ cho học sinh:</label>
-                    <span id="shareLinkLengthBadge" class="text-[10px] font-mono font-bold text-slate-400">0 ký tự</span>
+            <!-- 2 Đường link chia sẻ: Link 1 (chưa rút gọn) & Link 2 (đã rút gọn) -->
+            <div class="space-y-3">
+                <!-- Link thứ 1: Link gốc đầy đủ chưa rút gọn -->
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between text-xs gap-2">
+                        <label for="shareLinkUrlInput" class="font-extrabold text-slate-700">1. Link gốc đầy đủ (chưa rút gọn):</label>
+                        <span id="shareLinkLengthBadge" class="text-[10px] font-mono font-bold text-slate-400 shrink-0">0 ký tự</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="shareLinkUrlInput" readonly onclick="this.select()" placeholder="https://tao-de-on-tap.vercel.app/#e=N..." class="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono text-slate-700 outline-none">
+                        <button type="button" onclick="copyFullShareLink()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-extrabold transition shrink-0 flex items-center gap-1.5">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>Sao chép</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex gap-2">
-                    <input type="text" id="shareLinkUrlInput" readonly class="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono text-slate-700 outline-none">
-                    <button type="button" onclick="copyShareLink()" class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold transition shrink-0 flex items-center gap-1.5">
-                        <i class="fa-regular fa-copy"></i>
-                        <span>Sao chép</span>
-                    </button>
+
+                <!-- Link thứ 2: Link đã rút gọn tự động (khớp Mã QR) -->
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between text-xs gap-2">
+                        <label for="shareShortLinkInput" class="font-extrabold text-purple-800 flex items-center gap-1">
+                            <i class="fa-solid fa-wand-magic-sparkles text-purple-600 text-[11px]"></i>
+                            <span>2. Link đã rút gọn (khớp Mã QR):</span>
+                        </label>
+                        <span id="shareShortStatusBadge" class="text-[10px] font-extrabold text-emerald-600 shrink-0">Tự động rút gọn</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="shareShortLinkInput" readonly onclick="this.select()" placeholder="https://clck.ru/..." class="flex-1 px-3 py-2 rounded-xl bg-purple-50/60 border border-purple-300 text-xs font-mono font-bold text-purple-900 outline-none">
+                        <button type="button" onclick="copyShortShareLink()" class="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold transition shrink-0 flex items-center gap-1.5">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>Sao chép</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1743,6 +1764,10 @@
                         <i class="fa-solid fa-phone text-emerald-600 text-xs"></i>
                         <span>SĐT / Zalo: 0777 862 904</span>
                     </a>
+                    <a href="mailto:phucnguyenvlog13@gmail.com" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 font-extrabold transition">
+                        <i class="fa-solid fa-envelope text-blue-600 text-xs"></i>
+                        <span>Gmail: phucnguyenvlog13@gmail.com</span>
+                    </a>
                 </div>
             </div>
 
@@ -1802,6 +1827,9 @@
         let currentModalConfirmCallback = null;
         let latestShortShareLink = '';
         let latestSelfContainedShareLink = '';
+        let activeShareShortenSeq = 0;
+        const shortUrlMemoryCache = new Map();
+        const DEFAULT_PUBLIC_WEB_URL = 'https://tao-de-on-tap.vercel.app/';
 
         function escapeHtml(str) {
             return String(str ?? '')
@@ -1892,6 +1920,18 @@
             } catch (e) {
                 return false;
             }
+        }
+
+        async function copyTextSmart(text) {
+            const val = String(text || '').trim();
+            if (!val) return false;
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                try {
+                    await navigator.clipboard.writeText(val);
+                    return true;
+                } catch (_) {}
+            }
+            return copyTextToClipboardFallback(val);
         }
 
         function openCustomModal(title, subtitle, message, confirmLabel, onConfirm, isDanger = false) {
@@ -2319,23 +2359,22 @@
                 return !isNaN(n) ? Math.max(0, Math.min(3, n)) : 0;
             };
 
-            const partA = (Array.isArray(src.partA) ? src.partA : []).map((q, idx) => {
+            const partA = (Array.isArray(src.partA) ? src.partA : []).map((q) => {
                 const rawOpts = Array.isArray(q?.options) ? q.options : [];
                 const options = [0, 1, 2, 3].map(oi => {
                     const txt = String(rawOpts[oi] ?? '').trim();
                     return txt.replace(/^[A-D]\s*[.)\-:]\s*/i, '').trim();
                 });
                 return {
-                    id: String(q?.id || `A${idx + 1}`),
                     question: String(q?.question || '').trim(),
                     options,
                     answer: parseAnswerIndex(q?.answer),
                     explanation: String(q?.explanation || '').trim(),
                     tableHtml: q?.tableHtml ? String(q.tableHtml) : ''
                 };
-            }).filter(q => q.question);
+            }).filter(q => q.question).map((q, idx) => ({ id: `A${idx + 1}`, ...q }));
 
-            const partB = (Array.isArray(src.partB) ? src.partB : []).map((q, idx) => {
+            const partB = (Array.isArray(src.partB) ? src.partB : []).map((q) => {
                 const rawStmts = Array.isArray(q?.statements) ? q.statements : [];
                 const statements = rawStmts.map((st, si) => ({
                     label: String(st?.label || String.fromCharCode(97 + si)).trim(),
@@ -2344,18 +2383,16 @@
                     explanation: String(st?.explanation || '').trim()
                 })).filter(st => st.text);
                 return {
-                    id: String(q?.id || `B${idx + 1}`),
                     question: String(q?.question || '').trim(),
                     statements,
                     tableHtml: q?.tableHtml ? String(q.tableHtml) : ''
                 };
-            }).filter(q => q.question || q.statements.length > 0);
+            }).filter(q => q.question || q.statements.length > 0).map((q, idx) => ({ id: `B${idx + 1}`, ...q }));
 
-            const partC = (Array.isArray(src.partC) ? src.partC : []).map((q, idx) => ({
-                id: String(q?.id || `C${idx + 1}`),
+            const partC = (Array.isArray(src.partC) ? src.partC : []).map((q) => ({
                 question: String(q?.question || '').trim(),
                 guide: String(q?.guide || q?.answer || '').trim()
-            })).filter(q => q.question);
+            })).filter(q => q.question).map((q, idx) => ({ id: `C${idx + 1}`, ...q }));
 
             return { title, partA, partB, partC };
         }
@@ -3327,19 +3364,44 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             switchMainWorkspace('study');
         }
 
-        // Nén tối giản dữ liệu đề thi giúp giảm ~50% độ dài link trực tiếp & làm Mã QR thưa, dễ quét hơn
-        function encodeCompactExamPayload(examObj) {
+        function getPublicShareBaseUrl() {
+            const raw = String(window.location.href || '').split('#')[0].split('?')[0];
+            if (/^https?:\/\//i.test(raw) && !/^https?:\/\/(localhost|127\.0\.0\.1)\b/i.test(raw)) {
+                return raw;
+            }
+            return DEFAULT_PUBLIC_WEB_URL;
+        }
+
+        // Nén tối giản dữ liệu đề thi (cắt bỏ các phần tử rỗng thừa ở cuối mảng để giảm tối đa độ dài link)
+        function encodeCompactExamPayload(examObj, stripVerboseNotes = false) {
             const norm = normalizeExamData(examObj);
-            const compact = {
-                t: norm.title,
-                a: norm.partA.map(q => [q.question, q.options, q.answer, q.explanation || '', q.tableHtml || '']),
-                b: norm.partB.map(q => [
-                    q.question,
-                    q.statements.map(s => [s.label, s.text, s.isTrue ? 1 : 0, s.explanation || '']),
-                    q.tableHtml || ''
-                ]),
-                c: norm.partC.map(q => [q.question, q.guide || ''])
-            };
+            const compact = { t: norm.title };
+
+            if (norm.partA.length > 0) {
+                compact.a = norm.partA.map(q => {
+                    const exp = stripVerboseNotes ? '' : (q.explanation || '');
+                    const tbl = q.tableHtml || '';
+                    if (tbl) return [q.question, q.options, q.answer, exp, tbl];
+                    if (exp) return [q.question, q.options, q.answer, exp];
+                    return [q.question, q.options, q.answer];
+                });
+            }
+            if (norm.partB.length > 0) {
+                compact.b = norm.partB.map(q => {
+                    const stmts = q.statements.map(s => {
+                        const exp = stripVerboseNotes ? '' : (s.explanation || '');
+                        return exp ? [s.label, s.text, s.isTrue ? 1 : 0, exp] : [s.label, s.text, s.isTrue ? 1 : 0];
+                    });
+                    return q.tableHtml ? [q.question, stmts, q.tableHtml] : [q.question, stmts];
+                });
+            }
+            if (norm.partC.length > 0) {
+                compact.c = norm.partC.map(q => {
+                    const guide = stripVerboseNotes ? (q.guide || '').slice(0, 180) : (q.guide || '');
+                    return guide ? [q.question, guide] : [q.question];
+                });
+            }
+
             return typeof LZString !== 'undefined'
                 ? LZString.compressToEncodedURIComponent(JSON.stringify(compact))
                 : '';
@@ -3433,9 +3495,11 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
         async function tryLoadSharedExamFromUrl() {
             try {
                 const hash = String(window.location.hash || '');
+                const search = String(window.location.search || '');
+                const combinedLoc = `${hash}&${search.replace(/^\?/, '')}`;
 
                 // 1. Nạp từ link Google Drive siêu ngắn (#gdrive=FILE_ID)
-                const driveMatch = hash.match(/(?:gdrive|drive)=([a-zA-Z0-9_-]{15,})/);
+                const driveMatch = combinedLoc.match(/(?:^|[#&?])(?:gdrive|drive)=([a-zA-Z0-9_-]{15,})/);
                 if (driveMatch) {
                     showToast('Đang tải đề ôn tập từ Google Drive...');
                     const loadedDriveExam = await loadExamFromGoogleDriveId(driveMatch[1]);
@@ -3452,8 +3516,8 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                 }
 
                 // 2. Nạp từ link trực tiếp nén gọn (#e=...) hoặc bản đầy đủ (#exam=...)
-                const compactMatch = hash.match(/(?:^#|&)e=([^&]+)/);
-                const fullMatch = hash.match(/(?:^#|&)exam=([^&]+)/);
+                const compactMatch = combinedLoc.match(/(?:^|[#&?])e=([^&]+)/);
+                const fullMatch = combinedLoc.match(/(?:^|[#&?])exam=([^&]+)/);
                 const encoded = compactMatch ? compactMatch[1] : (fullMatch ? fullMatch[1] : '');
                 if (!encoded || typeof LZString === 'undefined') return false;
 
@@ -3469,54 +3533,234 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             }
         }
 
-        function renderShareQrCodeForUrl(targetUrl, customNote = '') {
-            const inp = document.getElementById('shareLinkUrlInput');
-            const badge = document.getElementById('shareLinkLengthBadge');
+        function drawQrLoadingPlaceholder(messageText = 'Đang tự động rút gọn Mã QR...') {
+            const canvas = document.getElementById('shareQrCanvas');
+            if (!canvas) return;
+            canvas.width = 420;
+            canvas.height = 420;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 420, 420);
+            ctx.fillStyle = '#faf5ff';
+            ctx.fillRect(0, 0, 420, 420);
+            ctx.strokeStyle = '#d8b4fe';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(10, 10, 400, 400);
+            ctx.fillStyle = '#7e22ce';
+            ctx.font = '800 24px Inter, Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(messageText, 210, 192);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '600 21px Inter, Arial, sans-serif';
+            ctx.fillText('Vui lòng đợi ~1 giây nhé!', 210, 234);
+        }
+
+        function updateShareLinksInputsUI(fullUrl, shortUrl = '', isShortening = false) {
+            const fullInp = document.getElementById('shareLinkUrlInput');
+            const lenBadge = document.getElementById('shareLinkLengthBadge');
+            const shortInp = document.getElementById('shareShortLinkInput');
+            const shortBadge = document.getElementById('shareShortStatusBadge');
+
+            if (fullInp && fullUrl !== null) fullInp.value = fullUrl;
+            if (lenBadge && fullUrl !== null) lenBadge.textContent = `${fullUrl.length} ký tự`;
+
+            if (shortInp) {
+                if (isShortening) {
+                    shortInp.value = 'Đang tự động rút gọn link...';
+                } else if (shortUrl) {
+                    shortInp.value = shortUrl;
+                } else {
+                    shortInp.value = '';
+                    shortInp.placeholder = 'Bấm "Làm mới link rút gọn & QR" để tạo lại';
+                }
+            }
+            if (shortBadge) {
+                if (isShortening) {
+                    shortBadge.textContent = 'Đang rút gọn...';
+                    shortBadge.className = 'text-[10px] font-extrabold text-amber-600 shrink-0';
+                } else if (shortUrl) {
+                    shortBadge.textContent = `Đã rút gọn (${shortUrl.length} ký tự)`;
+                    shortBadge.className = 'text-[10px] font-extrabold text-emerald-600 shrink-0';
+                } else {
+                    shortBadge.textContent = 'Chưa rút gọn được';
+                    shortBadge.className = 'text-[10px] font-extrabold text-rose-600 shrink-0';
+                }
+            }
+        }
+
+        function renderShareQrCodeForUrl(qrTargetUrl, customNote = '') {
             const canvas = document.getElementById('shareQrCanvas');
             const note = document.getElementById('shareQrNote');
             const dlQrBtn = document.getElementById('btnDownloadQrPng');
+            if (!canvas || typeof QRious === 'undefined' || !qrTargetUrl) return false;
 
-            if (inp) inp.value = targetUrl;
-            if (badge) badge.textContent = `${targetUrl.length} ký tự`;
-            if (!canvas || typeof QRious === 'undefined') return;
-
-            // QRious level 'L' hỗ trợ tới ~2.900 ký tự; link ngắn (< 300 ký tự) sẽ tự động ra QR ít ô vuông siêu sắc nét
-            if (targetUrl.length <= 2750) {
+            if (qrTargetUrl.length <= 2850) {
                 try {
+                    // Vẽ lên canvas tạm với padding = 0 rồi cắt khít đúng vùng ô vuông QR
+                    // để loại bỏ hoàn toàn phần dư lệch phải/dưới do làm tròn Math.floor của thư viện QRious
+                    const tmpCanvas = document.createElement('canvas');
                     new QRious({
-                        element: canvas,
-                        value: targetUrl,
-                        size: 210,
-                        level: 'L',
-                        padding: 10,
+                        element: tmpCanvas,
+                        value: qrTargetUrl,
+                        size: 560,
+                        level: qrTargetUrl.length <= 120 ? 'M' : 'L',
+                        padding: 0,
                         background: '#ffffff',
                         foreground: '#0f172a'
                     });
+
+                    const tw = tmpCanvas.width;
+                    const th = tmpCanvas.height;
+                    const tmpCtx = tmpCanvas.getContext('2d');
+                    let minX = 0, minY = 0, maxX = tw - 1, maxY = th - 1;
+                    try {
+                        const imgData = tmpCtx.getImageData(0, 0, tw, th).data;
+                        let foundMinX = tw, foundMinY = th, foundMaxX = -1, foundMaxY = -1;
+                        for (let y = 0; y < th; y++) {
+                            const rowOff = y * tw * 4;
+                            for (let x = 0; x < tw; x++) {
+                                const idx = rowOff + x * 4;
+                                if (imgData[idx] < 200 || imgData[idx + 1] < 200 || imgData[idx + 2] < 200) {
+                                    if (x < foundMinX) foundMinX = x;
+                                    if (y < foundMinY) foundMinY = y;
+                                    if (x > foundMaxX) foundMaxX = x;
+                                    if (y > foundMaxY) foundMaxY = y;
+                                }
+                            }
+                        }
+                        if (foundMaxX >= foundMinX && foundMaxY >= foundMinY) {
+                            minX = foundMinX;
+                            minY = foundMinY;
+                            maxX = foundMaxX;
+                            maxY = foundMaxY;
+                        }
+                    } catch (_) {}
+
+                    const qrW = Math.max(1, maxX - minX + 1);
+                    const qrH = Math.max(1, maxY - minY + 1);
+                    canvas.width = qrW;
+                    canvas.height = qrH;
+
+                    const outCtx = canvas.getContext('2d');
+                    outCtx.imageSmoothingEnabled = false;
+                    outCtx.fillStyle = '#ffffff';
+                    outCtx.fillRect(0, 0, qrW, qrH);
+                    outCtx.drawImage(tmpCanvas, minX, minY, qrW, qrH, 0, 0, qrW, qrH);
+
                     if (dlQrBtn) dlQrBtn.classList.remove('hidden');
                     if (note) {
-                        note.textContent = customNote || (targetUrl.length <= 180
-                            ? 'Mã QR siêu gọn, ít ô vuông — Quét 0,2 giây bằng Camera hoặc Zalo là mở ngay!'
-                            : 'Quét mã QR bằng Camera điện thoại hoặc Zalo (bấm "Rút gọn link" hoặc dùng Google Drive để QR nhỏ hơn nữa)');
+                        note.textContent = customNote || (qrTargetUrl.length <= 120
+                            ? 'Đã tự động rút gọn Mã QR siêu nét — Quét bằng Camera hoặc Zalo mở bài ngay!'
+                            : 'Quét mã QR bằng Camera điện thoại hoặc Zalo để mở bài ôn tập');
                     }
-                } catch (_) {
-                    if (dlQrBtn) dlQrBtn.classList.add('hidden');
-                    if (note) note.textContent = 'Đề dài vượt giới hạn Mã QR — hãy chuyển sang tab "Link Google Drive" để tạo QR siêu gọn!';
-                }
-            } else {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#334155';
-                ctx.font = 'bold 12px Inter, Arial, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('Đề dài vượt giới hạn QR trực tiếp', 105, 88);
-                ctx.fillStyle = '#059669';
-                ctx.fillText('Bấm tab "Link Google Drive"', 105, 110);
-                ctx.fillText('để tạo Mã QR siêu gọn nhẹ!', 105, 130);
-                if (dlQrBtn) dlQrBtn.classList.add('hidden');
-                if (note) note.textContent = 'Đề nhiều câu vượt giới hạn QR trực tiếp — hãy dùng tab "Link Google Drive" ở trên để có link ~60 ký tự và Mã QR ít ô vuông!';
+                    return true;
+                } catch (_) {}
             }
+
+            drawQrLoadingPlaceholder('Đề dài — Bấm Làm mới rút gọn QR');
+            if (dlQrBtn) dlQrBtn.classList.add('hidden');
+            if (note) {
+                note.textContent = customNote || 'Kiểm tra kết nối mạng rồi bấm "Làm mới link rút gọn & QR" hoặc dùng tab Google Drive nhé!';
+            }
+            return false;
+        }
+
+        async function requestShortUrlFromProviders(targetUrl, bypassCache = false) {
+            if (!targetUrl || !/^https?:\/\//i.test(targetUrl)) return '';
+            if (!bypassCache && shortUrlMemoryCache.has(targetUrl)) {
+                return shortUrlMemoryCache.get(targetUrl);
+            }
+
+            const isValidShort = (s) => /^https?:\/\/\S+$/i.test(s) && s.length < targetUrl.length && s.length <= 120;
+
+            // 1. Ưu tiên gọi API máy chủ Vercel cùng tên miền (không bị chặn CORS, ưu tiên trả về clck.ru, hỗ trợ cả URL rất dài qua POST)
+            if (/^https?:\/\//i.test(window.location.href)) {
+                const apiPaths = ['/api/tts?action=shorten', '/api/tts/shorten'];
+                for (const p of apiPaths) {
+                    try {
+                        const res = await fetchWithTimeout(p, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'shorten', url: targetUrl })
+                        }, 9000);
+                        if (res.ok) {
+                            const j = await res.json();
+                            const cand = String(j?.short_url || '').trim();
+                            if (isValidShort(cand)) {
+                                shortUrlMemoryCache.set(targetUrl, cand);
+                                return cand;
+                            }
+                        }
+                    } catch (_) {}
+                }
+            }
+
+            // 2. Gọi trực tiếp từ trình duyệt (ưu tiên clck.ru qua POST & GET để trả về đúng dạng https://clck.ru/...)
+            try {
+                const postRes = await fetchWithTimeout('https://clck.ru/--', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                    body: `url=${encodeURIComponent(targetUrl)}`
+                }, 8000);
+                if (postRes.ok) {
+                    const txt = (await postRes.text()).trim();
+                    if (isValidShort(txt)) {
+                        shortUrlMemoryCache.set(targetUrl, txt);
+                        return txt;
+                    }
+                }
+            } catch (_) {}
+
+            if (targetUrl.length <= 2500) {
+                try {
+                    const getRes = await fetchWithTimeout(`https://clck.ru/--?url=${encodeURIComponent(targetUrl)}`, { method: 'GET' }, 7500);
+                    if (getRes.ok) {
+                        const txt = (await getRes.text()).trim();
+                        if (isValidShort(txt)) {
+                            shortUrlMemoryCache.set(targetUrl, txt);
+                            return txt;
+                        }
+                    }
+                } catch (_) {}
+            }
+
+            // 3. Các cổng dự phòng khác hỗ trợ CORS trực tiếp trên trình duyệt
+            try {
+                const spooRes = await fetchWithTimeout('https://spoo.me/', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `url=${encodeURIComponent(targetUrl)}`
+                }, 8000);
+                if (spooRes.ok) {
+                    const j = await spooRes.json();
+                    const cand = String(j?.short_url || '').trim();
+                    if (isValidShort(cand)) {
+                        shortUrlMemoryCache.set(targetUrl, cand);
+                        return cand;
+                    }
+                }
+            } catch (_) {}
+
+            const fallbackGets = [
+                `https://is.gd/create.php?format=simple&url=${encodeURIComponent(targetUrl)}`,
+                `https://v.gd/create.php?format=simple&url=${encodeURIComponent(targetUrl)}`
+            ];
+            for (const ep of fallbackGets) {
+                try {
+                    const res = await fetchWithTimeout(ep, { method: 'GET' }, 7500);
+                    if (!res.ok) continue;
+                    const txt = (await res.text()).trim();
+                    if (isValidShort(txt)) {
+                        shortUrlMemoryCache.set(targetUrl, txt);
+                        return txt;
+                    }
+                } catch (_) {}
+            }
+
+            return '';
         }
 
         function switchShareModalTab(tab) {
@@ -3532,7 +3776,12 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             if (driveBox) driveBox.classList.toggle('hidden', !isDrive);
 
             if (!isDrive && latestSelfContainedShareLink) {
-                renderShareQrCodeForUrl(latestShortShareLink || latestSelfContainedShareLink);
+                updateShareLinksInputsUI(latestSelfContainedShareLink, latestShortShareLink, false);
+                if (latestShortShareLink) {
+                    renderShareQrCodeForUrl(latestShortShareLink);
+                } else if (latestSelfContainedShareLink.length <= 2850) {
+                    renderShareQrCodeForUrl(latestSelfContainedShareLink);
+                }
             } else if (isDrive) {
                 const driveInput = document.getElementById('gdriveLinkInput')?.value || '';
                 if (driveInput.trim()) buildGoogleDriveShareLink(driveInput, false);
@@ -3546,60 +3795,100 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             showToast('Đã tải file đề (.json)! Bạn tải file này lên Google Drive rồi dán link vào bước 3 nhé.');
         }
 
-        function buildGoogleDriveShareLink(rawDriveInput, showFeedback = true) {
+        async function buildGoogleDriveShareLink(rawDriveInput, showFeedback = true) {
             const fileId = extractGoogleDriveFileId(rawDriveInput);
             if (!fileId) {
                 if (showFeedback) showToast('Chưa nhận diện được ID tệp Google Drive — hãy dán đầy đủ đường link chia sẻ từ Google Drive nhé!');
                 return;
             }
-            const baseUrl = window.location.href.split('#')[0];
+            const baseUrl = getPublicShareBaseUrl();
             const driveShareUrl = `${baseUrl}#gdrive=${fileId}`;
-            renderShareQrCodeForUrl(driveShareUrl, 'Đã tạo Link Google Drive siêu ngắn & Mã QR ít ô vuông sắc nét!');
-            if (showFeedback) showToast('Đã tạo Link Google Drive ngắn & Mã QR gọn nhẹ!');
+            updateShareLinksInputsUI(driveShareUrl, '', true);
+            renderShareQrCodeForUrl(driveShareUrl, 'Đang rút gọn thêm Link Google Drive & làm nét Mã QR...');
+            const shortDrive = await requestShortUrlFromProviders(driveShareUrl, false);
+            if (shortDrive) {
+                updateShareLinksInputsUI(driveShareUrl, shortDrive, false);
+                renderShareQrCodeForUrl(shortDrive, 'Đã tạo Link Google Drive + Link rút gọn & Mã QR siêu nét!');
+            } else {
+                updateShareLinksInputsUI(driveShareUrl, driveShareUrl, false);
+                renderShareQrCodeForUrl(driveShareUrl, 'Đã tạo Link Google Drive siêu ngắn & Mã QR sắc nét!');
+            }
+            if (showFeedback) showToast('Đã tạo Link Google Drive & Mã QR gọn nhẹ!');
         }
 
-        async function shortenCurrentShareLink() {
-            const target = latestSelfContainedShareLink || document.getElementById('shareLinkUrlInput')?.value || '';
-            if (!target) return;
+        async function shortenCurrentShareLink(manualTrigger = false) {
+            const fullTarget = latestSelfContainedShareLink || document.getElementById('shareLinkUrlInput')?.value || '';
+            if (!fullTarget) return;
+
+            const seq = ++activeShareShortenSeq;
             const btn = document.getElementById('btnShortenShareUrl');
             if (btn) btn.disabled = true;
-            showToast('Đang rút gọn link & thu nhỏ Mã QR...');
+
+            updateShareLinksInputsUI(fullTarget, '', true);
+            if (fullTarget.length > 1200) {
+                drawQrLoadingPlaceholder('Đang tự động rút gọn Mã QR...');
+            } else {
+                renderShareQrCodeForUrl(fullTarget, 'Đang tự động rút gọn link để Mã QR thưa & dễ quét hơn...');
+            }
+
             try {
-                const endpoints = [
-                    `https://is.gd/create.php?format=simple&url=${encodeURIComponent(target)}`,
-                    `https://v.gd/create.php?format=simple&url=${encodeURIComponent(target)}`,
-                    `https://clck.ru/--?url=${encodeURIComponent(target)}`
-                ];
-                let shortUrl = '';
-                for (const ep of endpoints) {
-                    try {
-                        const res = await fetchWithTimeout(ep, { method: 'GET' }, 8000);
-                        if (!res.ok) continue;
-                        const txt = (await res.text()).trim();
-                        if (/^https?:\/\/\S+$/i.test(txt) && txt.length < target.length) {
-                            shortUrl = txt;
-                            break;
+                let shortUrl = await requestShortUrlFromProviders(fullTarget, manualTrigger);
+
+                // Nếu đề cực lớn (> 4.000 ký tự kèm lời giải rất dài) khiến máy chủ rút gọn từ chối,
+                // tự động tạo bản nén tinh gọn câu hỏi cho Link rút gọn & Mã QR (Link 1 vẫn giữ nguyên 100% đầy đủ)
+                if (!shortUrl && fullTarget.length > 3500) {
+                    const liteEncoded = encodeCompactExamPayload(EXAM_DATA, true);
+                    const liteUrl = `${getPublicShareBaseUrl()}#e=${liteEncoded}`;
+                    if (liteUrl.length < fullTarget.length) {
+                        shortUrl = await requestShortUrlFromProviders(liteUrl, manualTrigger);
+                        if (!shortUrl && liteUrl.length <= 2850) {
+                            if (seq !== activeShareShortenSeq) return;
+                            updateShareLinksInputsUI(fullTarget, '', false);
+                            renderShareQrCodeForUrl(liteUrl, 'Đã tối ưu dung lượng Mã QR trực tiếp để quét không lỗi!');
+                            return;
                         }
-                    } catch (_) {}
+                    }
                 }
+
+                if (seq !== activeShareShortenSeq) return;
+
                 if (shortUrl) {
                     latestShortShareLink = shortUrl;
-                    renderShareQrCodeForUrl(shortUrl, 'Đã rút gọn link thành công — Mã QR đã thu nhỏ siêu dễ quét!');
-                    showToast('Đã rút gọn link & thu nhỏ Mã QR thành công!');
+                    updateShareLinksInputsUI(fullTarget, shortUrl, false);
+                    renderShareQrCodeForUrl(shortUrl, 'Đã tự động rút gọn thành công — Mã QR siêu gọn, quét 0,2 giây mở ngay!');
+                    if (manualTrigger) showToast('Đã làm mới link rút gọn & Mã QR thành công!');
                 } else {
-                    showToast('Đề hơi dài cho dịch vụ rút gọn tự động — bạn hãy dùng tab "Link Google Drive" để có link siêu ngắn nhé!');
-                    switchShareModalTab('drive');
+                    updateShareLinksInputsUI(fullTarget, '', false);
+                    if (fullTarget.length <= 2850) {
+                        renderShareQrCodeForUrl(fullTarget, 'Đang hiển thị Mã QR trực tiếp (bấm "Làm mới link rút gọn" khi có mạng để rút gọn)');
+                    } else {
+                        renderShareQrCodeForUrl(fullTarget);
+                        if (manualTrigger) {
+                            showToast('Đề rất dài và hiện chưa kết nối được máy chủ rút gọn — bạn có thể dùng tab Link Google Drive nhé!');
+                        }
+                    }
                 }
             } finally {
-                if (btn) btn.disabled = false;
+                if (seq === activeShareShortenSeq && btn) btn.disabled = false;
             }
         }
 
         function downloadShareQrPng() {
             const canvas = document.getElementById('shareQrCanvas');
             if (!canvas) return;
+            const exportCanvas = document.createElement('canvas');
+            const outSize = 600;
+            const margin = 52;
+            exportCanvas.width = outSize;
+            exportCanvas.height = outSize;
+            const eCtx = exportCanvas.getContext('2d');
+            eCtx.imageSmoothingEnabled = false;
+            eCtx.fillStyle = '#ffffff';
+            eCtx.fillRect(0, 0, outSize, outSize);
+            eCtx.drawImage(canvas, margin, margin, outSize - margin * 2, outSize - margin * 2);
+
             const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
+            link.href = exportCanvas.toDataURL('image/png');
             link.download = `ma_qr_${getSafeFilenameSlug(EXAM_DATA.title, 'de_on_tap')}.png`;
             document.body.appendChild(link);
             link.click();
@@ -3609,22 +3898,23 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
 
         function openShareLinkModal() {
             if (!hasAnyQuestions()) { showToast('Hãy tạo ít nhất 1 câu hỏi trước khi chia sẻ!'); return; }
-            const compactEncoded = encodeCompactExamPayload(EXAM_DATA);
-            const baseUrl = window.location.href.split('#')[0];
+            const compactEncoded = encodeCompactExamPayload(EXAM_DATA, false);
+            const baseUrl = getPublicShareBaseUrl();
             latestSelfContainedShareLink = `${baseUrl}#e=${compactEncoded}`;
-            latestShortShareLink = '';
-
-            // Nếu đề gọn (<= 2750 ký tự) thì mở sẵn tab Link Trực Tiếp + Mã QR; nếu đề quá dài thì gợi ý sang tab Link Google Drive
-            if (latestSelfContainedShareLink.length <= 2750) {
-                switchShareModalTab('direct');
-                renderShareQrCodeForUrl(latestSelfContainedShareLink);
-            } else {
-                renderShareQrCodeForUrl(latestSelfContainedShareLink);
-                switchShareModalTab('drive');
-            }
+            latestShortShareLink = shortUrlMemoryCache.get(latestSelfContainedShareLink) || '';
 
             const modal = document.getElementById('shareLinkModal');
             if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+
+            switchShareModalTab('direct');
+
+            // Nếu đã có sẵn trong bộ nhớ đệm thì hiện tức thì cả 2 link + Mã QR rút gọn; nếu chưa có thì tự động rút gọn ngay!
+            if (latestShortShareLink) {
+                updateShareLinksInputsUI(latestSelfContainedShareLink, latestShortShareLink, false);
+                renderShareQrCodeForUrl(latestShortShareLink);
+            } else {
+                shortenCurrentShareLink(false);
+            }
         }
 
         function closeShareLinkModal() {
@@ -3632,10 +3922,25 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
         }
 
-        function copyShareLink() {
-            const val = document.getElementById('shareLinkUrlInput')?.value || latestShortShareLink || latestSelfContainedShareLink;
-            if (copyTextToClipboardFallback(val)) showToast('Đã sao chép đường link cho học sinh!');
-            else showToast('Hãy bôi đen đường link để sao chép nhé!');
+        async function copyFullShareLink() {
+            const val = document.getElementById('shareLinkUrlInput')?.value || latestSelfContainedShareLink;
+            if (await copyTextSmart(val)) showToast('Đã sao chép Link thứ 1 (Link gốc đầy đủ)!');
+            else showToast('Hãy chạm vào ô Link 1 để sao chép nhé!');
+        }
+
+        async function copyShortShareLink() {
+            const rawVal = document.getElementById('shareShortLinkInput')?.value || '';
+            const val = /^https?:\/\//i.test(rawVal) ? rawVal : latestShortShareLink;
+            if (!val) {
+                showToast('Link rút gọn đang được tạo, vui lòng đợi 1 giây hoặc sao chép Link 1 nhé!');
+                return;
+            }
+            if (await copyTextSmart(val)) showToast('Đã sao chép Link thứ 2 (Link đã rút gọn)!');
+            else showToast('Hãy chạm vào ô Link 2 để sao chép nhé!');
+        }
+
+        async function copyShareLink() {
+            return copyShortShareLink();
         }
 
         function openWordExportModal() {
@@ -3656,6 +3961,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                 html += `<h3>PHẦN I. TRẮC NGHIỆM</h3>`;
                 EXAM_DATA.partA.forEach((q, i) => {
                     html += `<p><b>Câu ${i + 1}:</b> ${escapeHtml(q.question)}</p>`;
+                    if (q.tableHtml) html += `<div style="margin:6px 0;">${q.tableHtml}</div>`;
                     q.options.forEach((o, oi) => { html += `<p style="margin-left:18px;">${LETTERS[oi]}. ${escapeHtml(o)}</p>`; });
                 });
             }
@@ -3663,6 +3969,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                 html += `<h3>PHẦN II. ĐÚNG / SAI</h3>`;
                 EXAM_DATA.partB.forEach((q, i) => {
                     html += `<p><b>Câu ${i + 1}:</b> ${escapeHtml(q.question)}</p>`;
+                    if (q.tableHtml) html += `<div style="margin:6px 0;">${q.tableHtml}</div>`;
                     q.statements.forEach(s => { html += `<p style="margin-left:18px;">${escapeHtml(s.label)}) ${escapeHtml(s.text)}</p>`; });
                 });
             }
@@ -3725,9 +4032,25 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
 
         function exportStandaloneWebApp() {
             if (!hasAnyQuestions()) { showToast('Chưa có câu hỏi nào để xuất Web .HTML!'); return; }
-            const htmlDoc = document.documentElement.outerHTML
-                .replace(/let IS_STANDALONE_STUDENT_APP = false;/, 'let IS_STANDALONE_STUDENT_APP = true;')
-                .replace(/\/\* __EXAM_DATA_START__ \*\/[\s\S]*?\/\* __EXAM_DATA_END__ \*\//, `/* __EXAM_DATA_START__ */\n        let EXAM_DATA = ${JSON.stringify(EXAM_DATA)};\n        /* __EXAM_DATA_END__ */`);
+            const clonedRoot = document.documentElement.cloneNode(true);
+
+            // Đóng toàn bộ hộp thoại nổi & thông báo tạm để học sinh mở file .html vào thẳng đề thi sạch đẹp
+            [
+                'shareLinkModal', 'wordExportModal', 'customModal', 'aiChatDrawer',
+                'ttsStudioModal', 'pptxAudioModal', 'pptConvertModal', 'videoStudioModal',
+                'studentPreviewExitBanner', 'toastNotification'
+            ].forEach(id => {
+                const el = clonedRoot.querySelector('#' + id);
+                if (el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+
+            const safeExamJson = JSON.stringify(EXAM_DATA).replace(/<\//g, '<\\/');
+            const htmlDoc = clonedRoot.outerHTML
+                .replace(/let IS_STANDALONE_STUDENT_APP = (?:false|true);/, 'let IS_STANDALONE_STUDENT_APP = true;')
+                .replace(/\/\* __EXAM_DATA_START__ \*\/[\s\S]*?\/\* __EXAM_DATA_END__ \*\//, `/* __EXAM_DATA_START__ */\n        let EXAM_DATA = ${safeExamJson};\n        /* __EXAM_DATA_END__ */`);
             const blob = new Blob(['<!DOCTYPE html>\n' + htmlDoc], { type: 'text/html;charset=utf-8' });
             triggerBlobFileDownload(blob, `${getSafeFilenameSlug(EXAM_DATA.title, 'web_on_tap')}.html`);
             showToast('Đã xuất tệp Web Ôn Tập độc lập (.html)!');
@@ -3972,7 +4295,15 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                 const blob = await fetchVideoTtsMp3(text, selectedTTSVoiceId, spd);
                 latestTTSMp3Blob = blob;
                 const player = document.getElementById('ttsAudioPlayer');
-                if (player) { player.src = URL.createObjectURL(blob); player.load(); }
+                if (player) {
+                    if (player._prevObjUrl) {
+                        try { URL.revokeObjectURL(player._prevObjUrl); } catch (_) {}
+                    }
+                    const newUrl = URL.createObjectURL(blob);
+                    player._prevObjUrl = newUrl;
+                    player.src = newUrl;
+                    player.load();
+                }
                 document.getElementById('ttsResultArea')?.classList.remove('hidden');
                 showToast('Đã tạo giọng đọc MP3 thành công!');
             } catch (err) {
