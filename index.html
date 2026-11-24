@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="description" content="Phúc nguyên Vlog — Nền tảng Tạo Đề Ôn Tập Trực Tuyến, Siêu Trợ Lý AI, Phòng Thu MP3, Lồng Tiếng PowerPoint &amp; Studio Video AI miễn phí.">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="vi_VN">
+    <meta property="og:site_name" content="Phúc nguyên Vlog">
+    <meta property="og:title" content="Phúc nguyên Vlog — Tạo Đề Ôn Tập &amp; Studio AI Đa Năng">
+    <meta property="og:description" content="Trang làm bài ôn tập trực tuyến &amp; công cụ hỗ trợ dạy học miễn phí.">
     <title>Phúc nguyên Vlog — Tạo Đề Ôn Tập &amp; Studio AI Đa Năng</title>
     <!-- Favicon tích hợp trực tiếp Logo Phúc nguyên Vlog (không cần tệp Icon.png rời khi lên Vercel) -->
     <link id="appFavicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23fde68a'/%3E%3Cstop offset='52%25' stop-color='%237de2c7'/%3E%3Cstop offset='100%25' stop-color='%23d9f99d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='120' height='120' rx='26' fill='url(%23bg)'/%3E%3Ccircle cx='46' cy='60' r='39' fill='%23ffffff'/%3E%3Cpath d='M51 35c-3-4-7-5-10-4 1 4 4 7 9 7 1 0 1-2 1-3z' fill='%234ade80'/%3E%3Cpath d='M55 34c1-5 4-8 8-9 0 5-2 8-6 10-1 0-2 0-2-1z' fill='%2322c55e'/%3E%3Cpath d='M58 40c4-3 8-4 11-3-2 4-5 6-10 6-1 0-2-2-1-3z' fill='%2316a34a'/%3E%3Cpath d='M18 79c4 0 8 2 10 6-4 1-8-1-10-5z' fill='%234ade80'/%3E%3Ctext x='45' y='52' text-anchor='middle' font-family='Arial,sans-serif' font-weight='900' font-size='19' fill='%2315803d'%3EPh%C3%BAc%3C/text%3E%3Ctext x='45' y='67' text-anchor='middle' font-family='Arial,sans-serif' font-weight='900' font-size='15.5' fill='%2315803d'%3Enguy%C3%AAn%3C/text%3E%3Ctext x='46' y='85' text-anchor='middle' font-family='Arial,sans-serif' font-weight='900' font-size='21' fill='%2316a34a'%3EVlog%3C/text%3E%3Cg transform='rotate(6 92 60)'%3E%3Crect x='77' y='30' width='31' height='58' rx='7' fill='none' stroke='%230c2d57' stroke-width='3.6'/%3E%3Cline x1='89' y1='35' x2='96' y2='35' stroke='%230c2d57' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M85 61h15a4.5 4.5 0 0 0 .5-8.9A6.5 6.5 0 0 0 88 50a5 5 0 0 0-3 11z' fill='none' stroke='%230c2d57' stroke-width='2.6' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(63 68) rotate(5)'%3E%3Crect x='5' y='5' width='22' height='22' rx='4' fill='%237de2c7' stroke='%230c2d57' stroke-width='2.8'/%3E%3Crect x='11' y='11' width='10' height='10' rx='1.5' fill='none' stroke='%230c2d57' stroke-width='2.2'/%3E%3Cpath d='M10 1v4M16 1v4M22 1v4M10 27v4M16 27v4M22 27v4M1 10h4M1 16h4M1 22h4M27 10h4M27 16h4M27 22h4' stroke='%230c2d57' stroke-width='2.2' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
@@ -1687,17 +1692,17 @@
                     </div>
                 </div>
 
-                <!-- Link thứ 2: Link đã rút gọn tự động (khớp Mã QR) -->
+                <!-- Link thứ 2: Link rút gọn trên chính tên miền Vercel (không bao giờ bị Zalo cảnh báo) -->
                 <div class="space-y-1">
                     <div class="flex items-center justify-between text-xs gap-2">
                         <label for="shareShortLinkInput" class="font-extrabold text-purple-800 flex items-center gap-1">
-                            <i class="fa-solid fa-wand-magic-sparkles text-purple-600 text-[11px]"></i>
-                            <span>2. Link đã rút gọn (khớp Mã QR):</span>
+                            <i class="fa-solid fa-shield-halved text-emerald-600 text-[11px]"></i>
+                            <span>2. Link đã rút gọn chuẩn Zalo (khớp Mã QR):</span>
                         </label>
-                        <span id="shareShortStatusBadge" class="text-[10px] font-extrabold text-emerald-600 shrink-0">Tự động rút gọn</span>
+                        <span id="shareShortStatusBadge" class="text-[10px] font-extrabold text-emerald-600 shrink-0">An toàn trên Zalo</span>
                     </div>
                     <div class="flex gap-2">
-                        <input type="text" id="shareShortLinkInput" readonly onclick="this.select()" placeholder="https://clck.ru/..." class="flex-1 px-3 py-2 rounded-xl bg-purple-50/60 border border-purple-300 text-xs font-mono font-bold text-purple-900 outline-none">
+                        <input type="text" id="shareShortLinkInput" readonly onclick="this.select()" placeholder="https://tao-de-on-tap.vercel.app/?d=..." class="flex-1 px-3 py-2 rounded-xl bg-purple-50/60 border border-purple-300 text-xs font-mono font-bold text-purple-900 outline-none">
                         <button type="button" onclick="copyShortShareLink()" class="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold transition shrink-0 flex items-center gap-1.5">
                             <i class="fa-regular fa-copy"></i>
                             <span>Sao chép</span>
@@ -3748,11 +3753,84 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             return null;
         }
 
+        async function expandFirstPartyShortCode(dCode) {
+            const clean = String(dCode || '').trim();
+            if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,48}$/.test(clean)) return '';
+
+            const apiBases = [];
+            if (/^https?:\/\//i.test(window.location.href)) {
+                apiBases.push('');
+            }
+            apiBases.push(DEFAULT_PUBLIC_WEB_URL.replace(/\/$/, ''));
+
+            for (const base of [...new Set(apiBases)]) {
+                try {
+                    const res = await fetchWithTimeout(`${base}/api/tts?action=expand&d=${encodeURIComponent(clean)}`, { method: 'GET' }, 9000);
+                    if (res.ok) {
+                        const j = await res.json();
+                        const u = String(j?.url || '').trim();
+                        if (/^https?:\/\/\S+$/i.test(u)) return u;
+                    }
+                } catch (_) {}
+            }
+
+            // Dự phòng giải mã trực tiếp trên trình duyệt nếu máy chủ API đang khởi động
+            const prefix = clean[0].toLowerCase();
+            const slug = clean.slice(1);
+            try {
+                if (prefix === 'b') {
+                    const r = await fetchWithTimeout(`https://bytebin.lucko.me/${encodeURIComponent(slug)}`, { method: 'GET' }, 7500);
+                    if (r.ok) {
+                        const t = (await r.text()).trim();
+                        if (/^https?:\/\/\S+$/i.test(t)) return t;
+                    }
+                } else if (prefix === 'p') {
+                    const r = await fetchWithTimeout(`https://dpaste.com/${encodeURIComponent(slug)}.txt`, { method: 'GET' }, 7500);
+                    if (r.ok) {
+                        const t = (await r.text()).trim();
+                        if (/^https?:\/\/\S+$/i.test(t)) return t;
+                    }
+                } else if (prefix === 'd') {
+                    const r = await fetchWithTimeout(`https://da.gd/coshorten/${encodeURIComponent(slug)}`, { method: 'GET' }, 7500);
+                    if (r.ok) {
+                        const t = (await r.text()).trim();
+                        if (/^https?:\/\/\S+$/i.test(t)) return t;
+                    }
+                }
+            } catch (_) {}
+            return '';
+        }
+
         async function tryLoadSharedExamFromUrl() {
             try {
-                const hash = String(window.location.hash || '');
-                const search = String(window.location.search || '');
-                const combinedLoc = `${hash}&${search.replace(/^\?/, '')}`;
+                let hash = String(window.location.hash || '');
+                let search = String(window.location.search || '');
+                const pathname = String(window.location.pathname || '');
+                let combinedLoc = `${hash}&${search.replace(/^\?/, '')}`;
+
+                // 0. Giải mã Link rút gọn chính chủ chống cảnh báo Zalo (?d=CODE hoặc /d/CODE)
+                const pathShortMatch = pathname.match(/\/d\/([a-zA-Z][a-zA-Z0-9_-]{2,48})/);
+                const queryShortMatch = combinedLoc.match(/(?:^|[#&?])d=([a-zA-Z][a-zA-Z0-9_-]{2,48})/);
+                const shortCode = queryShortMatch ? queryShortMatch[1] : (pathShortMatch ? pathShortMatch[1] : '');
+                if (shortCode) {
+                    showToast('Đang mở đề ôn tập...');
+                    const expandedUrl = await expandFirstPartyShortCode(shortCode);
+                    if (expandedUrl) {
+                        const hashIdx = expandedUrl.indexOf('#');
+                        const qIdx = expandedUrl.indexOf('?');
+                        const extractedFrag = hashIdx !== -1
+                            ? expandedUrl.slice(hashIdx + 1)
+                            : (qIdx !== -1 ? expandedUrl.slice(qIdx + 1) : '');
+                        if (extractedFrag) {
+                            combinedLoc = `#${extractedFrag}`;
+                            try {
+                                window.history.replaceState(null, '', `${window.location.pathname.replace(/\/d\/[^/]+$/, '/')}#${extractedFrag}`);
+                            } catch (_) {}
+                        }
+                    } else {
+                        showToast('Không mở được mã đề rút gọn này — hãy nhờ giáo viên gửi lại Link 1 hoặc làm mới QR nhé!');
+                    }
+                }
 
                 // 1. Nạp từ link Google Drive siêu ngắn (#gdrive=FILE_ID)
                 const driveMatch = combinedLoc.match(/(?:^|[#&?])(?:gdrive|drive)=([a-zA-Z0-9_-]{15,})/);
@@ -3921,97 +3999,110 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             return false;
         }
 
+        function wrapProviderUrlToZaloSafeLink(providerUrl, baseUrl) {
+            const raw = String(providerUrl || '').trim();
+            if (!/^https?:\/\/\S+$/i.test(raw)) return '';
+            const cleanBase = (baseUrl || getPublicShareBaseUrl()).replace(/\/?$/, '/');
+            // Nếu đã là link chính chủ trên tên miền Vercel của trang web thì giữ nguyên
+            if (raw.toLowerCase().startsWith(cleanBase.toLowerCase())) return raw;
+            try {
+                const u = new URL(raw);
+                const host = u.hostname.toLowerCase();
+                const slug = u.pathname.replace(/^\/+|\/+$/g, '');
+                if (!/^[a-zA-Z0-9_-]{2,40}$/.test(slug)) return '';
+                const map = {
+                    'da.gd': 'd',
+                    'is.gd': 'i',
+                    'v.gd': 'v',
+                    'clck.ru': 'c',
+                    'spoo.me': 's',
+                    'tinyurl.com': 't',
+                    'dpaste.com': 'p'
+                };
+                for (const [domain, prefix] of Object.entries(map)) {
+                    if (host === domain || host.endsWith('.' + domain)) {
+                        return `${cleanBase}?d=${prefix}${slug}`;
+                    }
+                }
+            } catch (_) {}
+            return '';
+        }
+
         async function requestShortUrlFromProviders(targetUrl, bypassCache = false) {
             if (!targetUrl || !/^https?:\/\//i.test(targetUrl)) return '';
             if (!bypassCache && shortUrlMemoryCache.has(targetUrl)) {
                 return shortUrlMemoryCache.get(targetUrl);
             }
 
-            const isValidShort = (s) => /^https?:\/\/\S+$/i.test(s) && s.length < targetUrl.length && s.length <= 120;
+            const baseUrl = getPublicShareBaseUrl().replace(/\/?$/, '/');
+            const isValidShort = (s) => /^https?:\/\/\S+$/i.test(s) && s.length < targetUrl.length && s.length <= 135;
 
-            // 1. Ưu tiên gọi API máy chủ Vercel cùng tên miền (không bị chặn CORS, ưu tiên trả về clck.ru, hỗ trợ cả URL rất dài qua POST)
+            // 1. Ưu tiên tuyệt đối API máy chủ Vercel chính chủ -> Trả về https://tao-de-on-tap.vercel.app/?d=... (Zalo tin cậy 100%, không bao giờ cảnh báo)
+            const apiEndpoints = [];
             if (/^https?:\/\//i.test(window.location.href)) {
-                const apiPaths = ['/api/tts?action=shorten', '/api/tts/shorten'];
-                for (const p of apiPaths) {
-                    try {
-                        const res = await fetchWithTimeout(p, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'shorten', url: targetUrl })
-                        }, 9000);
-                        if (res.ok) {
-                            const j = await res.json();
-                            const cand = String(j?.short_url || '').trim();
-                            if (isValidShort(cand)) {
-                                shortUrlMemoryCache.set(targetUrl, cand);
-                                return cand;
-                            }
-                        }
-                    } catch (_) {}
-                }
+                apiEndpoints.push('/api/tts?action=shorten', '/api/tts/shorten');
             }
+            apiEndpoints.push(`${DEFAULT_PUBLIC_WEB_URL.replace(/\/$/, '')}/api/tts?action=shorten`);
 
-            // 2. Gọi trực tiếp từ trình duyệt (ưu tiên clck.ru qua POST & GET để trả về đúng dạng https://clck.ru/...)
-            try {
-                const postRes = await fetchWithTimeout('https://clck.ru/--', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-                    body: `url=${encodeURIComponent(targetUrl)}`
-                }, 8000);
-                if (postRes.ok) {
-                    const txt = (await postRes.text()).trim();
-                    if (isValidShort(txt)) {
-                        shortUrlMemoryCache.set(targetUrl, txt);
-                        return txt;
-                    }
-                }
-            } catch (_) {}
-
-            if (targetUrl.length <= 2500) {
+            for (const p of [...new Set(apiEndpoints)]) {
                 try {
-                    const getRes = await fetchWithTimeout(`https://clck.ru/--?url=${encodeURIComponent(targetUrl)}`, { method: 'GET' }, 7500);
-                    if (getRes.ok) {
-                        const txt = (await getRes.text()).trim();
-                        if (isValidShort(txt)) {
-                            shortUrlMemoryCache.set(targetUrl, txt);
-                            return txt;
+                    const res = await fetchWithTimeout(p, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'shorten', url: targetUrl, base_url: baseUrl })
+                    }, 9500);
+                    if (res.ok) {
+                        const j = await res.json();
+                        const rawCand = String(j?.short_url || '').trim();
+                        const safeCand = wrapProviderUrlToZaloSafeLink(rawCand, baseUrl) || rawCand;
+                        if (isValidShort(safeCand) && !/tinyurl\.com|bit\.ly/i.test(safeCand)) {
+                            shortUrlMemoryCache.set(targetUrl, safeCand);
+                            return safeCand;
                         }
                     }
                 } catch (_) {}
             }
 
-            // 3. Các cổng dự phòng khác hỗ trợ CORS trực tiếp trên trình duyệt
+            // 2. Dự phòng trực tiếp từ trình duyệt qua Bytebin (hỗ trợ CORS & đề siêu dài) -> Bọc sang tên miền chính chủ ?d=b...
             try {
-                const spooRes = await fetchWithTimeout('https://spoo.me/', {
+                const bbRes = await fetchWithTimeout('https://bytebin.lucko.me/post', {
                     method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `url=${encodeURIComponent(targetUrl)}`
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8', 'Accept': 'application/json' },
+                    body: targetUrl
                 }, 8000);
-                if (spooRes.ok) {
-                    const j = await spooRes.json();
-                    const cand = String(j?.short_url || '').trim();
-                    if (isValidShort(cand)) {
-                        shortUrlMemoryCache.set(targetUrl, cand);
-                        return cand;
+                if (bbRes.ok) {
+                    const j = await bbRes.json();
+                    const key = String(j?.key || '').trim();
+                    if (/^[a-zA-Z0-9_-]{3,40}$/.test(key)) {
+                        const safeUrl = `${baseUrl}?d=b${key}`;
+                        if (isValidShort(safeUrl)) {
+                            shortUrlMemoryCache.set(targetUrl, safeUrl);
+                            return safeUrl;
+                        }
                     }
                 }
             } catch (_) {}
 
-            const fallbackGets = [
-                `https://is.gd/create.php?format=simple&url=${encodeURIComponent(targetUrl)}`,
-                `https://v.gd/create.php?format=simple&url=${encodeURIComponent(targetUrl)}`
+            // 3. Dự phòng các cổng da.gd / is.gd / v.gd / clck.ru -> Tự động bọc sang tên miền chính chủ https://tao-de-on-tap.vercel.app/?d=... để Zalo không cảnh báo
+            const directCandidates = [
+                { url: 'https://da.gd/s', method: 'POST', body: `url=${encodeURIComponent(targetUrl)}` },
+                { url: `https://is.gd/create.php?format=simple&url=${encodeURIComponent(targetUrl)}`, method: 'GET' },
+                { url: `https://v.gd/create.php?format=simple&url=${encodeURIComponent(targetUrl)}`, method: 'GET' },
+                { url: 'https://clck.ru/--', method: 'POST', body: `url=${encodeURIComponent(targetUrl)}` }
             ];
-            for (const ep of fallbackGets) {
+            for (const item of directCandidates) {
+                if (item.method === 'GET' && targetUrl.length > 2500) continue;
                 try {
-                    const res = await fetchWithTimeout(ep, { method: 'GET' }, 7500);
+                    const opts = item.method === 'POST'
+                        ? { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: item.body }
+                        : { method: 'GET' };
+                    const res = await fetchWithTimeout(item.url, opts, 7500);
                     if (!res.ok) continue;
                     const txt = (await res.text()).trim();
-                    if (isValidShort(txt)) {
-                        shortUrlMemoryCache.set(targetUrl, txt);
-                        return txt;
+                    const wrapped = wrapProviderUrlToZaloSafeLink(txt, baseUrl);
+                    if (wrapped && isValidShort(wrapped)) {
+                        shortUrlMemoryCache.set(targetUrl, wrapped);
+                        return wrapped;
                     }
                 } catch (_) {}
             }
