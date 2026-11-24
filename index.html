@@ -354,7 +354,7 @@
             <!-- =========================================================== -->
             <div id="hubZone1" class="studio-card scroll-mt-24 bg-white rounded-3xl border border-slate-200 hover:border-blue-400 shadow-2xs p-5 sm:p-6">
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-                    <div class="space-y-3 flex-1 min-w-0">
+                    <div class="space-y-2.5 flex-1 min-w-0">
                         <div class="flex items-start gap-3.5">
                             <div class="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 font-black text-xl flex items-center justify-center shrink-0">
                                 1
@@ -362,22 +362,12 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span class="text-[11px] font-black uppercase tracking-wider text-blue-600">Khu vực 1 • Đề Ôn Tập Trực Tuyến</span>
-                                    <span id="hubExamStatusBadge" class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-extrabold">Chưa có câu hỏi</span>
+                                    <span id="hubExamStatusBadge" class="hidden px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold"></span>
                                 </div>
                                 <h3 class="text-base sm:text-xl font-black text-slate-900 mt-0.5">Tạo, Ôn Tập &amp; Chỉnh Sửa Đề Ôn Tập</h3>
                                 <p class="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
-                                    Quét <strong>Ảnh chụp, Word (.docx/.doc), PDF</strong> thành Web ôn tập 3 bước, kèm <strong>AI Tạo/Sửa đề</strong>, chia sẻ <strong>Link &amp; Mã QR</strong>, xuất <strong>Word / PDF / Web .HTML</strong>.
+                                    Quét <strong>Ảnh chụp, Word (.docx/.doc), PDF</strong> thành Web ôn tập 3 bước, kèm <strong>AI Tạo/Sửa đề</strong>, chia sẻ <strong>Link siêu ngắn &amp; Mã QR</strong>, xuất <strong>Word / PDF / Web .HTML</strong>.
                                 </p>
-                            </div>
-                        </div>
-                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-                            <span class="font-extrabold text-slate-800 truncate"><i class="fa-solid fa-file-lines text-blue-600 mr-1.5"></i>Đề đang mở: <span id="hubExamTitleDisplay" class="text-blue-700">ĐỀ ÔN TẬP</span></span>
-                            <div class="flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-600">
-                                <span>TN: <strong id="hubCountA" class="text-slate-900">0</strong></span>
-                                <span>•</span>
-                                <span>Đ/S: <strong id="hubCountB" class="text-slate-900">0</strong></span>
-                                <span>•</span>
-                                <span>Tự luận: <strong id="hubCountC" class="text-slate-900">0</strong></span>
                             </div>
                         </div>
                     </div>
@@ -725,7 +715,7 @@
                     </div>
 
                     <!-- Điều hướng từng câu (trên) -->
-                    <div id="singleNavigationHeader" class="hidden items-center justify-between gap-2 bg-white rounded-2xl border border-slate-200 p-3 flex">
+                    <div id="singleNavigationHeader" class="hidden items-center justify-between gap-2 bg-white rounded-2xl border border-slate-200 p-3">
                         <button type="button" id="btnPrevQuestion" onclick="navigateSingleQuestion(-1)" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-extrabold disabled:opacity-40"><i class="fa-solid fa-chevron-left mr-1"></i>Câu trước</button>
                         <span id="singleQuestionCounter" class="text-xs sm:text-sm font-black text-indigo-700">Mục 1 / 1</span>
                         <button type="button" id="btnNextQuestion" onclick="navigateSingleQuestion(1)" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold disabled:opacity-40">Câu sau<i class="fa-solid fa-chevron-right ml-1"></i></button>
@@ -735,7 +725,7 @@
                     <div id="questionsContainer" class="space-y-4"></div>
 
                     <!-- Điều hướng từng câu (dưới) -->
-                    <div id="singleNavigationFooter" class="hidden items-center justify-between gap-2 bg-white rounded-2xl border border-slate-200 p-3 flex">
+                    <div id="singleNavigationFooter" class="hidden items-center justify-between gap-2 bg-white rounded-2xl border border-slate-200 p-3">
                         <button type="button" id="btnPrevQuestionBottom" onclick="navigateSingleQuestion(-1)" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-extrabold disabled:opacity-40"><i class="fa-solid fa-chevron-left mr-1"></i>Câu trước</button>
                         <button type="button" id="btnNextQuestionBottom" onclick="navigateSingleQuestion(1)" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold disabled:opacity-40">Câu tiếp theo<i class="fa-solid fa-chevron-right ml-1"></i></button>
                     </div>
@@ -1735,11 +1725,31 @@
         <span id="toastMessageText">Đã thực hiện thành công!</span>
     </div>
 
-    <!-- FOOTER -->
-    <footer class="bg-white/90 backdrop-blur-sm border-t border-slate-200/80 mt-10 pt-5 pb-20 sm:pb-6 text-center text-xs text-slate-500">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p id="footerMainTitle" class="font-bold text-slate-700">Phúc nguyên Vlog • Nền Tảng Tạo Đề Ôn Tập &amp; Studio AI Đa Năng</p>
-            <p>Web Ôn Tập • Siêu AI • Phòng Thu MP3 • PowerPoint &amp; Studio Video AI</p>
+    <!-- FOOTER THÔNG TIN LIÊN HỆ, YOUTUBE & NGUỒN CÔNG NGHỆ -->
+    <footer class="bg-white/95 backdrop-blur-sm border-t border-slate-200/80 mt-10 pt-6 pb-20 sm:pb-7 text-xs text-slate-600">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-4">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="text-center md:text-left space-y-1">
+                    <p id="footerMainTitle" class="text-sm font-black text-slate-900">Phúc nguyên Vlog • Nền Tảng Tạo Đề Ôn Tập &amp; Studio AI Đa Năng</p>
+                    <p class="text-[11px] sm:text-xs text-slate-500">Web Ôn Tập • Siêu AI • Phòng Thu MP3 • PowerPoint &amp; Studio Video AI</p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-center gap-2">
+                    <a href="https://www.youtube.com/@PhucNguyenVlog1" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-extrabold transition">
+                        <i class="fa-brands fa-youtube text-rose-600 text-sm"></i>
+                        <span>YouTube: @PhucNguyenVlog1</span>
+                    </a>
+                    <a href="tel:0777862904" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-extrabold transition">
+                        <i class="fa-solid fa-phone text-emerald-600 text-xs"></i>
+                        <span>SĐT / Zalo: 0777 862 904</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400 text-center sm:text-left">
+                <span>Nguồn &amp; công nghệ tích hợp: Google Gemini AI • KaTeX • Mammoth.js • PDF.js • JSZip • QRious • LZ-String</span>
+                <span class="font-semibold text-slate-500">© 2026 Phúc nguyên Vlog • Hỗ trợ dạy &amp; học miễn phí</span>
+            </div>
         </div>
     </footer>
 
@@ -2356,23 +2366,14 @@
             const countC = Array.isArray(EXAM_DATA?.partC) ? EXAM_DATA.partC.length : 0;
             const total = countA + countB + countC;
 
-            const titleEl = document.getElementById('hubExamTitleDisplay');
-            const cA = document.getElementById('hubCountA');
-            const cB = document.getElementById('hubCountB');
-            const cC = document.getElementById('hubCountC');
             const badge = document.getElementById('hubExamStatusBadge');
-
-            if (titleEl) titleEl.textContent = EXAM_DATA?.title || 'ĐỀ ÔN TẬP';
-            if (cA) cA.textContent = countA;
-            if (cB) cB.textContent = countB;
-            if (cC) cC.textContent = countC;
             if (badge) {
                 if (total > 0) {
-                    badge.textContent = `Sẵn sàng (${total} câu)`;
-                    badge.className = 'px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold';
+                    badge.textContent = `Đang mở: ${total} câu`;
+                    badge.classList.remove('hidden');
                 } else {
-                    badge.textContent = 'Chưa có câu hỏi';
-                    badge.className = 'px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-extrabold';
+                    badge.textContent = '';
+                    badge.classList.add('hidden');
                 }
             }
         }
@@ -2819,8 +2820,15 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
 
             const navTop = document.getElementById('singleNavigationHeader');
             const navBot = document.getElementById('singleNavigationFooter');
-            if (navTop) navTop.classList.toggle('hidden', !isSingle || flat.length === 0);
-            if (navBot) navBot.classList.toggle('hidden', !isSingle || flat.length === 0);
+            const showSingleNav = isSingle && flat.length > 0;
+            if (navTop) {
+                navTop.classList.toggle('hidden', !showSingleNav);
+                navTop.classList.toggle('flex', showSingleNav);
+            }
+            if (navBot) {
+                navBot.classList.toggle('hidden', !showSingleNav);
+                navBot.classList.toggle('flex', showSingleNav);
+            }
 
             if (isSingle && flat.length > 0) {
                 const ctr = document.getElementById('singleQuestionCounter');
@@ -2909,6 +2917,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                                 <span class="px-2.5 py-1 rounded-xl bg-indigo-600 text-white text-xs font-black shrink-0">Đ/S ${entry.index + 1}</span>
                                 <div class="text-sm sm:text-base font-bold text-slate-900 leading-relaxed flex-1">${escapeHtml(q.question)}</div>
                             </div>
+                            ${q.tableHtml ? `<div class="overflow-x-auto">${q.tableHtml}</div>` : ''}
                             <div class="space-y-2">${stHtml}</div>
                         </div>
                     `;
@@ -3078,7 +3087,29 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             }
             const palB = document.getElementById('palettePartB');
             if (palB) {
-                palB.innerHTML = pB.map((q, idx) => `<button type="button" onclick="scrollToQuestionCard('B', ${idx})" class="h-8 rounded-lg text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">B${idx + 1}</button>`).join('');
+                palB.innerHTML = pB.map((q, idx) => {
+                    const totalSt = q.statements.length;
+                    let answeredSt = 0;
+                    let correctSt = 0;
+                    q.statements.forEach((st, si) => {
+                        const v = appState.answersB[`${q.id}_${si}`];
+                        if (v !== undefined) {
+                            answeredSt++;
+                            if (v === st.isTrue) correctSt++;
+                        }
+                    });
+                    let cls = 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+                    if (answeredSt > 0) {
+                        if (appState.submitted || appState.quizMode === 'practice') {
+                            cls = (totalSt > 0 && answeredSt === totalSt && correctSt === totalSt)
+                                ? 'bg-emerald-600 text-white'
+                                : (correctSt > 0 ? 'bg-amber-500 text-white' : 'bg-rose-600 text-white');
+                        } else {
+                            cls = 'bg-blue-600 text-white';
+                        }
+                    }
+                    return `<button type="button" onclick="scrollToQuestionCard('B', ${idx})" class="h-8 rounded-lg text-xs font-extrabold ${cls}">B${idx + 1}</button>`;
+                }).join('');
             }
             const palC = document.getElementById('palettePartC');
             if (palC) {
@@ -3863,7 +3894,10 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
         async function syncVoicesFromVercelSilent() {
             ttsVoicesSyncedOnce = true;
             try {
-                const res = await fetchWithTimeout('/api/tts/voices', { method: 'GET' }, 6000);
+                let res = await fetchWithTimeout('/api/tts?action=voices', { method: 'GET' }, 6000);
+                if (!res.ok) {
+                    res = await fetchWithTimeout('/api/tts/voices', { method: 'GET' }, 6000);
+                }
                 if (!res.ok) return;
                 const data = await res.json();
                 const arr = Array.isArray(data) ? data : (Array.isArray(data?.voices) ? data.voices : []);
@@ -3871,7 +3905,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                     ttsVoicesList = arr.map(v => ({
                         id: v.id || v.voice_id || v.ShortName || 'vi-VN-HoaiMyNeural',
                         name: v.name || v.FriendlyName || v.id || 'Giọng AI',
-                        badge: v.badge || v.Locale || 'AI Voice'
+                        badge: v.badge || v.locale || v.Locale || 'AI Voice'
                     }));
                     renderTTSVoiceCards();
                     populatePptxVoiceSelect();
@@ -3913,7 +3947,14 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
         function loadCurrentExamToTTS() {
             if (!hasAnyQuestions()) { showToast('Hiện chưa có câu hỏi nào trong đề đang mở!'); return; }
             const lines = [EXAM_DATA.title];
-            EXAM_DATA.partA.forEach((q, i) => lines.push(`Câu ${i + 1}: ${q.question}`));
+            EXAM_DATA.partA.forEach((q, i) => {
+                const optsTxt = Array.isArray(q.options) ? q.options.map((o, oi) => `${LETTERS[oi]}. ${o}`).join('. ') : '';
+                lines.push(`Câu ${i + 1}: ${q.question}${optsTxt ? '. ' + optsTxt : ''}`);
+            });
+            EXAM_DATA.partB.forEach((q, i) => {
+                const stTxt = Array.isArray(q.statements) ? q.statements.map(s => `Ý ${s.label}: ${s.text}`).join('. ') : '';
+                lines.push(`Đúng Sai ${i + 1}: ${q.question}${stTxt ? '. ' + stTxt : ''}`);
+            });
             EXAM_DATA.partC.forEach((q, i) => lines.push(`Tự luận ${i + 1}: ${q.question}`));
             const ta = document.getElementById('ttsTextInput');
             if (ta) ta.value = lines.join('\n');
@@ -4117,17 +4158,21 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
         }
 
         async function loadPptxBlobIntoAudioStudio(blobOrFile, filename) {
-            // Thu hồi URL audio cũ nếu có
-            pptxState.slides.forEach(s => { if (s.mp3Url) { try { URL.revokeObjectURL(s.mp3Url); } catch (_) {} } });
-
             const zip = await JSZip.loadAsync(blobOrFile);
             const slidePaths = Object.keys(zip.files)
                 .filter(p => /^ppt\/slides\/slide\d+\.xml$/i.test(p))
                 .sort((a, b) => parseInt(a.match(/\d+/)[0], 10) - parseInt(b.match(/\d+/)[0], 10));
 
             if (slidePaths.length === 0) {
-                throw new Error('Không tìm thấy trang slide nào trong tệp .pptx này.');
+                throw new Error('Không tìm thấy slide nào trong tệp PowerPoint này.');
             }
+
+            // Giải phóng bộ nhớ âm thanh cũ nếu nạp tệp PowerPoint mới hợp lệ
+            pptxState.slides.forEach(oldSlide => {
+                if (oldSlide?.mp3Url) {
+                    try { URL.revokeObjectURL(oldSlide.mp3Url); } catch (_) {}
+                }
+            });
 
             const slides = [];
             for (let i = 0; i < slidePaths.length; i++) {
@@ -5013,18 +5058,26 @@ ${blockText}`;
 
         async function fetchVideoTtsMp3(text, voiceId, speed) {
             let lastErr = null;
+            const payload = JSON.stringify({
+                text,
+                voice: voiceId,
+                voice_id: voiceId,
+                speed: parseFloat(speed) || 1.0
+            });
             for (let attempt = 1; attempt <= 3; attempt++) {
                 try {
-                    const response = await fetchWithTimeout('/api/tts/generate', {
+                    let response = await fetchWithTimeout('/api/tts', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            text,
-                            voice: voiceId,
-                            voice_id: voiceId,
-                            speed: parseFloat(speed) || 1.0
-                        })
+                        body: payload
                     }, 58000);
+                    if (response.status === 404 || response.status === 405) {
+                        response = await fetchWithTimeout('/api/tts/generate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: payload
+                        }, 58000);
+                    }
                     const ct = (response.headers.get('content-type') || '').toLowerCase();
                     if (!response.ok || !ct.includes('audio')) {
                         let msg = `Máy chủ trả mã ${response.status}`;
@@ -5671,12 +5724,34 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
                 }
 
                 if (parsedScenes.length === 0 && cleaned.trim()) {
+                    try {
+                        const jsonParsed = extractCleanJsonFromAI(cleaned);
+                        const jsonList = Array.isArray(jsonParsed?.scenes) ? jsonParsed.scenes : [];
+                        jsonList.forEach((sc, i) => {
+                            const body = String(sc?.narration || sc?.text || sc?.script || '').trim();
+                            if (body) {
+                                parsedScenes.push({
+                                    id: 'vsc_' + Date.now() + '_' + i,
+                                    title: String(sc?.title || `Cảnh ${i + 1}`).trim(),
+                                    narration: body,
+                                    imageIndex: i < imgs.length ? i : (imgs.length > 0 ? i % imgs.length : -1)
+                                });
+                            }
+                        });
+                    } catch (_) {}
+                }
+
+                if (parsedScenes.length === 0 && cleaned.trim()) {
                     parsedScenes.push({
                         id: 'vsc_' + Date.now() + '_0',
                         title: topic.slice(0, 48) || 'Cảnh 1',
                         narration: cleaned.replace(/[*#_`]+/g, '').trim(),
                         imageIndex: imgs.length > 0 ? 0 : -1
                     });
+                }
+
+                if (parsedScenes.length === 0) {
+                    throw new Error('AI chưa tạo được danh sách cảnh. Hãy mô tả rõ chủ đề hơn rồi bấm thử lại nhé!');
                 }
 
                 videoStudioState.createScenes = parsedScenes;
@@ -6191,6 +6266,56 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
             }).join('');
         }
 
+        async function captureSingleFrameFromClip(clip, ratioInSegment = 0.35) {
+            return new Promise((resolve) => {
+                const v = document.createElement('video');
+                v.muted = true;
+                v.playsInline = true;
+                v.setAttribute('playsinline', '');
+                v.setAttribute('webkit-playsinline', '');
+                let settled = false;
+                let seekT = 0;
+                const done = (frameInfo) => {
+                    if (settled) return;
+                    settled = true;
+                    try { v.pause(); v.src = ''; v.load(); } catch (_) {}
+                    resolve(frameInfo);
+                };
+                const timer = setTimeout(() => done(null), 3200);
+                const drawNow = () => {
+                    try {
+                        const c = document.createElement('canvas');
+                        c.width = 480;
+                        c.height = 270;
+                        c.getContext('2d').drawImage(v, 0, 0, 480, 270);
+                        clearTimeout(timer);
+                        const b64 = c.toDataURL('image/jpeg', 0.7).split(',')[1];
+                        done(b64 ? { timeSec: Math.round(seekT), base64: b64 } : null);
+                    } catch (_) {
+                        clearTimeout(timer);
+                        done(null);
+                    }
+                };
+                v.onloadeddata = () => {
+                    const dur = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : (clip.duration || 0);
+                    const segStart = Math.max(0, clip.startSec || 0);
+                    const segEnd = dur > 0 ? Math.min(dur, clip.endSec || dur) : (clip.endSec || 0);
+                    const segLen = Math.max(0, segEnd - segStart);
+                    seekT = segLen > 0.3
+                        ? Math.min(Math.max(0, dur - 0.1), segStart + segLen * ratioInSegment)
+                        : (dur > 1.2 ? Math.min(1.0, dur * 0.25) : 0);
+                    if (seekT > 0.1) {
+                        v.onseeked = drawNow;
+                        try { v.currentTime = seekT; } catch (_) { drawNow(); }
+                    } else {
+                        drawNow();
+                    }
+                };
+                v.onerror = () => { clearTimeout(timer); done(null); };
+                v.src = clip.url;
+            });
+        }
+
         async function extractKeyframesFromAllDubClips(maxTotalFrames = 8) {
             const clips = videoStudioState.dubClips;
             if (!clips.length) return [];
@@ -6199,41 +6324,25 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
 
             for (let ci = 0; ci < clips.length && frames.length < maxTotalFrames; ci++) {
                 const c = clips[ci];
-                const video = document.createElement('video');
-                video.src = c.url;
-                video.muted = true;
-                video.playsInline = true;
-                video.preload = 'auto';
-
-                await new Promise(resolve => {
-                    const timer = setTimeout(resolve, 4000);
-                    video.onloadedmetadata = () => { clearTimeout(timer); resolve(); };
-                    video.onerror = () => { clearTimeout(timer); resolve(); };
-                });
-
-                const scale = Math.min(1, 640 / Math.max(video.videoWidth || 640, video.videoHeight || 360));
-                const canvas = document.createElement('canvas');
-                canvas.width = Math.max(160, Math.round((video.videoWidth || 640) * scale));
-                canvas.height = Math.max(160, Math.round((video.videoHeight || 360) * scale));
-                const ctx = canvas.getContext('2d');
-
-                const segStart = Math.max(0, c.startSec || 0);
-                const segEnd = Math.min(c.duration || 10, c.endSec || c.duration || 10);
-                const segLen = Math.max(0.5, segEnd - segStart);
                 const takeCount = Math.min(perClip, maxTotalFrames - frames.length);
-
                 for (let k = 0; k < takeCount; k++) {
-                    const t = Math.min(segEnd - 0.1, segStart + (segLen * (k + 0.5)) / takeCount);
-                    await new Promise(resolve => {
-                        const timer = setTimeout(resolve, 1800);
-                        video.onseeked = () => { clearTimeout(timer); resolve(); };
-                        try { video.currentTime = Math.max(0.1, t); } catch (_) { clearTimeout(timer); resolve(); }
-                    });
-                    try {
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
-                        frames.push({ clipIndex: ci + 1, timeSec: Math.round(t), base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
-                    } catch (_) {}
+                    const ratio = (k + 0.5) / takeCount;
+                    const captured = await captureSingleFrameFromClip(c, ratio);
+                    if (captured && captured.base64) {
+                        frames.push({
+                            clipIndex: ci + 1,
+                            timeSec: captured.timeSec,
+                            base64: captured.base64,
+                            mimeType: 'image/jpeg'
+                        });
+                    } else if (k === 0 && c.thumbUrl && c.thumbUrl.includes(',')) {
+                        frames.push({
+                            clipIndex: ci + 1,
+                            timeSec: Math.round(c.startSec || 0),
+                            base64: c.thumbUrl.split(',')[1],
+                            mimeType: 'image/jpeg'
+                        });
+                    }
                 }
             }
             return frames;
@@ -6360,39 +6469,41 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
             const outAspect = document.getElementById('vidDubOutputAspect')?.value || 'auto';
             const useFade = Boolean(document.getElementById('vidDubCrossfade')?.checked);
 
-            const createdVideos = [];
+            let playerVid = null;
             try {
-                setVideoRenderProgress(true, 14, 'Đang tạo giọng lồng tiếng AI (.MP3)...');
+                setVideoRenderProgress(true, 15, 'Đang tạo giọng lồng tiếng AI (.MP3)...');
                 const voiceMp3Blob = await fetchVideoTtsMp3(approvedText, voiceId, speed);
                 const voiceAb = await voiceMp3Blob.arrayBuffer();
                 const voiceBuffer = await audioCtx.decodeAudioData(voiceAb.slice(0));
-                const voiceDurSec = Math.max(1.5, voiceBuffer.duration);
+                const voiceDurSec = Math.max(2, voiceBuffer.duration || 4);
 
-                // Tính kế hoạch cắt tự động cho từng clip
-                const clipsPlan = [];
-                if (autoCutMode === 'auto_fit_voice') {
-                    const targetTotal = voiceDurSec + 0.35;
-                    const rawTotal = videoStudioState.dubClips.reduce((s, c) => s + Math.max(0.5, c.endSec - c.startSec), 0) || 1;
-                    const ratio = targetTotal / rawTotal;
+                // Tính đoạn cắt cho từng clip và đảm bảo đủ độ dài tối thiểu khớp giọng đọc AI
+                const clips = videoStudioState.dubClips;
+                const baseSegments = clips.map(c => {
+                    const clipDur = Math.max(1.2, c.duration || 10);
+                    if (autoCutMode === 'auto_fit_voice') {
+                        const idealSlice = Math.max(1.2, voiceDurSec / clips.length);
+                        const sliceDur = Math.min(clipDur, idealSlice);
+                        const start = clipDur > sliceDur ? Math.max(0, (clipDur - sliceDur) / 2) : 0;
+                        return { clip: c, startSec: start, playDurSec: sliceDur };
+                    }
+                    const d = Math.max(1.0, Math.min(clipDur, c.endSec - c.startSec));
+                    return { clip: c, startSec: Math.max(0, c.startSec), playDurSec: d };
+                });
 
-                    videoStudioState.dubClips.forEach(c => {
-                        const baseLen = Math.max(0.5, c.endSec - c.startSec);
-                        const wantLen = Math.max(1.0, baseLen * ratio);
-                        if (wantLen <= c.duration) {
-                            const mid = (c.startSec + c.endSec) / 2;
-                            const s = Math.max(0, Math.min(c.duration - wantLen, mid - wantLen / 2));
-                            clipsPlan.push({ clip: c, startSec: s, durationSec: wantLen });
-                        } else {
-                            // Nếu clip ngắn hơn thời lượng cần thiết, phát lặp mượt hết thời lượng đó
-                            clipsPlan.push({ clip: c, startSec: 0, durationSec: wantLen, loopIfShort: true });
-                        }
-                    });
-                } else {
-                    videoStudioState.dubClips.forEach(c => {
-                        const segLen = Math.max(0.5, c.endSec - c.startSec);
-                        clipsPlan.push({ clip: c, startSec: c.startSec, durationSec: segLen });
-                    });
+                const segments = [...baseSegments];
+                let plannedTotalSec = segments.reduce((s, g) => s + g.playDurSec, 0);
+                let extraIdx = 0;
+                while (plannedTotalSec + 0.15 < voiceDurSec && baseSegments.length > 0 && segments.length < 30) {
+                    const srcSeg = baseSegments[extraIdx % baseSegments.length];
+                    const rem = Math.max(0.5, voiceDurSec - plannedTotalSec);
+                    const take = Math.min(srcSeg.playDurSec, rem);
+                    segments.push({ clip: srcSeg.clip, startSec: srcSeg.startSec, playDurSec: take });
+                    plannedTotalSec += take;
+                    extraIdx++;
                 }
+
+                const totalRenderSec = Math.max(voiceDurSec + 0.25, plannedTotalSec);
 
                 // Chuẩn bị kích thước khung hình xuất video
                 const canvas = document.getElementById('vidLiveRenderCanvas');
@@ -6400,56 +6511,69 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                 else if (outAspect === '1:1') { canvas.width = 960; canvas.height = 960; }
                 else if (outAspect === '16:9') { canvas.width = 1280; canvas.height = 720; }
                 else {
-                    const fw = videoStudioState.dubClips[0]?.width || 1280;
-                    const fh = videoStudioState.dubClips[0]?.height || 720;
+                    const fw = clips[0]?.width || 1280;
+                    const fh = clips[0]?.height || 720;
                     const sc = Math.min(1, 1280 / Math.max(fw, fh));
                     canvas.width = Math.max(320, Math.round((fw * sc) / 2) * 2);
                     canvas.height = Math.max(240, Math.round((fh * sc) / 2) * 2);
                 }
                 const ctx = canvas.getContext('2d');
 
-                setVideoRenderProgress(true, 28, `Đang nạp sẵn ${clipsPlan.length} đoạn video để cắt ghép mượt...`);
                 const dest = audioCtx.createMediaStreamDestination();
-
-                for (let i = 0; i < clipsPlan.length; i++) {
-                    const item = clipsPlan[i];
-                    const vEl = document.createElement('video');
-                    vEl.src = item.clip.url;
-                    vEl.playsInline = true;
-                    vEl.crossOrigin = 'anonymous';
-                    vEl.loop = Boolean(item.loopIfShort);
-                    vEl.muted = origVol <= 0.001;
-                    vEl.volume = origVol > 0 ? 1.0 : 0;
-
-                    await new Promise((resolve, reject) => {
-                        const timer = setTimeout(resolve, 6000);
-                        vEl.onloadeddata = () => { clearTimeout(timer); resolve(); };
-                        vEl.onerror = () => { clearTimeout(timer); reject(new Error(`Không phát được clip "${item.clip.name}".`)); };
-                    });
-
-                    if (origVol > 0.001) {
-                        try {
-                            const src = audioCtx.createMediaElementSource(vEl);
-                            const g = audioCtx.createGain();
-                            g.gain.value = origVol;
-                            src.connect(g);
-                            g.connect(dest);
-                        } catch (_) {
-                            vEl.muted = true;
-                        }
-                    }
-
-                    item.videoEl = vEl;
-                    createdVideos.push(vEl);
-                }
-
-                // Kết nối giọng lồng tiếng AI chạy xuyên suốt toàn bộ video sau khi ghép
                 const voiceSrc = audioCtx.createBufferSource();
                 voiceSrc.buffer = voiceBuffer;
                 const voiceGain = audioCtx.createGain();
                 voiceGain.gain.value = 1.0;
                 voiceSrc.connect(voiceGain);
                 voiceGain.connect(dest);
+
+                // Dùng 1 thẻ video duy nhất phát nối tiếp để không vượt giới hạn bộ giải mã phần cứng trên iPhone/Android
+                playerVid = document.createElement('video');
+                playerVid.playsInline = true;
+                playerVid.setAttribute('playsinline', '');
+                playerVid.setAttribute('webkit-playsinline', '');
+                playerVid.preload = 'auto';
+                if (origVol > 0.001) {
+                    try {
+                        playerVid.muted = false;
+                        playerVid.volume = 1.0;
+                        const mediaElSrc = audioCtx.createMediaElementSource(playerVid);
+                        const origGain = audioCtx.createGain();
+                        origGain.gain.value = origVol;
+                        mediaElSrc.connect(origGain);
+                        origGain.connect(dest);
+                    } catch (_) {
+                        playerVid.muted = true;
+                    }
+                } else {
+                    playerVid.muted = true;
+                }
+
+                // Nạp sẵn khung hình đầu tiên trước khi bấm máy ghi hình để không bị đen giây đầu
+                const loadAndSeekSegment = async (seg, isLast) => {
+                    const availDur = Math.max(0.5, (seg.clip.duration || 10) - seg.startSec);
+                    playerVid.loop = isLast || seg.playDurSec >= availDur - 0.15;
+                    if (playerVid._loadedClipUrl !== seg.clip.url) {
+                        playerVid._loadedClipUrl = seg.clip.url;
+                        playerVid.src = seg.clip.url;
+                        await new Promise((resolve, reject) => {
+                            const timer = setTimeout(resolve, 4500);
+                            playerVid.onloadeddata = () => { clearTimeout(timer); resolve(); };
+                            playerVid.onerror = () => { clearTimeout(timer); reject(new Error(`Không phát được clip "${seg.clip.name}".`)); };
+                        });
+                    }
+                    await new Promise(resolve => {
+                        const timer = setTimeout(resolve, 1000);
+                        playerVid.onseeked = () => { clearTimeout(timer); resolve(); };
+                        try { playerVid.currentTime = Math.max(0, seg.startSec); } catch (_) { clearTimeout(timer); resolve(); }
+                    });
+                };
+
+                setVideoRenderProgress(true, 26, 'Đang chuẩn bị luồng cắt ghép video & phụ đề...');
+                await loadAndSeekSegment(segments[0], segments.length === 1);
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                drawVideoFittedOnCanvas(ctx, playerVid, canvas.width, canvas.height, 1);
 
                 const canvasStream = canvas.captureStream(30);
                 const combinedStream = new MediaStream([
@@ -6464,37 +6588,30 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                 recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
                 const stoppedPromise = new Promise(resolve => { recorder.onstop = resolve; });
 
-                const totalClipsDur = clipsPlan.reduce((s, p) => s + p.durationSec, 0) || 1;
-                const totalRenderSec = Math.max(totalClipsDur, voiceDurSec + 0.25);
-
                 recorder.start(250);
                 voiceSrc.start(audioCtx.currentTime + 0.04);
                 const overallStartMs = performance.now();
 
-                for (let ci = 0; ci < clipsPlan.length; ci++) {
+                for (let ci = 0; ci < segments.length; ci++) {
                     if (videoStudioState.cancelRequested) break;
-                    const plan = clipsPlan[ci];
-                    const vEl = plan.videoEl;
-                    const isLastClip = ci === clipsPlan.length - 1;
-                    // Nếu là clip cuối và lời đọc vẫn còn dư chút ít, giữ tiếp cho hết giọng đọc
+                    const seg = segments[ci];
+                    const isLastSeg = ci === segments.length - 1;
+                    if (ci > 0) {
+                        await loadAndSeekSegment(seg, isLastSeg);
+                    }
+
                     const elapsedSoFar = (performance.now() - overallStartMs) / 1000;
-                    const segDurSec = isLastClip
-                        ? Math.max(plan.durationSec, totalRenderSec - elapsedSoFar)
-                        : plan.durationSec;
+                    const segDurSec = isLastSeg
+                        ? Math.max(0.6, totalRenderSec - elapsedSoFar)
+                        : seg.playDurSec;
 
-                    await new Promise(resolve => {
-                        const timer = setTimeout(resolve, 1200);
-                        vEl.onseeked = () => { clearTimeout(timer); resolve(); };
-                        try { vEl.currentTime = Math.max(0, plan.startSec); } catch (_) { clearTimeout(timer); resolve(); }
-                    });
-
-                    try { await vEl.play(); } catch (_) {}
+                    try { await playerVid.play(); } catch (_) {}
                     const clipStartMs = performance.now();
 
                     await new Promise(resolveClip => {
                         const loopFrame = () => {
                             if (videoStudioState.cancelRequested) {
-                                try { vEl.pause(); } catch (_) {}
+                                try { playerVid.pause(); } catch (_) {}
                                 try { voiceSrc.stop(); } catch (_) {}
                                 resolveClip();
                                 return;
@@ -6504,15 +6621,15 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
 
                             ctx.fillStyle = '#0f172a';
                             ctx.fillRect(0, 0, canvas.width, canvas.height);
-                            drawVideoFittedOnCanvas(ctx, vEl, canvas.width, canvas.height, 1);
+                            drawVideoFittedOnCanvas(ctx, playerVid, canvas.width, canvas.height, 1);
 
-                            // Hiệu ứng chuyển cảnh Fade mượt ở đầu/cuối mỗi clip khi ghép nhiều video
-                            if (useFade && clipsPlan.length > 1) {
+                            // Hiệu ứng chuyển cảnh Fade mượt ở đầu/cuối mỗi đoạn khi ghép nhiều video
+                            if (useFade && segments.length > 1) {
                                 const fadeDur = Math.min(0.32, segDurSec * 0.2);
                                 if (ci > 0 && clipElapsed < fadeDur) {
                                     ctx.fillStyle = `rgba(15, 23, 42, ${1 - clipElapsed / fadeDur})`;
                                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                                } else if (!isLastClip && (segDurSec - clipElapsed) < fadeDur) {
+                                } else if (!isLastSeg && (segDurSec - clipElapsed) < fadeDur) {
                                     ctx.fillStyle = `rgba(15, 23, 42, ${1 - (segDurSec - clipElapsed) / fadeDur})`;
                                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                                 }
@@ -6527,15 +6644,15 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                                 });
                             }
 
-                            const pct = 32 + Math.round((totalElapsed / totalRenderSec) * 66);
+                            const pct = 30 + Math.round((totalElapsed / totalRenderSec) * 68);
                             setVideoRenderProgress(
                                 true,
                                 Math.min(99, pct),
-                                `Đang cắt ghép Clip ${ci + 1}/${clipsPlan.length} & chạy phụ đề (${Math.round(totalElapsed)}s / ${Math.round(totalRenderSec)}s)...`
+                                `Đang cắt ghép đoạn ${ci + 1}/${segments.length} & chạy phụ đề (${Math.round(totalElapsed)}s / ${Math.round(totalRenderSec)}s)...`
                             );
 
                             if (clipElapsed >= segDurSec) {
-                                try { vEl.pause(); } catch (_) {}
+                                try { playerVid.pause(); } catch (_) {}
                                 resolveClip();
                             } else {
                                 videoStudioState.activeRafId = requestAnimationFrame(loopFrame);
@@ -6556,18 +6673,20 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                     finalBlob,
                     recInfo.ext,
                     outSlug,
-                    `Đã cắt ghép ${clipsPlan.length} clip • ${Math.round(totalRenderSec)} giây • ${sizeMB} MB (.${recInfo.ext.toUpperCase()})`,
+                    `Đã cắt ghép ${clips.length} clip • ${Math.round(totalRenderSec)} giây • ${sizeMB} MB (.${recInfo.ext.toUpperCase()})`,
                     approvedText,
                     scriptFilename,
                     voiceMp3Blob
                 );
-                showToast(`Đã cắt ghép ${clipsPlan.length} video, lồng tiếng & chèn phụ đề chạy chữ thành công!`);
+                showToast(`Đã cắt ghép ${clips.length} video, lồng tiếng & chèn phụ đề chạy chữ thành công!`);
             } catch (err) {
                 if (!videoStudioState.cancelRequested) {
                     setVideoStudioError(`Lỗi khi cắt ghép & lồng tiếng video: ${err.message}`);
                 }
             } finally {
-                createdVideos.forEach(v => { try { v.pause(); } catch (_) {} });
+                if (playerVid) {
+                    try { playerVid.pause(); playerVid.src = ''; playerVid.load(); } catch (_) {}
+                }
                 videoStudioState.isBusy = false;
                 setVideoRenderProgress(false);
                 if (videoStudioState.activeAudioCtx) {
@@ -6578,9 +6697,9 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
             }
         }
 
-        function bindVideoStudioDropzoneEvents() {
-            [['vidCreateDropzone', handleVideoCreateImagesSelected], ['vidDubDropzone', handleVideoDubFileSelected]].forEach(([id, handler]) => {
-                const dz = document.getElementById(id);
+        function bindVideoDropzoneEvents() {
+            const bindOne = (elId, handler) => {
+                const dz = document.getElementById(elId);
                 if (!dz) return;
                 ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => {
                     e.preventDefault();
@@ -6593,7 +6712,9 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                 dz.addEventListener('drop', e => {
                     if (e.dataTransfer?.files?.length) handler(e.dataTransfer.files);
                 });
-            });
+            };
+            bindOne('vidCreateDropzone', handleVideoCreateImagesSelected);
+            bindOne('vidDubDropzone', handleVideoDubFileSelected);
         }
 
         // =========================================================================
@@ -6630,26 +6751,31 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
         }
 
         async function initApp() {
-            bindDropzoneAndPasteEvents();
-            bindPptxDropzoneEvents();
-            bindPptConvertDropzoneEvents();
-            bindVideoStudioDropzoneEvents();
-            switchActiveAIBot('tutor');
-            renderTTSVoiceCards();
-            populatePptxVoiceSelect();
-            populateVideoStudioVoiceSelects();
-            startExamTimer();
-
-            const loadedFromLink = await tryLoadSharedExamFromUrl();
-            if (loadedFromLink) return;
-
-            if (IS_STANDALONE_STUDENT_APP) {
+            try {
+                EXAM_DATA = normalizeExamData(EXAM_DATA);
                 buildActiveExamList();
-                applyStudentStandaloneModeUI();
-            } else {
-                buildActiveExamList();
+                switchActiveAIBot('tutor');
+                renderTTSVoiceCards();
+                populatePptxVoiceSelect();
+                populateVideoStudioVoiceSelects();
+                bindDropzoneAndPasteEvents();
+                bindPptxDropzoneEvents();
+                bindPptConvertDropzoneEvents();
+                bindVideoDropzoneEvents();
+
+                const loadedFromUrl = await tryLoadSharedExamFromUrl();
+                if (!loadedFromUrl) {
+                    if (IS_STANDALONE_STUDENT_APP) {
+                        applyStudentStandaloneModeUI();
+                    } else {
+                        switchMainWorkspace(hasAnyQuestions() ? 'study' : 'hub');
+                    }
+                }
+
                 updateHeaderExamTitles();
-                switchMainWorkspace(hasAnyQuestions() ? 'study' : 'hub');
+                startExamTimer();
+            } catch (err) {
+                console.error('Init error:', err);
             }
         }
 

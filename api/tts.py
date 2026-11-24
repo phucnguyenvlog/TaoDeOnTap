@@ -13,6 +13,7 @@ VOICES = [
     {
         "id": "vi-VN-HoaiMyNeural",
         "name": "Hoài My (Nữ • Tiếng Việt chuẩn)",
+        "badge": "Chuẩn truyền cảm",
         "gender": "female",
         "locale": "vi-VN",
         "description": "Giọng nữ miền Bắc tự nhiên, rõ chữ, đọc đề thi & văn bản dài cực mượt",
@@ -20,6 +21,7 @@ VOICES = [
     {
         "id": "vi-VN-NamMinhNeural",
         "name": "Nam Minh (Nam • Tiếng Việt chuẩn)",
+        "badge": "Trầm ấm rõ nét",
         "gender": "male",
         "locale": "vi-VN",
         "description": "Giọng nam trầm ấm, dứt khoát, phù hợp đọc giảng bài & thuyết minh",
@@ -27,6 +29,7 @@ VOICES = [
     {
         "id": "en-US-JennyNeural",
         "name": "Jenny (Nữ • Tiếng Anh Mỹ)",
+        "badge": "Tiếng Anh Mỹ",
         "gender": "female",
         "locale": "en-US",
         "description": "Giọng nữ bản xứ Mỹ chuẩn cho đề thi Tiếng Anh",
@@ -34,6 +37,7 @@ VOICES = [
     {
         "id": "en-US-GuyNeural",
         "name": "Guy (Nam • Tiếng Anh Mỹ)",
+        "badge": "Tiếng Anh Mỹ",
         "gender": "male",
         "locale": "en-US",
         "description": "Giọng nam bản xứ Mỹ tự nhiên",
@@ -41,6 +45,7 @@ VOICES = [
     {
         "id": "en-GB-SoniaNeural",
         "name": "Sonia (Nữ • Tiếng Anh Anh)",
+        "badge": "Tiếng Anh Anh",
         "gender": "female",
         "locale": "en-GB",
         "description": "Giọng nữ chuẩn Anh-Anh (British English)",
@@ -192,7 +197,7 @@ class handler(BaseHTTPRequestHandler):
         path = parsed.path.rstrip("/") or "/"
         action = parse_qs(parsed.query).get("action", [""])[0]
 
-        if action == "voices" or path == "/voices":
+        if action == "voices" or path in ("/voices", "/api/tts/voices") or path.endswith("/voices"):
             self._send_json(200, {"voices": VOICES})
             return
 
