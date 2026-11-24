@@ -1839,7 +1839,7 @@
         let builderConversationHistory = [];
         let chatAttachedFile = null;
         let undoExamBackup = null;
-        let aiChatIsFullscreen = false;
+        let isExportingPdfNow = false;
         let currentModalConfirmCallback = null;
         let latestShortShareLink = '';
         let latestSelfContainedShareLink = '';
@@ -2707,6 +2707,67 @@
             });
         }
 
+        function decodeLegacyBinaryVietnameseText(arrayBuffer) {
+            const bytes = new Uint8Array(arrayBuffer);
+            // Trích xuất chuỗi UTF-16LE (chuẩn lưu tiếng Việt có dấu trong Word .doc & PowerPoint .ppt 97–2003)
+            let utf16Clean = '';
+            try {
+                const raw16 = new TextDecoder('utf-16le', { fatal: false }).decode(bytes);
+                const runs16 = raw16.match(/[\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF\n\r\t]{4,}/g) || [];
+                utf16Clean = runs16
+                    .map(s => s.trim())
+                    .filter(s => /[a-zA-Z\u00C0-\u1EF9]{2,}/.test(s) && !/^(Root Entry|WordDocument|PowerPoint Document|SummaryInformation|DocumentSummaryInformation|Normal\.dot)/i.test(s))
+                    .join('\n');
+            } catch (_) {}
+
+            const raw8 = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+            const utf8Clean = raw8
+                .replace(/[^\x20-\x7E\u00C0-\u1EF9\n\r\t]/g, ' ')
+                .replace(/\s{3,}/g, '\n')
+                .trim();
+
+            const vnCount16 = (utf16Clean.match(/[\u00C0-\u1EF9]/g) || []).length;
+            const vnCount8 = (utf8Clean.match(/[\u00C0-\u1EF9]/g) || []).length;
+            if (vnCount16 > vnCount8 && utf16Clean.length >= 20) {
+                return utf16Clean;
+            }
+            return utf8Clean || utf16Clean;
+        }
+
+        async function renderPdfPagesAsImages(file, maxPages = 10) {
+            if (typeof pdfjsLib === 'undefined') return [];
+            try {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                const ab = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+                const pagesOut = [];
+                const total = Math.min(pdf.numPages, maxPages);
+                for (let p = 1; p <= total; p++) {
+                    const page = await pdf.getPage(p);
+                    const baseVp = page.getViewport({ scale: 1.0 });
+                    const scale = Math.min(2.0, 1500 / Math.max(baseVp.width || 1, baseVp.height || 1));
+                    const vp = page.getViewport({ scale: Math.max(1.2, scale) });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.round(vp.width);
+                    canvas.height = Math.round(vp.height);
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.84);
+                    pagesOut.push({
+                        pageNum: p,
+                        dataUrl,
+                        base64: dataUrl.split(',')[1] || '',
+                        mimeType: 'image/jpeg'
+                    });
+                }
+                return pagesOut;
+            } catch (_) {
+                return [];
+            }
+        }
+
         async function extractTextFromDocumentFile(file) {
             const name = (file.name || '').toLowerCase();
             if (name.endsWith('.txt')) {
@@ -2731,17 +2792,20 @@
                     return textOut.trim();
                 } catch (_) {}
             }
-            // Dự phòng cho tệp .doc cũ hoặc tệp văn bản nhị phân
+            // Dự phòng cho tệp .doc cũ (hỗ trợ cả tiếng Việt UTF-16LE và UTF-8)
             const buf = await file.arrayBuffer();
-            const decoded = new TextDecoder('utf-8', { fatal: false }).decode(buf);
-            return decoded.replace(/[^\x20-\x7E\u00C0-\u1EF9\n\r\t]/g, ' ').replace(/\s{3,}/g, ' ').trim();
+            return decodeLegacyBinaryVietnameseText(buf);
         }
 
         async function handleImageFilesSelected(fileList) {
             if (!fileList || fileList.length === 0) return;
             const files = Array.from(fileList);
+            const inp = document.getElementById('imageFileInput');
+            if (inp) inp.value = '';
+
             for (const f of files) {
-                const isImg = f.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(f.name || '');
+                const lowerName = (f.name || '').toLowerCase();
+                const isImg = f.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(lowerName);
                 if (isImg) {
                     const comp = await compressImageFileToJpegDataUrl(f, 1600, 0.82);
                     uploadedFilesQueue.push({
@@ -2751,6 +2815,33 @@
                         dataUrl: comp.dataUrl,
                         base64: comp.base64,
                         mimeType: comp.mimeType
+                    });
+                } else if (lowerName.endsWith('.pdf')) {
+                    showToast(`Đang đọc tệp PDF "${f.name}"...`);
+                    const extractedText = await extractTextFromDocumentFile(f);
+                    const pureChars = extractedText.replace(/---\s*Trang\s*\d+\s*---/gi, '').replace(/\s+/g, '');
+                    // Nếu là file PDF scan từ ảnh (ít chữ chọn được), tự động chụp từng trang PDF sang ảnh nét để AI đọc 100%
+                    if (pureChars.length < 60) {
+                        const renderedPages = await renderPdfPagesAsImages(f, 10);
+                        if (renderedPages.length > 0) {
+                            renderedPages.forEach(pg => {
+                                uploadedFilesQueue.push({
+                                    id: 'up_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                                    name: `${f.name} (Trang ${pg.pageNum})`,
+                                    kind: 'image',
+                                    dataUrl: pg.dataUrl,
+                                    base64: pg.base64,
+                                    mimeType: pg.mimeType
+                                });
+                            });
+                            continue;
+                        }
+                    }
+                    uploadedFilesQueue.push({
+                        id: 'up_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                        name: f.name || 'Tai_lieu.pdf',
+                        kind: 'doc',
+                        text: extractedText
                     });
                 } else {
                     const extractedText = await extractTextFromDocumentFile(f);
@@ -2762,9 +2853,8 @@
                     });
                 }
             }
-            const inp = document.getElementById('imageFileInput');
-            if (inp) inp.value = '';
             renderUploadedFilesQueue();
+            scrollToElementSmooth('uploadedImagesSection', 'center');
         }
 
         function renderUploadedFilesQueue() {
@@ -3215,15 +3305,18 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
 
         function scrollToQuestionCard(part, idx) {
             if (appState.viewMode === 'single') {
-                appState.sectionFilter = 'ALL';
+                setSectionFilter('ALL');
                 const flat = getFlattenedFilteredItems();
                 const found = flat.findIndex(it => it.part === part && it.index === idx);
                 if (found >= 0) appState.singleIndex = found;
                 renderStudyWorkspace();
+                scrollToElementSmooth('questionsContainer', 'start');
                 return;
             }
-            const el = document.getElementById(`qcard_${part}_${idx}`);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (appState.sectionFilter !== 'ALL' && appState.sectionFilter !== part) {
+                setSectionFilter('ALL');
+            }
+            scrollToElementSmooth(`qcard_${part}_${idx}`, 'center');
         }
 
         function updateProgressAndPalette() {
@@ -3334,6 +3427,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             if (document.getElementById('scoreTime')) document.getElementById('scoreTime').textContent = formatElapsedClock(appState.secondsElapsed);
             document.getElementById('resultSummaryBanner')?.classList.remove('hidden');
             renderStudyWorkspace();
+            scrollToElementSmooth('resultSummaryBanner', 'center');
             showToast(`Đã nộp bài! Điểm trắc nghiệm của bạn: ${score10} / 10`);
         }
 
@@ -3386,6 +3480,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             buildActiveExamList();
             updateHeaderExamTitles();
             renderManualEditor();
+            scrollToElementSmooth(`editorCard_A_${EXAM_DATA.partA.length - 1}`, 'center');
         }
 
         function addNewTFItem() {
@@ -3400,6 +3495,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             buildActiveExamList();
             updateHeaderExamTitles();
             renderManualEditor();
+            scrollToElementSmooth(`editorCard_B_${EXAM_DATA.partB.length - 1}`, 'center');
         }
 
         function addNewEssayItem() {
@@ -3411,6 +3507,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             buildActiveExamList();
             updateHeaderExamTitles();
             renderManualEditor();
+            scrollToElementSmooth(`editorCard_C_${EXAM_DATA.partC.length - 1}`, 'center');
         }
 
         function renderManualEditor() {
@@ -3422,7 +3519,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             const htmlParts = [];
             EXAM_DATA.partA.forEach((q, idx) => {
                 htmlParts.push(`
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
+                    <div id="editorCard_A_${idx}" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
                         <div class="flex items-center justify-between gap-2">
                             <span class="px-2.5 py-0.5 rounded-lg bg-blue-600 text-white font-black">Trắc nghiệm ${idx + 1}</span>
                             <button type="button" onclick="EXAM_DATA.partA.splice(${idx},1);buildActiveExamList();updateHeaderExamTitles();renderManualEditor();" class="text-rose-600 font-bold hover:underline">Xoá câu</button>
@@ -3444,7 +3541,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
 
             EXAM_DATA.partB.forEach((q, idx) => {
                 htmlParts.push(`
-                    <div class="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-200 space-y-2.5 text-xs">
+                    <div id="editorCard_B_${idx}" class="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-200 space-y-2.5 text-xs">
                         <div class="flex items-center justify-between gap-2">
                             <span class="px-2.5 py-0.5 rounded-lg bg-indigo-600 text-white font-black">Đúng / Sai ${idx + 1}</span>
                             <button type="button" onclick="EXAM_DATA.partB.splice(${idx},1);buildActiveExamList();updateHeaderExamTitles();renderManualEditor();" class="text-rose-600 font-bold hover:underline">Xoá câu</button>
@@ -3452,14 +3549,17 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                         <textarea rows="2" oninput="EXAM_DATA.partB[${idx}].question=this.value;buildActiveExamList();" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-bold">${escapeHtml(q.question)}</textarea>
                         <div class="space-y-1.5">
                             ${q.statements.map((st, si) => `
-                                <div class="flex flex-wrap items-center gap-1.5 bg-white p-2 rounded-xl border border-slate-200">
-                                    <span class="font-black text-indigo-700">${escapeHtml(st.label)})</span>
-                                    <input type="text" value="${escapeHtml(st.text)}" oninput="EXAM_DATA.partB[${idx}].statements[${si}].text=this.value;buildActiveExamList();" class="flex-1 min-w-[160px] px-2 py-1 rounded border border-slate-300">
-                                    <select onchange="EXAM_DATA.partB[${idx}].statements[${si}].isTrue=(this.value==='true');buildActiveExamList();" class="px-2 py-1 rounded border border-slate-300 font-bold">
-                                        <option value="true" ${st.isTrue ? 'selected' : ''}>Đúng</option>
-                                        <option value="false" ${!st.isTrue ? 'selected' : ''}>Sai</option>
-                                    </select>
-                                    <button type="button" onclick="EXAM_DATA.partB[${idx}].statements.splice(${si},1);buildActiveExamList();renderManualEditor();" class="text-rose-600 px-1.5"><i class="fa-solid fa-xmark"></i></button>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200 space-y-1.5">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="font-black text-indigo-700">${escapeHtml(st.label)})</span>
+                                        <input type="text" value="${escapeHtml(st.text)}" oninput="EXAM_DATA.partB[${idx}].statements[${si}].text=this.value;buildActiveExamList();" class="flex-1 min-w-[160px] px-2 py-1 rounded border border-slate-300">
+                                        <select onchange="EXAM_DATA.partB[${idx}].statements[${si}].isTrue=(this.value==='true');buildActiveExamList();" class="px-2 py-1 rounded border border-slate-300 font-bold">
+                                            <option value="true" ${st.isTrue ? 'selected' : ''}>Đúng</option>
+                                            <option value="false" ${!st.isTrue ? 'selected' : ''}>Sai</option>
+                                        </select>
+                                        <button type="button" onclick="EXAM_DATA.partB[${idx}].statements.splice(${si},1);buildActiveExamList();renderManualEditor();" class="text-rose-600 px-1.5"><i class="fa-solid fa-xmark"></i></button>
+                                    </div>
+                                    <input type="text" value="${escapeHtml(st.explanation || '')}" placeholder="Giải thích mệnh đề ${escapeHtml(st.label)} (tuỳ chọn)..." oninput="EXAM_DATA.partB[${idx}].statements[${si}].explanation=this.value;buildActiveExamList();" class="w-full px-2 py-1 rounded border border-slate-200 bg-slate-50 text-[11px]">
                                 </div>
                             `).join('')}
                         </div>
@@ -3470,7 +3570,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
 
             EXAM_DATA.partC.forEach((q, idx) => {
                 htmlParts.push(`
-                    <div class="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 space-y-2.5 text-xs">
+                    <div id="editorCard_C_${idx}" class="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 space-y-2.5 text-xs">
                         <div class="flex items-center justify-between gap-2">
                             <span class="px-2.5 py-0.5 rounded-lg bg-amber-500 text-white font-black">Tự luận ${idx + 1}</span>
                             <button type="button" onclick="EXAM_DATA.partC.splice(${idx},1);buildActiveExamList();updateHeaderExamTitles();renderManualEditor();" class="text-rose-600 font-bold hover:underline">Xoá câu</button>
@@ -4110,34 +4210,87 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
         }
 
+        function formatPrintableText(str) {
+            return escapeHtml(String(str ?? '')).replace(/\r?\n/g, '<br>');
+        }
+
         function buildPrintableExamHtml(includeAnswers) {
-            let html = `<div style="font-family:Times New Roman,serif;font-size:13pt;line-height:1.5;color:#111;padding:16px;">`;
-            html += `<h2 style="text-align:center;margin-bottom:16px;">${escapeHtml(EXAM_DATA.title)}</h2>`;
-            if (EXAM_DATA.partA.length) {
-                html += `<h3>PHẦN I. TRẮC NGHIỆM</h3>`;
-                EXAM_DATA.partA.forEach((q, i) => {
-                    html += `<p><b>Câu ${i + 1}:</b> ${escapeHtml(q.question)}</p>`;
+            const pA = Array.isArray(EXAM_DATA.partA) ? EXAM_DATA.partA : [];
+            const pB = Array.isArray(EXAM_DATA.partB) ? EXAM_DATA.partB : [];
+            const pC = Array.isArray(EXAM_DATA.partC) ? EXAM_DATA.partC : [];
+
+            let html = `<div style="font-family:'Times New Roman',Times,serif;font-size:13pt;line-height:1.55;color:#111827;padding:12px;">`;
+            html += `<div style="text-align:center;border-bottom:1.5px solid #1e293b;padding-bottom:10px;margin-bottom:16px;">`;
+            html += `<div style="font-size:11pt;font-weight:bold;text-transform:uppercase;color:#334155;">ĐỀ ÔN TẬP &amp; KIỂM TRA KIẾN THỨC</div>`;
+            html += `<h2 style="font-size:16pt;font-weight:bold;margin:6px 0 4px 0;color:#0f172a;">${escapeHtml(EXAM_DATA.title || 'ĐỀ ÔN TẬP')}</h2>`;
+            const metaParts = [];
+            if (pA.length) metaParts.push(`${pA.length} câu Trắc nghiệm`);
+            if (pB.length) metaParts.push(`${pB.length} câu Đúng/Sai`);
+            if (pC.length) metaParts.push(`${pC.length} câu Tự luận`);
+            if (metaParts.length) {
+                html += `<div style="font-size:11pt;font-style:italic;color:#475569;">(${metaParts.join(' • ')})</div>`;
+            }
+            html += `</div>`;
+
+            if (pA.length) {
+                html += `<h3 style="font-size:13.5pt;font-weight:bold;margin:14px 0 8px 0;text-transform:uppercase;">PHẦN I. CÂU HỎI TRẮC NGHIỆM NHIỀU LỰA CHỌN</h3>`;
+                pA.forEach((q, i) => {
+                    html += `<div style="margin-bottom:10px;">`;
+                    html += `<p style="margin:0 0 4px 0;"><b>Câu ${i + 1}:</b> ${formatPrintableText(q.question)}</p>`;
                     if (q.tableHtml) html += `<div style="margin:6px 0;">${q.tableHtml}</div>`;
-                    q.options.forEach((o, oi) => { html += `<p style="margin-left:18px;">${LETTERS[oi]}. ${escapeHtml(o)}</p>`; });
+                    q.options.forEach((o, oi) => {
+                        html += `<p style="margin:2px 0 2px 18px;"><b>${LETTERS[oi]}.</b> ${formatPrintableText(o)}</p>`;
+                    });
+                    html += `</div>`;
                 });
             }
-            if (EXAM_DATA.partB.length) {
-                html += `<h3>PHẦN II. ĐÚNG / SAI</h3>`;
-                EXAM_DATA.partB.forEach((q, i) => {
-                    html += `<p><b>Câu ${i + 1}:</b> ${escapeHtml(q.question)}</p>`;
+            if (pB.length) {
+                html += `<h3 style="font-size:13.5pt;font-weight:bold;margin:16px 0 8px 0;text-transform:uppercase;">PHẦN II. CÂU HỎI TRẮC NGHIỆM ĐÚNG / SAI</h3>`;
+                pB.forEach((q, i) => {
+                    html += `<div style="margin-bottom:10px;">`;
+                    html += `<p style="margin:0 0 4px 0;"><b>Câu ${i + 1}:</b> ${formatPrintableText(q.question)}</p>`;
                     if (q.tableHtml) html += `<div style="margin:6px 0;">${q.tableHtml}</div>`;
-                    q.statements.forEach(s => { html += `<p style="margin-left:18px;">${escapeHtml(s.label)}) ${escapeHtml(s.text)}</p>`; });
+                    q.statements.forEach(s => {
+                        html += `<p style="margin:2px 0 2px 18px;"><b>${escapeHtml(s.label)})</b> ${formatPrintableText(s.text)} &nbsp; <i>[ Đúng / Sai ]</i></p>`;
+                    });
+                    html += `</div>`;
                 });
             }
-            if (EXAM_DATA.partC.length) {
-                html += `<h3>PHẦN III. TỰ LUẬN</h3>`;
-                EXAM_DATA.partC.forEach((q, i) => { html += `<p><b>Câu ${i + 1}:</b> ${escapeHtml(q.question)}</p>`; });
+            if (pC.length) {
+                html += `<h3 style="font-size:13.5pt;font-weight:bold;margin:16px 0 8px 0;text-transform:uppercase;">PHẦN III. CÂU HỎI TỰ LUẬN</h3>`;
+                pC.forEach((q, i) => {
+                    html += `<p style="margin:0 0 10px 0;"><b>Câu ${i + 1}:</b> ${formatPrintableText(q.question)}</p>`;
+                });
             }
             if (includeAnswers) {
-                html += `<hr><h3>ĐÁP ÁN &amp; HƯỚNG DẪN GIẢI</h3>`;
-                EXAM_DATA.partA.forEach((q, i) => { html += `<p><b>Câu ${i + 1}:</b> ${LETTERS[q.answer] || 'A'} ${q.explanation ? '— ' + escapeHtml(q.explanation) : ''}</p>`; });
-                EXAM_DATA.partB.forEach((q, i) => { html += `<p><b>Đ/S ${i + 1}:</b> ${q.statements.map(s => `${s.label}:${s.isTrue ? 'Đúng' : 'Sai'}`).join(', ')}</p>`; });
-                EXAM_DATA.partC.forEach((q, i) => { html += `<p><b>Tự luận ${i + 1}:</b> ${escapeHtml(q.guide || '')}</p>`; });
+                html += `<hr style="border:0;border-top:1.5px dashed #64748b;margin:18px 0 12px 0;">`;
+                html += `<h3 style="font-size:13.5pt;font-weight:bold;margin:0 0 8px 0;text-transform:uppercase;text-align:center;">ĐÁP ÁN &amp; HƯỚNG DẪN GIẢI CHI TIẾT</h3>`;
+                if (pA.length) {
+                    html += `<p style="margin:6px 0;"><b>I. Bảng đáp án Trắc nghiệm:</b> ${pA.map((q, i) => `<b>${i + 1}.${LETTERS[q.answer] || 'A'}</b>`).join(' &nbsp;|&nbsp; ')}</p>`;
+                    pA.forEach((q, i) => {
+                        if (q.explanation) {
+                            html += `<p style="margin:3px 0 3px 12px;">• <b>Câu ${i + 1} (${LETTERS[q.answer] || 'A'}):</b> ${formatPrintableText(q.explanation)}</p>`;
+                        }
+                    });
+                }
+                if (pB.length) {
+                    html += `<p style="margin:10px 0 4px 0;"><b>II. Đáp án Đúng / Sai:</b></p>`;
+                    pB.forEach((q, i) => {
+                        const summary = q.statements.map(s => `${escapeHtml(s.label)}) <b>${s.isTrue ? 'Đúng' : 'Sai'}</b>`).join('; ');
+                        html += `<p style="margin:3px 0 3px 12px;">• <b>Câu ${i + 1}:</b> ${summary}</p>`;
+                        q.statements.forEach(s => {
+                            if (s.explanation) {
+                                html += `<p style="margin:2px 0 2px 26px;font-size:12pt;color:#334155;">- <i>Ý ${escapeHtml(s.label)}:</i> ${formatPrintableText(s.explanation)}</p>`;
+                            }
+                        });
+                    });
+                }
+                if (pC.length) {
+                    html += `<p style="margin:10px 0 4px 0;"><b>III. Hướng dẫn giải Tự luận:</b></p>`;
+                    pC.forEach((q, i) => {
+                        html += `<p style="margin:4px 0 6px 12px;">• <b>Câu ${i + 1}:</b> ${formatPrintableText(q.guide || 'Chưa có hướng dẫn giải.')}</p>`;
+                    });
+                }
             }
             html += `</div>`;
             return html;
@@ -4145,45 +4298,391 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
 
         function exportExamToWordDoc() {
             const inc = Boolean(document.getElementById('optExportIncludeAnswers')?.checked);
-            const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body>${buildPrintableExamHtml(inc)}</body></html>`;
+            const wordCss = `<style>table{border-collapse:collapse;width:100%;margin:6px 0;}th,td{border:1px solid #334155;padding:5px 8px;}</style>`;
+            const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">${wordCss}</head><body>${buildPrintableExamHtml(inc)}</body></html>`;
             const blob = new Blob(['\ufeff', docHtml], { type: 'application/msword;charset=utf-8' });
             triggerBlobFileDownload(blob, `${getSafeFilenameSlug(EXAM_DATA.title, 'de_on_tap')}.doc`);
             closeWordExportModal();
             showToast('Đã xuất file Word (.doc) thành công!');
         }
 
-        function exportExamToPdf() {
-            const inc = Boolean(document.getElementById('optExportIncludeAnswers')?.checked);
-            if (typeof html2pdf === 'undefined') {
-                showToast('Thư viện PDF chưa sẵn sàng, hãy tải file Word (.doc) nhé!');
+        function buildPdfAtomicBlocks(includeAnswers) {
+            const blocks = [];
+            const pA = Array.isArray(EXAM_DATA.partA) ? EXAM_DATA.partA : [];
+            const pB = Array.isArray(EXAM_DATA.partB) ? EXAM_DATA.partB : [];
+            const pC = Array.isArray(EXAM_DATA.partC) ? EXAM_DATA.partC : [];
+
+            const metaParts = [];
+            if (pA.length) metaParts.push(`${pA.length} câu Trắc nghiệm`);
+            if (pB.length) metaParts.push(`${pB.length} câu Đúng/Sai`);
+            if (pC.length) metaParts.push(`${pC.length} câu Tự luận`);
+
+            blocks.push({
+                keepNext: false,
+                html: `
+                    <div style="text-align:center;border-bottom:2px solid #0f172a;padding-bottom:12px;margin-bottom:14px;">
+                        <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#1d4ed8;">PHÚC NGUYÊN VLOG • ĐỀ ÔN TẬP TRỰC TUYẾN</div>
+                        <div style="font-size:20px;font-weight:900;color:#0f172a;margin-top:4px;line-height:1.35;">${escapeHtml(EXAM_DATA.title || 'ĐỀ ÔN TẬP')}</div>
+                        ${metaParts.length ? `<div style="font-size:12px;font-weight:600;color:#475569;margin-top:4px;">Cấu trúc đề: ${metaParts.join(' • ')}</div>` : ''}
+                    </div>
+                `
+            });
+
+            if (pA.length) {
+                blocks.push({
+                    keepNext: true,
+                    html: `<div style="margin:10px 0 8px 0;padding:6px 10px;background:#eff6ff;border-left:4px solid #2563eb;font-size:13.5px;font-weight:900;color:#1e3a8a;text-transform:uppercase;">PHẦN I. CÂU HỎI TRẮC NGHIỆM NHIỀU LỰA CHỌN</div>`
+                });
+                pA.forEach((q, i) => {
+                    const allShort = q.options.every(o => String(o || '').length <= 34 && !String(o || '').includes('\n'));
+                    const gridStyle = allShort
+                        ? 'display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;margin-top:6px;padding-left:10px;'
+                        : 'display:block;margin-top:6px;padding-left:10px;';
+                    const optsHtml = q.options.map((o, oi) =>
+                        `<div style="font-size:13.5px;line-height:1.5;color:#1e293b;margin-bottom:${allShort ? '0' : '4px'};"><strong style="color:#0f172a;">${LETTERS[oi]}.</strong> ${formatPrintableText(o)}</div>`
+                    ).join('');
+                    blocks.push({
+                        keepNext: false,
+                        html: `
+                            <div style="margin-bottom:11px;font-size:14px;line-height:1.55;color:#0f172a;">
+                                <div><strong style="color:#1d4ed8;">Câu ${i + 1}:</strong> <span style="font-weight:600;">${formatPrintableText(q.question)}</span></div>
+                                ${q.tableHtml ? `<div style="margin:6px 0;">${q.tableHtml}</div>` : ''}
+                                <div style="${gridStyle}">${optsHtml}</div>
+                            </div>
+                        `
+                    });
+                });
+            }
+
+            if (pB.length) {
+                blocks.push({
+                    keepNext: true,
+                    html: `<div style="margin:12px 0 8px 0;padding:6px 10px;background:#eef2ff;border-left:4px solid #4f46e5;font-size:13.5px;font-weight:900;color:#312e81;text-transform:uppercase;">PHẦN II. CÂU HỎI TRẮC NGHIỆM ĐÚNG / SAI</div>`
+                });
+                pB.forEach((q, i) => {
+                    const stHtml = q.statements.map(s => `
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:4px 8px;margin-top:4px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:13.2px;line-height:1.5;">
+                            <div style="flex:1;color:#1e293b;"><strong style="color:#4338ca;">${escapeHtml(s.label)})</strong> ${formatPrintableText(s.text)}</div>
+                            <div style="font-size:11.5px;font-weight:700;color:#475569;white-space:nowrap;padding-top:1px;">[ &nbsp;Đúng &nbsp;|&nbsp; Sai&nbsp; ]</div>
+                        </div>
+                    `).join('');
+                    blocks.push({
+                        keepNext: false,
+                        html: `
+                            <div style="margin-bottom:12px;font-size:14px;line-height:1.55;color:#0f172a;">
+                                <div><strong style="color:#4338ca;">Câu ${i + 1}:</strong> <span style="font-weight:600;">${formatPrintableText(q.question)}</span></div>
+                                ${q.tableHtml ? `<div style="margin:6px 0;">${q.tableHtml}</div>` : ''}
+                                <div style="margin-top:4px;">${stHtml}</div>
+                            </div>
+                        `
+                    });
+                });
+            }
+
+            if (pC.length) {
+                blocks.push({
+                    keepNext: true,
+                    html: `<div style="margin:12px 0 8px 0;padding:6px 10px;background:#fffbeb;border-left:4px solid #d97706;font-size:13.5px;font-weight:900;color:#78350f;text-transform:uppercase;">PHẦN III. CÂU HỎI TỰ LUẬN</div>`
+                });
+                pC.forEach((q, i) => {
+                    blocks.push({
+                        keepNext: false,
+                        html: `
+                            <div style="margin-bottom:11px;font-size:14px;line-height:1.55;color:#0f172a;">
+                                <strong style="color:#b45309;">Câu ${i + 1}:</strong> <span style="font-weight:600;">${formatPrintableText(q.question)}</span>
+                            </div>
+                        `
+                    });
+                });
+            }
+
+            if (includeAnswers) {
+                blocks.push({
+                    keepNext: true,
+                    html: `
+                        <div style="margin:16px 0 10px 0;padding-top:12px;border-top:2px dashed #94a3b8;text-align:center;">
+                            <div style="display:inline-block;padding:5px 16px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:999px;font-size:13.5px;font-weight:900;color:#065f46;text-transform:uppercase;">ĐÁP ÁN &amp; HƯỚNG DẪN GIẢI CHI TIẾT</div>
+                        </div>
+                    `
+                });
+
+                if (pA.length) {
+                    const ansCells = pA.map((q, i) =>
+                        `<span style="display:inline-block;min-width:58px;padding:3px 7px;margin:2px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;font-size:12.5px;text-align:center;"><b>${i + 1}.</b> <strong style="color:#059669;">${LETTERS[q.answer] || 'A'}</strong></span>`
+                    ).join('');
+                    blocks.push({
+                        keepNext: false,
+                        html: `
+                            <div style="margin-bottom:10px;">
+                                <div style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:5px;">I. Bảng đáp án Trắc nghiệm:</div>
+                                <div style="line-height:1.6;">${ansCells}</div>
+                            </div>
+                        `
+                    });
+                    pA.forEach((q, i) => {
+                        if (q.explanation) {
+                            blocks.push({
+                                keepNext: false,
+                                html: `<div style="margin-bottom:6px;padding-left:8px;font-size:13px;line-height:1.5;color:#1e293b;">• <strong>Câu ${i + 1} (${LETTERS[q.answer] || 'A'}):</strong> ${formatPrintableText(q.explanation)}</div>`
+                            });
+                        }
+                    });
+                }
+
+                if (pB.length) {
+                    blocks.push({
+                        keepNext: true,
+                        html: `<div style="font-size:13.5px;font-weight:800;color:#0f172a;margin:8px 0 5px 0;">II. Đáp án &amp; Giải thích Đúng / Sai:</div>`
+                    });
+                    pB.forEach((q, i) => {
+                        const summary = q.statements.map(s => `${escapeHtml(s.label)}) <strong style="color:${s.isTrue ? '#059669' : '#dc2626'};">${s.isTrue ? 'Đúng' : 'Sai'}</strong>`).join(' &nbsp;•&nbsp; ');
+                        const expLines = q.statements
+                            .filter(s => s.explanation)
+                            .map(s => `<div style="margin-top:2px;padding-left:14px;font-size:12.5px;color:#334155;">- <em>Ý ${escapeHtml(s.label)}:</em> ${formatPrintableText(s.explanation)}</div>`)
+                            .join('');
+                        blocks.push({
+                            keepNext: false,
+                            html: `<div style="margin-bottom:8px;padding-left:8px;font-size:13px;line-height:1.5;color:#0f172a;">• <strong>Câu ${i + 1}:</strong> ${summary}${expLines}</div>`
+                        });
+                    });
+                }
+
+                if (pC.length) {
+                    blocks.push({
+                        keepNext: true,
+                        html: `<div style="font-size:13.5px;font-weight:800;color:#0f172a;margin:8px 0 5px 0;">III. Hướng dẫn chấm Tự luận:</div>`
+                    });
+                    pC.forEach((q, i) => {
+                        blocks.push({
+                            keepNext: false,
+                            html: `<div style="margin-bottom:8px;padding-left:8px;font-size:13px;line-height:1.55;color:#1e293b;">• <strong>Câu ${i + 1}:</strong> ${formatPrintableText(q.guide || 'Chưa có hướng dẫn giải.')}</div>`
+                        });
+                    });
+                }
+            }
+            return blocks;
+        }
+
+        async function exportExamToPdf() {
+            if (isExportingPdfNow) return;
+            if (!hasAnyQuestions()) {
+                showToast('Chưa có câu hỏi nào để xuất PDF!');
                 return;
             }
-            const host = document.createElement('div');
-            host.style.position = 'fixed';
-            host.style.left = '-9999px';
-            host.style.top = '0';
-            host.style.width = '794px';
-            host.style.background = '#ffffff';
-            host.innerHTML = buildPrintableExamHtml(inc);
-            document.body.appendChild(host);
-
+            const inc = Boolean(document.getElementById('optExportIncludeAnswers')?.checked);
             closeWordExportModal();
-            showToast('Đang xuất file PDF (.pdf)...');
-            html2pdf()
-                .set({
-                    margin: 12,
-                    filename: `${getSafeFilenameSlug(EXAM_DATA.title, 'de_on_tap')}.pdf`,
-                    image: { type: 'jpeg', quality: 0.96 },
-                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                })
-                .from(host)
-                .save()
-                .then(() => showToast('Đã tải xong file PDF (.pdf)!'))
-                .catch(() => showToast('Không thể tạo PDF trên trình duyệt này — hãy dùng nút Tải File Word (.doc) nhé!'))
-                .finally(() => {
-                    if (host.parentNode) host.parentNode.removeChild(host);
+
+            const JsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+            if (typeof html2canvas !== 'function' || typeof JsPDFCtor !== 'function') {
+                // Dự phòng mở cửa sổ in A4 gốc của trình duyệt nếu CDN bị chặn
+                const win = window.open('', '_blank');
+                if (win) {
+                    win.document.write(`<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>${escapeHtml(EXAM_DATA.title)}</title><style>@page{size:A4 portrait;margin:14mm;}body{margin:0;background:#fff;color:#111;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #334155;padding:5px 8px;}</style></head><body>${buildPrintableExamHtml(inc)}</body></html>`);
+                    win.document.close();
+                    setTimeout(() => { try { win.focus(); win.print(); } catch (_) {} }, 300);
+                } else {
+                    showToast('Trình duyệt chưa tải xong thư viện PDF, bạn hãy tải File Word (.doc) nhé!');
+                }
+                return;
+            }
+
+            isExportingPdfNow = true;
+            const savedScrollX = window.scrollX || 0;
+            const savedScrollY = window.scrollY || 0;
+
+            // 1. Màn chắn tiến trình % sáng rõ che toàn màn hình trong lúc kết xuất chuẩn A4 tại toạ độ (0, 0)
+            const overlay = document.createElement('div');
+            overlay.id = 'pdfExportOverlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#f8fafc;display:flex;align-items:center;justify-content:center;padding:16px;';
+            overlay.innerHTML = `
+                <div style="width:100%;max-width:420px;background:#ffffff;border:1px solid #e2e8f0;border-radius:24px;padding:22px 24px;box-shadow:0 20px 40px -15px rgba(15,23,42,0.14);font-family:Inter,Arial,sans-serif;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+                        <div style="font-size:14px;font-weight:900;color:#0f172a;">Đang xuất File PDF chuẩn A4</div>
+                        <span id="pdfExportLivePct" style="padding:2px 10px;border-radius:999px;background:#dc2626;color:#ffffff;font-size:11px;font-weight:900;font-family:monospace;">8%</span>
+                    </div>
+                    <div id="pdfExportLiveLabel" style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;">Đang dàn trang câu hỏi &amp; công thức sắc nét...</div>
+                    <div style="width:100%;height:10px;background:#fee2e2;border-radius:999px;overflow:hidden;">
+                        <div id="pdfExportLiveBar" class="progress-bar-animated" style="height:100%;width:8%;border-radius:999px;transition:width 0.25s ease;"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const updatePdfUi = (pct, text) => {
+                const c = Math.max(5, Math.min(100, Math.round(pct)));
+                const pEl = document.getElementById('pdfExportLivePct');
+                const lEl = document.getElementById('pdfExportLiveLabel');
+                const bEl = document.getElementById('pdfExportLiveBar');
+                if (pEl) pEl.textContent = `${c}%`;
+                if (lEl && text) lEl.textContent = text;
+                if (bEl) bEl.style.width = `${c}%`;
+            };
+
+            // 2. Đặt vùng dàn trang chuẩn khổ A4 (794×1123px) ngay tại toạ độ thật (0, 0) để không bao giờ bị lỗi trang trắng
+            window.scrollTo(0, 0);
+            const stage = document.createElement('div');
+            stage.id = 'pdfRenderStage';
+            stage.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#ffffff;color:#0f172a;z-index:9990;font-family:Inter,Arial,sans-serif;pointer-events:none;';
+            document.body.appendChild(stage);
+
+            try {
+                const PAGE_W = 794;
+                const PAGE_H = 1123;
+                const PAD_TOP = 42;
+                const PAD_SIDE = 48;
+                const PAD_BOTTOM = 48;
+                const MAX_CONTENT_H = PAGE_H - PAD_TOP - PAD_BOTTOM;
+
+                // Bước A: Đo chiều cao thật của từng khối câu hỏi sau khi đã vẽ công thức Toán/Lý/Hóa (KaTeX)
+                const measureBox = document.createElement('div');
+                measureBox.style.cssText = `width:${PAGE_W - PAD_SIDE * 2}px;background:#ffffff;padding:0;margin:0;`;
+                const rawBlocks = buildPdfAtomicBlocks(inc);
+                rawBlocks.forEach(b => {
+                    const item = document.createElement('div');
+                    item.style.cssText = 'width:100%;box-sizing:border-box;';
+                    if (b.keepNext) item.dataset.keepNext = '1';
+                    item.innerHTML = b.html;
+                    measureBox.appendChild(item);
                 });
+                stage.appendChild(measureBox);
+
+                // Định dạng bảng biểu & công thức KaTeX (xoá .katex-mathml ẩn để html2canvas không vẽ trùng chữ)
+                measureBox.querySelectorAll('table').forEach(tbl => {
+                    tbl.style.borderCollapse = 'collapse';
+                    tbl.style.width = '100%';
+                    tbl.style.fontSize = '12.5px';
+                    tbl.querySelectorAll('th, td').forEach(cell => {
+                        cell.style.border = '1px solid #334155';
+                        cell.style.padding = '5px 8px';
+                    });
+                });
+                renderMathInContainer(measureBox);
+                measureBox.querySelectorAll('.katex-mathml').forEach(m => m.remove());
+
+                if (document.fonts && document.fonts.ready) {
+                    try { await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 700))]); } catch (_) {}
+                }
+                await new Promise(r => requestAnimationFrame(() => setTimeout(r, 50)));
+
+                updatePdfUi(18, 'Đang phân trang A4 tự động (không cắt ngang câu hỏi)...');
+
+                const measuredNodes = Array.from(measureBox.children);
+                const pages = [];
+                let curPage = [];
+                let curH = 0;
+
+                for (let i = 0; i < measuredNodes.length; i++) {
+                    const node = measuredNodes[i];
+                    const h = Math.ceil(node.getBoundingClientRect().height) + 2;
+                    if (curPage.length > 0 && curH + h > MAX_CONTENT_H) {
+                        // Tránh để tiêu đề Phần I/II/III nằm lẻ loi ở cuối trang trước
+                        let carryHeading = null;
+                        if (curPage.length >= 2 && curPage[curPage.length - 1].dataset.keepNext === '1') {
+                            carryHeading = curPage.pop();
+                        }
+                        pages.push(curPage);
+                        curPage = [];
+                        curH = 0;
+                        if (carryHeading) {
+                            curPage.push(carryHeading);
+                            curH += Math.ceil(carryHeading.getBoundingClientRect().height) + 2;
+                        }
+                    }
+                    curPage.push(node);
+                    curH += h;
+                }
+                if (curPage.length > 0) pages.push(curPage);
+
+                stage.innerHTML = '';
+                const pdf = new JsPDFCtor({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+                let hasAddedAnyPdfPage = false;
+
+                // Bước B: Kết xuất sắc nét từng trang A4 độc lập
+                for (let pIdx = 0; pIdx < pages.length; pIdx++) {
+                    const pct = 22 + Math.round(((pIdx + 0.5) / Math.max(1, pages.length)) * 72);
+                    updatePdfUi(pct, `Đang kết xuất Trang ${pIdx + 1} / ${pages.length} (${pct}%)...`);
+
+                    const sheet = document.createElement('div');
+                    sheet.style.cssText = `width:${PAGE_W}px;min-height:${PAGE_H}px;background:#ffffff;color:#0f172a;padding:${PAD_TOP}px ${PAD_SIDE}px ${PAD_BOTTOM}px ${PAD_SIDE}px;box-sizing:border-box;position:relative;`;
+
+                    const contentWrap = document.createElement('div');
+                    contentWrap.style.cssText = 'width:100%;';
+                    pages[pIdx].forEach(node => contentWrap.appendChild(node));
+                    sheet.appendChild(contentWrap);
+
+                    const footer = document.createElement('div');
+                    footer.style.cssText = `position:absolute;left:${PAD_SIDE}px;right:${PAD_SIDE}px;bottom:16px;padding-top:6px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10.5px;font-weight:600;color:#64748b;`;
+                    footer.innerHTML = `<span>Phúc nguyên Vlog • Đề Ôn Tập</span><span>Trang ${pIdx + 1} / ${pages.length}</span>`;
+                    sheet.appendChild(footer);
+
+                    stage.innerHTML = '';
+                    stage.appendChild(sheet);
+                    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
+
+                    const renderH = Math.max(PAGE_H, Math.ceil(sheet.scrollHeight));
+                    const canvas = await html2canvas(sheet, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        logging: false,
+                        backgroundColor: '#ffffff',
+                        scrollX: 0,
+                        scrollY: 0,
+                        x: 0,
+                        y: 0,
+                        width: PAGE_W,
+                        height: renderH,
+                        windowWidth: 1024,
+                        onclone: (clonedDoc) => {
+                            clonedDoc.documentElement.style.overflow = 'visible';
+                            clonedDoc.body.style.overflow = 'visible';
+                            clonedDoc.body.style.background = '#ffffff';
+                            Array.from(clonedDoc.body.children).forEach(ch => {
+                                if (ch.id !== 'pdfRenderStage') ch.style.display = 'none';
+                            });
+                        }
+                    });
+
+                    const slicePxH = PAGE_H * 2;
+                    if (canvas.height <= slicePxH + 28) {
+                        if (hasAddedAnyPdfPage) pdf.addPage('a4', 'portrait');
+                        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+                        hasAddedAnyPdfPage = true;
+                    } else {
+                        // Trường hợp 1 câu tự luận hoặc bảng biểu siêu dài vượt quá 1 trang A4: tự cắt nối tiếp sang trang kế
+                        let offsetY = 0;
+                        while (offsetY < canvas.height - 10) {
+                            const takeH = Math.min(slicePxH, canvas.height - offsetY);
+                            const subCanvas = document.createElement('canvas');
+                            subCanvas.width = canvas.width;
+                            subCanvas.height = slicePxH;
+                            const sCtx = subCanvas.getContext('2d');
+                            sCtx.fillStyle = '#ffffff';
+                            sCtx.fillRect(0, 0, subCanvas.width, subCanvas.height);
+                            sCtx.drawImage(canvas, 0, offsetY, canvas.width, takeH, 0, 0, canvas.width, takeH);
+                            if (hasAddedAnyPdfPage) pdf.addPage('a4', 'portrait');
+                            pdf.addImage(subCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+                            hasAddedAnyPdfPage = true;
+                            offsetY += takeH;
+                        }
+                    }
+                }
+
+                updatePdfUi(100, 'Đã hoàn tất 100% — Đang tải File PDF về máy!');
+                await new Promise(r => setTimeout(r, 260));
+
+                const pdfBlob = pdf.output('blob');
+                triggerBlobFileDownload(pdfBlob, `${getSafeFilenameSlug(EXAM_DATA.title, 'de_on_tap')}.pdf`);
+                showToast(`Đã tải xong File PDF chuẩn A4 (${pages.length} trang sắc nét)!`);
+            } catch (err) {
+                console.error('PDF export error:', err);
+                showToast(`Lỗi tạo PDF: ${err.message || 'Bạn hãy dùng nút Tải File Word (.doc) nhé!'}`);
+            } finally {
+                if (stage.parentNode) stage.parentNode.removeChild(stage);
+                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                window.scrollTo(savedScrollX, savedScrollY);
+                isExportingPdfNow = false;
+            }
         }
 
         function exportStandaloneWebApp() {
@@ -4205,6 +4704,10 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                     el.classList.add('hidden');
                     el.classList.remove('flex', 'grid', 'lg:flex', 'sm:inline-flex');
                 }
+            });
+            ['pdfExportOverlay', 'pdfRenderStage', 'aiChatLiveProgressBubble'].forEach(id => {
+                const tmp = clonedRoot.querySelector('#' + id);
+                if (tmp && tmp.parentNode) tmp.parentNode.removeChild(tmp);
             });
             const clonedStudy = clonedRoot.querySelector('#workspaceStudy');
             if (clonedStudy) clonedStudy.classList.remove('hidden');
@@ -4261,10 +4764,24 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
         async function handleChatFileAttach(fileList) {
             if (!fileList || !fileList.length) return;
             const f = fileList[0];
-            const isImg = f.type.startsWith('image/') || /\.(png|jpe?g|webp|gif)$/i.test(f.name || '');
+            const lowerName = (f.name || '').toLowerCase();
+            const isImg = f.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(lowerName);
             if (isImg) {
                 const comp = await compressImageFileToJpegDataUrl(f, 1400, 0.82);
                 chatAttachedFile = { name: f.name, kind: 'image', base64: comp.base64, mimeType: comp.mimeType };
+            } else if (lowerName.endsWith('.pdf')) {
+                const text = await extractTextFromDocumentFile(f);
+                const pureChars = text.replace(/---\s*Trang\s*\d+\s*---/gi, '').replace(/\s+/g, '');
+                if (pureChars.length < 60) {
+                    const pages = await renderPdfPagesAsImages(f, 6);
+                    if (pages.length > 0) {
+                        chatAttachedFile = { name: f.name, kind: 'pdf_images', pages };
+                    } else {
+                        chatAttachedFile = { name: f.name, kind: 'doc', text };
+                    }
+                } else {
+                    chatAttachedFile = { name: f.name, kind: 'doc', text };
+                }
             } else {
                 const text = await extractTextFromDocumentFile(f);
                 chatAttachedFile = { name: f.name, kind: 'doc', text };
@@ -4360,6 +4877,10 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                 if (chatAttachedFile) {
                     if (chatAttachedFile.kind === 'image') {
                         parts.push({ inlineData: { mimeType: chatAttachedFile.mimeType, data: chatAttachedFile.base64 } });
+                    } else if (chatAttachedFile.kind === 'pdf_images' && Array.isArray(chatAttachedFile.pages)) {
+                        chatAttachedFile.pages.forEach(pg => {
+                            parts.push({ inlineData: { mimeType: pg.mimeType || 'image/jpeg', data: pg.base64 } });
+                        });
                     } else if (chatAttachedFile.text) {
                         parts.push({ text: `[Tài liệu đính kèm "${chatAttachedFile.name}"]:\n${chatAttachedFile.text.slice(0, 18000)}` });
                     }
@@ -5450,10 +5971,7 @@ ${blockText}`;
         }
 
         async function convertOldPptBufferToPptxBlob(arrayBuffer, origName) {
-            const rawText = new TextDecoder('utf-8', { fatal: false }).decode(arrayBuffer)
-                .replace(/[^\x20-\x7E\u00C0-\u1EF9\n]/g, ' ')
-                .replace(/\s{3,}/g, '\n')
-                .trim();
+            const rawText = decodeLegacyBinaryVietnameseText(arrayBuffer);
             const chunks = rawText.split(/\n+/).filter(l => l.trim().length > 3).slice(0, 12);
             const slideTitle = (origName || 'Bai giang').replace(/\.ppt$/i, '');
 
@@ -6107,16 +6625,6 @@ ${blockText}`;
             showToast(`Đang tải file video "${videoStudioState.latestVideoFilename}" về máy!`);
         }
 
-        function downloadLatestVideoScriptTxt() {
-            if (!videoStudioState.latestScriptText) {
-                showToast('Chưa có nội dung văn bản để xuất!');
-                return;
-            }
-            const blob = new Blob(['\ufeff', videoStudioState.latestScriptText], { type: 'text/plain;charset=utf-8' });
-            triggerBlobFileDownload(blob, videoStudioState.latestScriptFilename);
-            showToast('Đã xuất tệp văn bản (.txt) về máy!');
-        }
-
         function downloadLatestVideoVoiceMp3() {
             if (!videoStudioState.latestVoiceMp3Blob) return;
             triggerBlobFileDownload(videoStudioState.latestVoiceMp3Blob, videoStudioState.latestVoiceMp3Filename);
@@ -6430,14 +6938,6 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
                 .join('\n\n---\n\n');
         }
 
-        function exportVideoCreateScriptTxt() {
-            const text = buildFullCreateScriptTxt();
-            if (!text.trim()) { showToast('Chưa có kịch bản văn bản nào!'); return; }
-            const blob = new Blob(['\ufeff', text], { type: 'text/plain;charset=utf-8' });
-            triggerBlobFileDownload(blob, 'kich_ban_video_ai.txt');
-            showToast('Đã xuất văn bản kịch bản (.txt) về máy!');
-        }
-
         async function approveAndRenderCreateVideo() {
             const validScenes = videoStudioState.createScenes.filter(sc => (sc.narration || '').trim());
             if (validScenes.length === 0) {
@@ -6591,6 +7091,9 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
                 setVideoRenderProgress(false);
 
                 const finalBlob = new Blob(chunks, { type: recInfo.mime || 'video/webm' });
+                if (!finalBlob || finalBlob.size < 500) {
+                    throw new Error('Trình duyệt chưa ghi nhận được dữ liệu khung hình video, bạn hãy giữ mở tab trình duyệt trong lúc xuất nhé!');
+                }
                 const sizeMB = (finalBlob.size / (1024 * 1024)).toFixed(2);
                 const firstTitle = prepared[0]?.scene?.title || 'video_ai_long_tieng';
                 showVideoStudioResult(
@@ -7131,15 +7634,6 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
             }
         }
 
-        function exportVideoDubScriptTxt() {
-            const text = (document.getElementById('vidDubScriptTextarea')?.value || '').trim();
-            if (!text) { showToast('Chưa có văn bản lồng tiếng để xuất!'); return; }
-            const base = (videoStudioState.dubClips[0]?.name || 'video_ghep').replace(/\.[^.]+$/, '');
-            const blob = new Blob(['\ufeff', text], { type: 'text/plain;charset=utf-8' });
-            triggerBlobFileDownload(blob, `${getSafeFilenameSlug(base, 'video')}_van_ban_long_tieng.txt`);
-            showToast('Đã xuất văn bản lồng tiếng (.txt) về máy!');
-        }
-
         async function approveAndRenderDubbedVideo() {
             if (videoStudioState.dubClips.length === 0) {
                 setVideoStudioError('Chưa có file video nào được tải lên!');
@@ -7392,6 +7886,9 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                 setVideoRenderProgress(false);
 
                 const finalBlob = new Blob(chunks, { type: recInfo.mime || 'video/webm' });
+                if (!finalBlob || finalBlob.size < 500) {
+                    throw new Error('Trình duyệt chưa ghi nhận được dữ liệu khung hình video, bạn hãy giữ mở tab trình duyệt trong lúc xuất nhé!');
+                }
                 const sizeMB = (finalBlob.size / (1024 * 1024)).toFixed(2);
                 showVideoStudioResult(
                     finalBlob,
@@ -7473,6 +7970,25 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                     }
                 }
                 if (imgFiles.length > 0) handleImageFilesSelected(imgFiles);
+            });
+            window.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && !isExportingPdfNow) {
+                    closeCustomModal();
+                    closeShareLinkModal();
+                    closeWordExportModal();
+                }
+            });
+            [
+                ['customModal', closeCustomModal],
+                ['shareLinkModal', closeShareLinkModal],
+                ['wordExportModal', closeWordExportModal]
+            ].forEach(([modalId, closeFn]) => {
+                const m = document.getElementById(modalId);
+                if (m) {
+                    m.addEventListener('click', e => {
+                        if (e.target === m) closeFn();
+                    });
+                }
             });
         }
 
