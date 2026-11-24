@@ -302,9 +302,9 @@
     </header>
 
     <!-- =================================================================== -->
-    <!-- KHU VỰC NỘI DUNG CHÍNH (TRANG CHỦ TRẮNG SÁNG 4 KHU VỰC + KHU VỰC 1) -->
+    <!-- KHU VỰC NỘI DUNG CHÍNH (TRANG CHỦ TRẮNG SÁNG 5 KHU VỰC + KHU VỰC 1) -->
     <!-- =================================================================== -->
-    <main class="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-5 lg:px-6 py-5 sm:py-7">
+    <main class="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-5 sm:py-7">
 
         <!-- =============================================================== -->
         <!-- TRANG CHỦ TRẮNG SÁNG • 4 KHU VỰC NGAY NGẮN CÓ NÚT TRUY CẬP      -->
@@ -1009,154 +1009,190 @@
         </div>
     </div>
 
-    <!-- NGĂN KÉO TRỢ LÝ AI (KHU VỰC 2: SIÊU AI & AI TẠO/SỬA ĐỀ • GIAO DIỆN TRẮNG SÁNG) -->
-    <div id="aiChatDrawer" class="fixed inset-0 bg-slate-900/45 backdrop-blur-xs z-50 hidden justify-end">
-        <div id="aiChatDrawerPanel" class="bg-slate-50 text-slate-900 w-full max-w-xl h-full flex flex-col shadow-2xl border-l border-slate-200 transition-all">
-            <!-- Header ngăn kéo AI -->
-            <div class="bg-white px-4 py-3 border-b border-slate-200 space-y-2.5 shrink-0">
-                <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center text-base shrink-0 shadow-2xs">
-                            <i class="fa-solid fa-robot"></i>
+    <!-- =================================================================== -->
+    <!-- KHU VỰC 2 (TOÀN MÀN HÌNH): SIÊU AI HỎI ĐÁP & AI TẠO / SỬA ĐỀ         -->
+    <!-- =================================================================== -->
+    <div id="aiChatDrawer" class="fixed inset-0 bg-[#f8fafc] z-50 hidden flex-col w-screen h-screen overflow-hidden">
+        <div id="aiChatDrawerPanel" class="bg-[#f8fafc] text-slate-900 w-full h-full flex flex-col">
+            <!-- Thanh tiêu đề toàn màn hình Khu vực 2 -->
+            <div class="bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_2px_12px_-6px_rgba(15,23,42,0.06)] shrink-0">
+                <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 space-y-2.5">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                            <button type="button" onclick="closeAssistantDrawer()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
+                                <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                                <span>Quay lại</span>
+                            </button>
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center text-base shrink-0 shadow-2xs">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 truncate">Khu vực 2 • Trợ Lý AI Đa Năng Toàn Màn Hình</div>
+                                <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Siêu AI Hỏi Đáp &amp; AI Tạo / Sửa Đề</h3>
+                                <p id="botRoleDescription" class="hidden sm:block text-[11px] text-slate-500 truncate">Hỏi đáp mọi kiến thức, gửi ảnh/Word/PDF để giải chi tiết</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button type="button" onclick="clearActiveChatHistory()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5" title="Làm mới cuộc trò chuyện">
+                                <i class="fa-solid fa-broom"></i>
+                                <span class="hidden sm:inline">Làm mới</span>
+                            </button>
+                            <button type="button" onclick="closeAssistantDrawer()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-xmark"></i>
+                                <span>Đóng</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chuyển 2 chế độ: Siêu AI / AI Tạo & Sửa Đề -->
+                    <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200/80 max-w-xl">
+                        <button type="button" id="tabBotTutor" onclick="switchActiveAIBot('tutor')" class="py-2 px-3 rounded-xl text-xs font-extrabold bg-emerald-600 text-white transition">
+                            <i class="fa-solid fa-comments mr-1"></i>Siêu AI Hỏi Đáp
+                        </button>
+                        <button type="button" id="tabBotBuilder" onclick="switchActiveAIBot('builder')" class="py-2 px-3 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-white transition">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI Tạo / Sửa Đề
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danh sách tin nhắn rộng toàn màn hình -->
+            <div class="flex-1 overflow-y-auto">
+                <div id="aiChatMessagesBox" class="max-w-7xl mx-auto w-full px-3 sm:px-5 lg:px-6 py-4 sm:py-5 space-y-3.5"></div>
+            </div>
+
+            <!-- Khung nhập tin nhắn & Đính kèm tệp rộng toàn màn hình -->
+            <div class="bg-white border-t border-slate-200 shrink-0">
+                <div class="max-w-7xl mx-auto w-full px-3 sm:px-5 lg:px-6 py-3 space-y-2">
+                    <div id="chatAttachedPreview" class="hidden items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 font-bold">
+                        <span id="chatAttachedFileName" class="truncate">Đã đính kèm tệp</span>
+                        <button type="button" onclick="clearChatFileAttach()" class="text-rose-600 hover:underline shrink-0">Bỏ</button>
+                    </div>
+
+                    <div class="flex items-end gap-2.5">
+                        <input type="file" id="chatAttachFileInput" accept="image/*,.doc,.docx,.pdf,.txt" class="sr-only" onchange="handleChatFileAttach(this.files)">
+                        <label for="chatAttachFileInput" class="w-11 h-11 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 flex items-center justify-center cursor-pointer shrink-0 transition" title="Đính kèm ảnh, Word hoặc PDF">
+                            <i class="fa-solid fa-paperclip pointer-events-none"></i>
+                        </label>
+                        <textarea id="aiChatInput" rows="2" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendAIChatMessage();}" placeholder="Nhập câu hỏi hoặc yêu cầu tạo/sửa đề... (Enter để gửi, Shift+Enter xuống dòng)" class="flex-1 p-3 rounded-xl bg-slate-50 focus:bg-white border border-slate-300 focus:border-blue-500 text-xs sm:text-sm outline-none resize-none"></textarea>
+                        <button type="button" id="btnSendAIChat" onclick="sendAIChatMessage()" class="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-extrabold transition shrink-0 flex items-center gap-1.5 disabled:opacity-50">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Gửi</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- KHU VỰC 3 (TOÀN MÀN HÌNH): PHÒNG THU VĂN BẢN -> ÂM THANH (.MP3)      -->
+    <!-- =================================================================== -->
+    <div id="ttsStudioModal" class="fixed inset-0 bg-[#f8fafc] z-50 hidden flex-col w-screen h-screen overflow-hidden">
+        <div class="bg-[#f8fafc] text-slate-800 w-full h-full flex flex-col overflow-hidden animate-fade-in">
+            <div class="bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_2px_12px_-6px_rgba(15,23,42,0.06)] shrink-0">
+                <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-3 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <button type="button" onclick="closeTTSStudioModal()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-700 border border-slate-200 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                            <span>Trang Chủ</span>
+                        </button>
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white flex items-center justify-center text-lg shadow-xs shrink-0">
+                            <i class="fa-solid fa-volume-high"></i>
                         </div>
                         <div class="min-w-0">
-                            <h3 class="text-sm font-black text-slate-900 truncate">Trợ Lý AI Phúc nguyên Vlog</h3>
-                            <p id="botRoleDescription" class="text-[11px] text-slate-500 truncate">Hỏi đáp mọi kiến thức, gửi ảnh/Word/PDF để giải chi tiết</p>
+                            <div class="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-teal-600 truncate">Khu vực 3 • Phòng Thu Giọng Đọc AI</div>
+                            <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Chuyển Văn Bản Thành Âm Thanh (.MP3)</h3>
                         </div>
                     </div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <button type="button" onclick="clearActiveChatHistory()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs" title="Làm mới cuộc trò chuyện">
-                            <i class="fa-solid fa-broom"></i>
-                        </button>
-                        <button type="button" onclick="toggleAIChatFullscreen()" class="hidden sm:flex w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 items-center justify-center text-xs" title="Mở rộng / Thu gọn">
-                            <i class="fa-solid fa-expand"></i>
-                        </button>
-                        <button type="button" onclick="closeAssistantDrawer()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition">
-                            Đóng
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Chuyển 2 chế độ: Siêu AI / AI Tạo & Sửa Đề -->
-                <div class="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200/80">
-                    <button type="button" id="tabBotTutor" onclick="switchActiveAIBot('tutor')" class="py-2 px-3 rounded-xl text-xs font-extrabold bg-emerald-600 text-white transition">
-                        <i class="fa-solid fa-comments mr-1"></i>Siêu AI Hỏi Đáp
-                    </button>
-                    <button type="button" id="tabBotBuilder" onclick="switchActiveAIBot('builder')" class="py-2 px-3 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-white transition">
-                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI Tạo / Sửa Đề
-                    </button>
-                </div>
-            </div>
-
-            <!-- Danh sách tin nhắn -->
-            <div id="aiChatMessagesBox" class="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3"></div>
-
-            <!-- Khung nhập tin nhắn & Đính kèm tệp -->
-            <div class="bg-white border-t border-slate-200 p-3 space-y-2 shrink-0">
-                <div id="chatAttachedPreview" class="hidden items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 font-bold">
-                    <span id="chatAttachedFileName" class="truncate">Đã đính kèm tệp</span>
-                    <button type="button" onclick="clearChatFileAttach()" class="text-rose-600 hover:underline shrink-0">Bỏ</button>
-                </div>
-
-                <div class="flex items-end gap-2">
-                    <input type="file" id="chatAttachFileInput" accept="image/*,.doc,.docx,.pdf,.txt" class="sr-only" onchange="handleChatFileAttach(this.files)">
-                    <label for="chatAttachFileInput" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 flex items-center justify-center cursor-pointer shrink-0 transition" title="Đính kèm ảnh, Word hoặc PDF">
-                        <i class="fa-solid fa-paperclip pointer-events-none"></i>
-                    </label>
-                    <textarea id="aiChatInput" rows="2" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendAIChatMessage();}" placeholder="Nhập câu hỏi hoặc yêu cầu tạo/sửa đề... (Enter để gửi)" class="flex-1 p-2.5 rounded-xl bg-slate-50 focus:bg-white border border-slate-300 focus:border-blue-500 text-xs sm:text-sm outline-none resize-none"></textarea>
-                    <button type="button" id="btnSendAIChat" onclick="sendAIChatMessage()" class="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold transition shrink-0 flex items-center gap-1.5 disabled:opacity-50">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>Gửi</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- KHU VỰC 3: HỘP THOẠI PHÒNG THU VĂN BẢN -> ÂM THANH (.MP3) -->
-    <div id="ttsStudioModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-2 sm:p-4">
-        <div class="bg-slate-50 text-slate-800 rounded-3xl border border-slate-200 shadow-2xl w-full max-w-3xl max-h-[94vh] flex flex-col overflow-hidden animate-fade-in">
-            <div class="bg-white px-4 sm:px-5 py-3.5 border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white flex items-center justify-center text-lg shadow-xs shrink-0">
-                        <i class="fa-solid fa-volume-high"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Chuyển Văn Bản Thành Âm Thanh (.MP3)</h3>
-                        <p class="text-[11px] sm:text-xs text-slate-500 truncate">Giọng đọc Tiếng Việt truyền cảm • Tuỳ chỉnh tốc độ • Tải thẳng tệp MP3</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeTTSStudioModal()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition shrink-0">
-                    Đóng
-                </button>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
-                <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <span class="text-xs font-black text-slate-800">1. Chọn giọng đọc AI</span>
-                        <button type="button" onclick="loadCurrentExamToTTS()" class="px-3 py-1 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-extrabold transition">
-                            <i class="fa-solid fa-file-import mr-1"></i>Nạp đề ôn tập hiện tại
-                        </button>
-                    </div>
-                    <div id="ttsVoiceCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
-                </div>
-
-                <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
-                    <div class="flex items-center justify-between text-xs">
-                        <span class="font-black text-slate-800">2. Nhập văn bản cần đọc</span>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-slate-500">Tốc độ:</span>
-                            <input type="range" id="ttsSpeedRange" min="0.75" max="1.40" step="0.05" value="1.00" oninput="document.getElementById('ttsSpeedLbl').textContent=parseFloat(this.value).toFixed(2)+'x'" class="w-24 accent-teal-600">
-                            <span id="ttsSpeedLbl" class="font-mono font-extrabold text-teal-700 w-10 text-right">1.00x</span>
-                        </div>
-                    </div>
-                    <textarea id="ttsTextInput" rows="5" placeholder="Nhập hoặc dán đoạn văn bản, bài giảng, câu hỏi ôn tập tại đây..." class="w-full p-3 rounded-xl bg-slate-50 focus:bg-white border border-slate-300 focus:border-teal-500 text-xs sm:text-sm outline-none resize-y"></textarea>
-                    <button type="button" id="btnGenerateTTS" onclick="generateTTSAudio()" class="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-xs sm:text-sm font-black shadow-xs transition flex items-center justify-center gap-2 disabled:opacity-50">
-                        <i class="fa-solid fa-waveform-lines fa-volume-high"></i>
-                        <span>Tạo File Giọng Đọc (.MP3)</span>
-                    </button>
-                </div>
-
-                <div id="ttsResultArea" class="hidden bg-emerald-50 rounded-2xl border border-emerald-200 p-4 space-y-3 animate-fade-in">
-                    <div class="text-xs font-black text-emerald-900"><i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i>Đã tạo xong giọng đọc MP3 — Bạn nghe thử hoặc tải về máy:</div>
-                    <audio id="ttsAudioPlayer" controls class="w-full h-10"></audio>
-                    <button type="button" onclick="downloadLatestTTSMp3()" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition">
-                        <i class="fa-solid fa-download mr-1.5"></i>Tải File Âm Thanh (.MP3)
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- KHU VỰC 4A: HỘP THOẠI LỒNG TIẾNG POWERPOINT (.PPTX) ĐẦY ĐỦ 3 BƯỚC -->
-    <div id="pptxAudioModal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-sm z-50 hidden items-center justify-center p-2 sm:p-4">
-        <div class="bg-slate-50 text-slate-800 rounded-3xl border border-slate-200 shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
-            <!-- Header -->
-            <div class="bg-white px-4 sm:px-5 py-3.5 border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
-                        <i class="fa-solid fa-file-powerpoint"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Lồng Tiếng PowerPoint Tự Động (.PPTX)</h3>
-                        <p class="text-[11px] sm:text-xs text-slate-500 truncate">Phân tích từng slide • AI viết lời giảng truyền cảm • Nhúng MP3 trực tiếp &amp; tải file .pptx hoàn chỉnh</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <button type="button" onclick="closePptxAudioModal(); openPptConvertModal();" class="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-xs font-extrabold transition">
-                        <i class="fa-solid fa-file-export"></i>
-                        <span>Đổi .PPT cũ</span>
-                    </button>
-                    <button type="button" onclick="closePptxAudioModal()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition flex items-center gap-1">
+                    <button type="button" onclick="closeTTSStudioModal()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition shrink-0 flex items-center gap-1.5">
                         <i class="fa-solid fa-xmark"></i>
                         <span>Đóng</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Vùng cuộn chính -->
-            <div class="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4">
+            <div class="flex-1 overflow-y-auto">
+                <div class="max-w-7xl mx-auto w-full px-3 sm:px-5 lg:px-6 py-5 sm:py-6 space-y-5">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                        <div class="lg:col-span-5 bg-white rounded-3xl border border-slate-200 shadow-2xs p-4 sm:p-5 space-y-3.5">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <span class="text-xs sm:text-sm font-black text-slate-900">1. Chọn giọng đọc AI</span>
+                                <button type="button" onclick="loadCurrentExamToTTS()" class="px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-extrabold transition">
+                                    <i class="fa-solid fa-file-import mr-1"></i>Nạp đề ôn tập hiện tại
+                                </button>
+                            </div>
+                            <div id="ttsVoiceCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2"></div>
+                        </div>
+
+                        <div class="lg:col-span-7 space-y-4">
+                            <div class="bg-white rounded-3xl border border-slate-200 shadow-2xs p-4 sm:p-5 space-y-3.5">
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+                                    <span class="font-black text-slate-900">2. Nhập văn bản cần chuyển thành âm thanh</span>
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <span class="font-bold text-slate-500">Tốc độ đọc:</span>
+                                        <input type="range" id="ttsSpeedRange" min="0.75" max="1.40" step="0.05" value="1.00" oninput="document.getElementById('ttsSpeedLbl').textContent=parseFloat(this.value).toFixed(2)+'x'" class="w-28 accent-teal-600">
+                                        <span id="ttsSpeedLbl" class="font-mono font-extrabold text-teal-700 w-11 text-right">1.00x</span>
+                                    </div>
+                                </div>
+                                <textarea id="ttsTextInput" rows="10" placeholder="Nhập hoặc dán đoạn văn bản, bài giảng, câu hỏi ôn tập tại đây..." class="w-full p-3.5 rounded-2xl bg-slate-50 focus:bg-white border border-slate-300 focus:border-teal-500 text-xs sm:text-sm leading-relaxed outline-none resize-y"></textarea>
+                                <button type="button" id="btnGenerateTTS" onclick="generateTTSAudio()" class="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-xs sm:text-sm font-black shadow-xs transition flex items-center justify-center gap-2 disabled:opacity-50">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                    <span>Tạo File Giọng Đọc (.MP3)</span>
+                                </button>
+                            </div>
+
+                            <div id="ttsResultArea" class="hidden bg-emerald-50 rounded-3xl border border-emerald-200 p-4 sm:p-5 space-y-3.5 animate-fade-in">
+                                <div class="text-xs sm:text-sm font-black text-emerald-900"><i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i>Đã tạo xong giọng đọc MP3 — Bạn nghe thử hoặc tải về máy:</div>
+                                <audio id="ttsAudioPlayer" controls class="w-full h-11"></audio>
+                                <button type="button" onclick="downloadLatestTTSMp3()" class="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold transition">
+                                    <i class="fa-solid fa-download mr-1.5"></i>Tải File Âm Thanh (.MP3)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- KHU VỰC 4A (TOÀN MÀN HÌNH): LỒNG TIẾNG POWERPOINT TỰ ĐỘNG (.PPTX)    -->
+    <!-- =================================================================== -->
+    <div id="pptxAudioModal" class="fixed inset-0 bg-[#f8fafc] z-50 hidden flex-col w-screen h-screen overflow-hidden">
+        <div class="bg-[#f8fafc] text-slate-800 w-full h-full flex flex-col overflow-hidden">
+            <!-- Header toàn màn hình Khu vực 4A -->
+            <div class="bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_2px_12px_-6px_rgba(15,23,42,0.06)] shrink-0">
+                <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-3 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <button type="button" onclick="closePptxAudioModal()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-orange-50 text-slate-700 hover:text-orange-700 border border-slate-200 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                            <span>Trang Chủ</span>
+                        </button>
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+                            <i class="fa-solid fa-file-powerpoint"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-orange-600 truncate">Khu vực 4 • Studio Bài Giảng PowerPoint</div>
+                            <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Lồng Tiếng PowerPoint Tự Động (.PPTX)</h3>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="closePptxAudioModal(); openPptConvertModal();" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-xs font-extrabold transition">
+                            <i class="fa-solid fa-file-export"></i>
+                            <span class="hidden sm:inline">Đổi .PPT → .PPTX</span>
+                        </button>
+                        <button type="button" onclick="closePptxAudioModal()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>Đóng</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vùng cuộn chính rộng toàn màn hình -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="max-w-7xl mx-auto w-full px-3 sm:px-5 lg:px-6 py-5 sm:py-6 space-y-5">
                 <!-- BƯỚC 1: CHỌN FILE POWERPOINT -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3">
                     <div class="flex flex-wrap items-center justify-between gap-2">
@@ -1298,70 +1334,112 @@
                     </div>
                     <div id="pptxSlidesList" class="space-y-3"></div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- KHU VỰC 4B: CHUYỂN FILE .PPT CŨ SANG .PPTX -->
-    <div id="pptConvertModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-xl p-5 space-y-4">
-            <div class="flex items-center justify-between gap-2">
-                <h3 class="text-base font-black text-slate-900"><i class="fa-solid fa-file-export text-orange-500 mr-2"></i>Chuyển File .PPT Cũ Sang .PPTX</h3>
-                <button type="button" onclick="closePptConvertModal()" class="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold">Đóng</button>
-            </div>
-            <input type="file" id="pptOldFileInput" accept=".ppt" class="sr-only" onchange="handlePptOldFilesSelected(this.files)">
-            <label for="pptOldFileInput" id="pptConvertDropzone" class="block cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50 p-6 text-center space-y-2 transition">
-                <div class="pointer-events-none text-sm font-black text-slate-900">Chọn tệp PowerPoint 97–2003 (.ppt)</div>
-                <div class="pointer-events-none text-xs text-slate-500">Trích xuất văn bản slide sang gói .pptx chuẩn để đưa vào Lồng Tiếng AI</div>
-            </label>
-            <div id="pptConvertStatusBox" class="hidden p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-900 space-y-2.5">
-                <div id="pptConvertStatusText"></div>
-                <div class="flex flex-wrap gap-2">
-                    <button type="button" onclick="downloadConvertedPptx()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold">Tải File .PPTX</button>
-                    <button type="button" onclick="sendConvertedPptxToAudioStudio()" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold">Đưa sang Lồng Tiếng AI →</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- =================================================================== -->
-    <!-- KHU VỰC 5: STUDIO TẠO VIDEO, CẮT GHÉP NHIỀU VIDEO & PHỤ ĐỀ CHẠY CHỮ -->
+    <!-- KHU VỰC 4B (TOÀN MÀN HÌNH): CHUYỂN FILE .PPT CŨ SANG .PPTX           -->
     <!-- =================================================================== -->
-    <div id="videoStudioModal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-sm z-50 hidden items-center justify-center p-2 sm:p-4">
-        <div class="bg-slate-50 text-slate-800 w-full max-w-5xl max-h-[95vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl border border-slate-200">
-            <!-- Thanh tiêu đề -->
-            <div class="bg-white px-4 sm:px-5 py-3.5 flex items-center justify-between gap-3 shrink-0 border-b border-slate-200">
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
-                        <i class="fa-solid fa-film"></i>
+    <div id="pptConvertModal" class="fixed inset-0 bg-[#f8fafc] z-50 hidden flex-col w-screen h-screen overflow-hidden">
+        <div class="bg-[#f8fafc] text-slate-800 w-full h-full flex flex-col overflow-hidden">
+            <div class="bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_2px_12px_-6px_rgba(15,23,42,0.06)] shrink-0">
+                <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-3 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <button type="button" onclick="closePptConvertModal()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-orange-50 text-slate-700 hover:text-orange-700 border border-slate-200 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                            <span>Trang Chủ</span>
+                        </button>
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+                            <i class="fa-solid fa-file-export"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-orange-600 truncate">Khu vực 4 • Công Cụ Chuyển Đổi Định Dạng</div>
+                            <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Chuyển File .PPT Cũ (97–2003) Sang .PPTX</h3>
+                        </div>
                     </div>
-                    <div class="min-w-0">
-                        <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Studio Video, Cắt Ghép Nhiều Video &amp; Phụ Đề Chạy Chữ AI</h3>
-                        <p class="text-[11px] sm:text-xs text-slate-500 truncate">Dựng video từ ảnh/lời nói hoặc cắt ghép nhiều file video tự động, duyệt văn bản lồng tiếng &amp; chạy phụ đề phía dưới</p>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="closePptConvertModal(); openPptxAudioModal();" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-xs font-extrabold transition">
+                            <i class="fa-solid fa-file-powerpoint"></i>
+                            <span class="hidden sm:inline">Lồng Tiếng .PPTX</span>
+                        </button>
+                        <button type="button" onclick="closePptConvertModal()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>Đóng</span>
+                        </button>
                     </div>
                 </div>
-                <button type="button" onclick="closeVideoStudioModal()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
-                    <i class="fa-solid fa-xmark"></i>
-                    <span>Đóng</span>
-                </button>
             </div>
+            <div class="flex-1 overflow-y-auto">
+                <div class="max-w-7xl mx-auto w-full px-3 sm:px-5 lg:px-6 py-6 sm:py-8">
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xs p-5 sm:p-8 space-y-5">
+                        <input type="file" id="pptOldFileInput" accept=".ppt" class="sr-only" onchange="handlePptOldFilesSelected(this.files)">
+                        <label for="pptOldFileInput" id="pptConvertDropzone" class="block cursor-pointer rounded-3xl border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50 hover:bg-orange-50/40 p-8 sm:p-12 text-center space-y-2.5 transition">
+                            <div class="pointer-events-none w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center text-2xl mx-auto shadow-sm">
+                                <i class="fa-solid fa-file-export"></i>
+                            </div>
+                            <div class="pointer-events-none text-sm sm:text-lg font-black text-slate-900">Bấm chọn hoặc kéo thả tệp PowerPoint 97–2003 (.ppt)</div>
+                            <div class="pointer-events-none text-xs sm:text-sm text-slate-500">Trích xuất văn bản slide sang gói .pptx chuẩn để đưa thẳng sang Lồng Tiếng AI</div>
+                        </label>
+                        <div id="pptConvertStatusBox" class="hidden p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-900 space-y-3">
+                            <div id="pptConvertStatusText"></div>
+                            <div class="flex flex-wrap gap-2.5">
+                                <button type="button" onclick="downloadConvertedPptx()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold transition">Tải File .PPTX</button>
+                                <button type="button" onclick="sendConvertedPptxToAudioStudio()" class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold transition">Đưa sang Lồng Tiếng AI →</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <!-- Thanh chuyển 2 chế độ -->
-            <div class="bg-white border-b border-slate-200 px-4 py-2.5 shrink-0">
-                <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200/80 max-w-2xl mx-auto">
-                    <button type="button" id="vidTabCreate" onclick="switchVideoStudioTab('create')" class="py-2 px-3 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 bg-purple-600 text-white shadow-2xs">
-                        <i class="fa-solid fa-images"></i>
-                        <span>1. Ảnh / Lời Nói → Video</span>
-                    </button>
-                    <button type="button" id="vidTabDub" onclick="switchVideoStudioTab('dub')" class="py-2 px-3 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
-                        <i class="fa-solid fa-scissors"></i>
-                        <span>2. Cắt Ghép Nhiều Video &amp; Lồng Tiếng</span>
-                    </button>
+    <!-- =================================================================== -->
+    <!-- KHU VỰC 5 (TOÀN MÀN HÌNH): STUDIO TẠO VIDEO, CẮT GHÉP & PHỤ ĐỀ AI    -->
+    <!-- =================================================================== -->
+    <div id="videoStudioModal" class="fixed inset-0 bg-[#f8fafc] z-50 hidden flex-col w-screen h-screen overflow-hidden">
+        <div class="bg-[#f8fafc] text-slate-800 w-full h-full flex flex-col overflow-hidden">
+            <!-- Thanh tiêu đề toàn màn hình Khu vực 5 -->
+            <div class="bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_2px_12px_-6px_rgba(15,23,42,0.06)] shrink-0">
+                <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 space-y-2.5">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                            <button type="button" onclick="closeVideoStudioModal()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-purple-50 text-slate-700 hover:text-purple-700 border border-slate-200 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
+                                <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                                <span>Trang Chủ</span>
+                            </button>
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center text-lg shadow-sm shrink-0">
+                                <i class="fa-solid fa-film"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-purple-600 truncate">Khu vực 5 • Studio Video, Cắt Ghép &amp; Lồng Tiếng AI</div>
+                                <h3 class="text-sm sm:text-base font-black text-slate-900 truncate">Studio Video, Cắt Ghép Nhiều Video &amp; Phụ Đề Chạy Chữ AI</h3>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeVideoStudioModal()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 text-xs font-extrabold transition flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>Đóng</span>
+                        </button>
+                    </div>
+
+                    <!-- Thanh chuyển 2 chế độ -->
+                    <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200/80 max-w-2xl">
+                        <button type="button" id="vidTabCreate" onclick="switchVideoStudioTab('create')" class="py-2 px-3 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 bg-purple-600 text-white shadow-2xs">
+                            <i class="fa-solid fa-images"></i>
+                            <span>1. Ảnh / Lời Nói → Video</span>
+                        </button>
+                        <button type="button" id="vidTabDub" onclick="switchVideoStudioTab('dub')" class="py-2 px-3 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
+                            <i class="fa-solid fa-scissors"></i>
+                            <span>2. Cắt Ghép Nhiều Video &amp; Lồng Tiếng</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Vùng cuộn chính -->
-            <div class="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-4">
+            <!-- Vùng cuộn chính rộng toàn màn hình -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="max-w-7xl mx-auto w-full px-3 sm:px-5 lg:px-6 py-5 sm:py-6 space-y-5">
 
                 <!-- ======================================================= -->
                 <!-- CHẾ ĐỘ 1: TẠO VIDEO TỪ HÌNH ẢNH HOẶC LỜI NÓI            -->
@@ -1411,29 +1489,42 @@
                             </div>
                             <div class="flex items-end">
                                 <button type="button" id="btnVidGenerateScript" onclick="aiGenerateVideoCreateScript()" class="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold transition disabled:opacity-50">
-                                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>AI Viết Kịch Bản
+                                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>AI Xem Ảnh &amp; Viết Kịch Bản Lồng Tiếng
                                 </button>
+                            </div>
+                        </div>
+
+                        <!-- Thanh tiến trình % đợi AI phân tích ảnh & viết kịch bản (đạt 100% mới mở Bước 2) -->
+                        <div id="vidCreateAnalyzeProgressBox" class="hidden p-3.5 rounded-2xl bg-purple-50 border border-purple-200 space-y-2 animate-fade-in">
+                            <div class="flex items-center justify-between gap-2 text-xs font-extrabold text-purple-950">
+                                <span id="vidCreateAnalyzeProgressLabel" class="flex items-center gap-2 min-w-0">
+                                    <i class="fa-solid fa-spinner fa-spin text-purple-600 shrink-0"></i>
+                                    <span class="truncate">AI đang phân tích hình ảnh &amp; viết lời lồng tiếng...</span>
+                                </span>
+                                <span id="vidCreateAnalyzeProgressPct" class="px-2.5 py-0.5 rounded-full bg-purple-600 text-white font-mono text-[11px] font-black shrink-0">0%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-purple-100 rounded-full overflow-hidden">
+                                <div id="vidCreateAnalyzeProgressBar" class="h-full progress-bar-animated rounded-full transition-all duration-300" style="width: 5%"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Bước 2: Duyệt kịch bản từng cảnh & xuất video -->
-                    <div id="vidCreateScenesWrapper" class="hidden bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3.5">
+                    <!-- Bước 2 (CHỈ HIỆN SAU KHI TIẾN TRÌNH ĐẠT 100%): Duyệt kịch bản & bấm Đồng Ý xuất Video -->
+                    <div id="vidCreateScenesWrapper" class="hidden bg-white rounded-3xl border border-slate-200 shadow-2xs p-4 sm:p-5 space-y-3.5 animate-fade-in">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-xs font-black flex items-center justify-center">2</span>
-                                <span>Duyệt &amp; Sửa lời thuyết minh từng cảnh trước khi dựng Video</span>
+                                <span class="w-6 h-6 rounded-full bg-purple-600 text-white text-xs font-black flex items-center justify-center">2</span>
+                                <span>Văn bản lồng tiếng &amp; Phụ đề chạy chữ — Duyệt xong bấm Đồng Ý xuất Video</span>
                             </div>
                             <div class="flex items-center gap-1.5">
                                 <button type="button" onclick="addManualVideoCreateScene()" class="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-extrabold">+ Thêm cảnh</button>
-                                <button type="button" onclick="exportVideoCreateScriptTxt()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold">Tải văn bản (.txt)</button>
                             </div>
                         </div>
 
                         <div id="vidCreateScenesList" class="space-y-2.5"></div>
 
                         <!-- Chọn giọng đọc & tùy chọn phụ đề chạy chữ xuất video -->
-                        <div class="p-3.5 rounded-2xl bg-purple-50/60 border border-purple-200 space-y-3 text-xs">
+                        <div class="p-4 rounded-2xl bg-purple-50/60 border border-purple-200 space-y-3.5 text-xs">
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label class="block font-bold text-slate-700 mb-1">Giọng lồng tiếng AI</label>
@@ -1457,19 +1548,15 @@
                             </div>
 
                             <div class="flex flex-wrap items-center gap-4">
-                                <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+                                <label class="flex items-center gap-2 cursor-pointer font-extrabold text-purple-900">
                                     <input type="checkbox" id="vidCreateSubtitles" checked class="w-4 h-4 rounded accent-purple-600">
-                                    <span>Hiện phụ đề chạy chữ phía dưới</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
-                                    <input type="checkbox" id="vidCreateAutoTxt" checked class="w-4 h-4 rounded accent-purple-600">
-                                    <span>Xuất kèm file văn bản (.txt)</span>
+                                    <span><i class="fa-solid fa-closed-captioning mr-1 text-purple-600"></i>Hiện phụ đề chạy chữ phía dưới</span>
                                 </label>
                             </div>
 
-                            <button type="button" id="btnVidCreateRender" onclick="approveAndRenderCreateVideo()" class="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs sm:text-sm font-black shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50">
+                            <button type="button" id="btnVidCreateRender" onclick="approveAndRenderCreateVideo()" class="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs sm:text-sm font-black shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50">
                                 <i class="fa-solid fa-circle-check"></i>
-                                <span>Đồng Ý Văn Bản → Tự Lồng Tiếng &amp; Xuất File Video</span>
+                                <span>Đồng Ý → Tự Động Lồng Tiếng &amp; Xuất Video Ngay</span>
                             </button>
                         </div>
                     </div>
@@ -1579,32 +1666,43 @@
                                         <label class="block font-bold text-slate-700 mb-1">Gợi ý thêm cho AI (tuỳ chọn):</label>
                                         <textarea id="vidDubUserHint" rows="2" placeholder="VD: Đây là các đoạn quay thí nghiệm / du lịch, hãy viết lời lồng tiếng liền mạch hấp dẫn..." class="w-full p-2.5 rounded-xl bg-slate-50 focus:bg-white border border-slate-300 focus:border-purple-500 outline-none"></textarea>
                                     </div>
-                                    <button type="button" id="btnVidDubAnalyze" onclick="aiAnalyzeVideoAndWriteDubScript()" class="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm font-extrabold transition flex items-center justify-center gap-2 shadow-2xs disabled:opacity-50">
+                                    <button type="button" id="btnVidDubAnalyze" onclick="aiAnalyzeVideoAndWriteDubScript()" class="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm font-extrabold transition flex items-center justify-center gap-2 shadow-2xs disabled:opacity-50">
                                         <i class="fa-solid fa-wand-magic-sparkles"></i>
                                         <span>AI Xem Tất Cả Clip &amp; Viết Văn Bản Lồng Tiếng</span>
                                     </button>
+
+                                    <!-- Thanh tiến trình % đợi AI xem video & viết lồng tiếng (đạt 100% mới hiện Số 2) -->
+                                    <div id="vidDubAnalyzeProgressBox" class="hidden p-3.5 rounded-2xl bg-purple-50 border border-purple-200 space-y-2 animate-fade-in">
+                                        <div class="flex items-center justify-between gap-2 text-xs font-extrabold text-purple-950">
+                                            <span id="vidDubAnalyzeProgressLabel" class="flex items-center gap-2 min-w-0">
+                                                <i class="fa-solid fa-spinner fa-spin text-purple-600 shrink-0"></i>
+                                                <span class="truncate">Đang phân tích video...</span>
+                                            </span>
+                                            <span id="vidDubAnalyzeProgressPct" class="px-2.5 py-0.5 rounded-full bg-purple-600 text-white font-mono text-[11px] font-black shrink-0">0%</span>
+                                        </div>
+                                        <div class="w-full h-2.5 bg-purple-100 rounded-full overflow-hidden">
+                                            <div id="vidDubAnalyzeProgressBar" class="h-full progress-bar-animated rounded-full transition-all duration-300" style="width: 5%"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Bước 2: AI đưa văn bản ra để người dùng duyệt & cấu hình Phụ Đề Chạy Chữ -->
-                    <div id="vidDubScriptSection" class="hidden bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 space-y-3.5">
+                    <!-- Bước 2 (CHỈ HIỆN SAU KHI ĐỢI ĐẠT 100%): Văn bản lồng tiếng & Phụ đề chạy chữ -->
+                    <div id="vidDubScriptSection" class="hidden bg-white rounded-3xl border border-slate-200 shadow-2xs p-4 sm:p-5 space-y-3.5 animate-fade-in">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-xs font-black flex items-center justify-center">2</span>
-                                <span>Văn bản lồng tiếng &amp; Phụ đề chạy chữ — Bạn duyệt sửa rồi bấm Đồng Ý</span>
+                                <span class="w-6 h-6 rounded-full bg-purple-600 text-white text-xs font-black flex items-center justify-center">2</span>
+                                <span>Văn bản lồng tiếng &amp; Phụ đề chạy chữ — Bạn kiểm tra hợp lý rồi chọn Đồng Ý</span>
                             </div>
-                            <button type="button" onclick="exportVideoDubScriptTxt()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold transition">
-                                <i class="fa-solid fa-file-lines mr-1"></i>Tải riêng văn bản (.txt)
-                            </button>
                         </div>
 
-                        <textarea id="vidDubScriptTextarea" rows="5" oninput="updateVideoDubScriptStats()" placeholder="Văn bản lời lồng tiếng (đồng thời làm phụ đề chạy chữ phía dưới) sẽ hiện tại đây để bạn duyệt hoặc tự gõ..." class="w-full rounded-xl bg-slate-50 focus:bg-white border border-slate-300 focus:border-purple-500 p-3.5 text-xs sm:text-sm leading-relaxed text-slate-900 outline-none resize-y"></textarea>
+                        <textarea id="vidDubScriptTextarea" rows="5" oninput="updateVideoDubScriptStats()" placeholder="Văn bản lời lồng tiếng (đồng thời làm phụ đề chạy chữ phía dưới) sẽ hiện tại đây để bạn duyệt hoặc chỉnh sửa..." class="w-full rounded-xl bg-slate-50 focus:bg-white border border-slate-300 focus:border-purple-500 p-3.5 text-xs sm:text-sm leading-relaxed text-slate-900 outline-none resize-y"></textarea>
 
                         <div id="vidDubScriptStats" class="flex flex-wrap items-center justify-between gap-2 text-[11px] font-bold text-slate-500"></div>
 
-                        <div class="p-3.5 rounded-2xl bg-purple-50/60 border border-purple-200 space-y-3 text-xs">
+                        <div class="p-4 rounded-2xl bg-purple-50/60 border border-purple-200 space-y-3.5 text-xs">
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label class="block font-bold text-slate-700 mb-1">Giọng đọc AI</label>
@@ -1628,15 +1726,11 @@
                             </div>
 
                             <!-- Cài đặt Phụ Đề Chạy Chữ Phía Dưới -->
-                            <div class="p-3 rounded-xl bg-white border border-purple-200/80 space-y-2.5">
+                            <div class="p-3.5 rounded-xl bg-white border border-purple-200/80 space-y-2.5">
                                 <div class="flex flex-wrap items-center justify-between gap-2">
                                     <label class="flex items-center gap-2 cursor-pointer font-extrabold text-purple-900">
                                         <input type="checkbox" id="vidDubSubtitles" checked class="w-4 h-4 rounded accent-purple-600">
                                         <span><i class="fa-solid fa-closed-captioning mr-1 text-purple-600"></i>Bật Phụ Đề Chạy Chữ Phía Dưới</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
-                                        <input type="checkbox" id="vidDubAutoExportTxt" checked class="w-4 h-4 rounded accent-purple-600">
-                                        <span>Tự xuất file văn bản (.txt) khi bấm Đồng Ý</span>
                                     </label>
                                 </div>
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -1668,9 +1762,9 @@
                                 </div>
                             </div>
 
-                            <button type="button" id="btnVidDubApproveRender" onclick="approveAndRenderDubbedVideo()" class="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs sm:text-sm font-black shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50">
+                            <button type="button" id="btnVidDubApproveRender" onclick="approveAndRenderDubbedVideo()" class="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs sm:text-sm font-black shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50">
                                 <i class="fa-solid fa-circle-check"></i>
-                                <span>Đồng Ý Văn Bản → Tự Cắt Ghép, Lồng Tiếng &amp; Chạy Phụ Đề → Xuất File Video</span>
+                                <span>Đồng Ý → Tự Động Cắt Ghép, Lồng Tiếng &amp; Xuất Video Ngay</span>
                             </button>
                         </div>
                     </div>
@@ -1718,24 +1812,21 @@
                         </div>
                     </div>
 
-                    <video id="vidResultPlayer" controls playsinline class="w-full max-h-80 rounded-2xl bg-slate-900 border border-emerald-200"></video>
+                    <video id="vidResultPlayer" controls playsinline class="w-full max-h-96 rounded-2xl bg-slate-900 border border-emerald-200"></video>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <button type="button" onclick="downloadLatestRenderedVideo()" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-black transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <button type="button" onclick="downloadLatestRenderedVideo()" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-black transition flex items-center justify-center gap-1.5 shadow-xs">
                             <i class="fa-solid fa-download"></i>
-                            <span>Tải File Video</span>
+                            <span>Tải Lại File Video Về Máy</span>
                         </button>
-                        <button type="button" onclick="downloadLatestVideoScriptTxt()" class="py-2.5 px-4 rounded-xl bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-extrabold transition flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-file-lines"></i>
-                            <span>Tải Văn Bản (.txt)</span>
-                        </button>
-                        <button type="button" id="btnDownloadLatestVidMp3" onclick="downloadLatestVideoVoiceMp3()" class="hidden py-2.5 px-4 rounded-xl bg-white hover:bg-teal-50 text-teal-800 border border-teal-300 text-xs font-extrabold transition items-center justify-center gap-1.5">
+                        <button type="button" id="btnDownloadLatestVidMp3" onclick="downloadLatestVideoVoiceMp3()" class="hidden py-3 px-4 rounded-xl bg-white hover:bg-teal-50 text-teal-800 border border-teal-300 text-xs sm:text-sm font-extrabold transition items-center justify-center gap-1.5">
                             <i class="fa-solid fa-volume-high"></i>
-                            <span>Tải Riêng MP3</span>
+                            <span>Tải Riêng File Giọng Đọc (.MP3)</span>
                         </button>
                     </div>
                 </div>
 
+                </div>
             </div>
         </div>
     </div>
@@ -4046,6 +4137,8 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
                     el.classList.remove('flex');
                 }
             });
+            const clonedBody = clonedRoot.querySelector('body');
+            if (clonedBody) clonedBody.classList.remove('overflow-hidden');
 
             const safeExamJson = JSON.stringify(EXAM_DATA).replace(/<\//g, '<\\/');
             const htmlDoc = clonedRoot.outerHTML
@@ -4056,6 +4149,15 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             showToast('Đã xuất tệp Web Ôn Tập độc lập (.html)!');
         }
 
+        function syncFullWorkspaceBodyScroll() {
+            const fullIds = ['aiChatDrawer', 'ttsStudioModal', 'pptxAudioModal', 'pptConvertModal', 'videoStudioModal'];
+            const anyOpen = fullIds.some(id => {
+                const el = document.getElementById(id);
+                return el && !el.classList.contains('hidden');
+            });
+            document.body.classList.toggle('overflow-hidden', anyOpen);
+        }
+
         // =========================================================================
         // 7. KHU VỰC 2: SIÊU AI HỎI MỌI THỨ & AI SOẠN / SỬA ĐỀ ÔN TẬP
         // =========================================================================
@@ -4064,6 +4166,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             if (!drawer) return;
             drawer.classList.remove('hidden');
             drawer.classList.add('flex');
+            syncFullWorkspaceBodyScroll();
             switchActiveAIBot(botMode);
         }
 
@@ -4072,6 +4175,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             if (!drawer) return;
             drawer.classList.add('hidden');
             drawer.classList.remove('flex');
+            syncFullWorkspaceBodyScroll();
         }
 
         function toggleAIChatFullscreen() {
@@ -4242,6 +4346,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             if (!modal) return;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            syncFullWorkspaceBodyScroll();
             renderTTSVoiceCards();
             if (!ttsVoicesSyncedOnce) syncVoicesFromVercelSilent();
         }
@@ -4249,8 +4354,10 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
         function closeTTSStudioModal() {
             const modal = document.getElementById('ttsStudioModal');
             if (!modal) return;
+            modal.querySelectorAll('audio').forEach(a => { try { a.pause(); } catch (_) {} });
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            syncFullWorkspaceBodyScroll();
         }
 
         function renderTTSVoiceCards() {
@@ -4344,6 +4451,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             if (!modal) return;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            syncFullWorkspaceBodyScroll();
             populatePptxVoiceSelect();
             if (!ttsVoicesSyncedOnce) syncVoicesFromVercelSilent();
         }
@@ -4354,6 +4462,7 @@ Chỉ trả về duy nhất JSON hợp lệ.`;
             modal.querySelectorAll('audio').forEach(a => { try { a.pause(); } catch (_) {} });
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            syncFullWorkspaceBodyScroll();
         }
 
         function setPptxError(msg) {
@@ -5183,6 +5292,7 @@ ${blockText}`;
             if (!modal) return;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            syncFullWorkspaceBodyScroll();
         }
 
         function closePptConvertModal() {
@@ -5190,6 +5300,7 @@ ${blockText}`;
             if (!modal) return;
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            syncFullWorkspaceBodyScroll();
         }
 
         function bindPptConvertDropzoneEvents() {
@@ -5251,6 +5362,8 @@ ${blockText}`;
             activeRecorder: null,
             activeAudioCtx: null,
             activeRafId: 0,
+            activeFrameTimerId: 0,
+            analyzeTimerId: 0,
             speechRec: null,
             isDictating: false,
             // Dữ liệu Chế độ 1: Ảnh / Lời nói -> Video
@@ -5274,6 +5387,7 @@ ${blockText}`;
             if (!modal) return;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            syncFullWorkspaceBodyScroll();
             populateVideoStudioVoiceSelects();
             switchVideoStudioTab(defaultTab);
             if (!ttsVoicesSyncedOnce) {
@@ -5285,10 +5399,15 @@ ${blockText}`;
             const modal = document.getElementById('videoStudioModal');
             if (!modal) return;
             cancelActiveVideoRender(true);
+            if (videoStudioState.analyzeTimerId) {
+                clearInterval(videoStudioState.analyzeTimerId);
+                videoStudioState.analyzeTimerId = 0;
+            }
             stopVideoSpeechDictation();
             modal.querySelectorAll('video').forEach(v => { try { v.pause(); } catch (_) {} });
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            syncFullWorkspaceBodyScroll();
         }
 
         function populateVideoStudioVoiceSelects() {
@@ -5351,11 +5470,36 @@ ${blockText}`;
             }
         }
 
+        function setVideoAnalyzeProgress(mode, visible, pct = 0, label = '') {
+            const prefix = mode === 'dub' ? 'vidDubAnalyzeProgress' : 'vidCreateAnalyzeProgress';
+            const box = document.getElementById(prefix + 'Box');
+            if (!box) return;
+            if (!visible) {
+                box.classList.add('hidden');
+                return;
+            }
+            box.classList.remove('hidden');
+            const clamped = Math.max(2, Math.min(100, Math.round(pct)));
+            const pctEl = document.getElementById(prefix + 'Pct');
+            const barEl = document.getElementById(prefix + 'Bar');
+            const lblEl = document.getElementById(prefix + 'Label');
+            if (pctEl) pctEl.textContent = `${clamped}%`;
+            if (barEl) barEl.style.width = `${clamped}%`;
+            if (lblEl && label) {
+                const iconCls = clamped >= 100 ? 'fa-solid fa-circle-check text-emerald-600 shrink-0' : 'fa-solid fa-spinner fa-spin text-purple-600 shrink-0';
+                lblEl.innerHTML = `<i class="${iconCls}"></i><span class="truncate">${escapeHtml(label)}</span>`;
+            }
+        }
+
         function cancelActiveVideoRender(silent = false) {
             videoStudioState.cancelRequested = true;
             if (videoStudioState.activeRafId) {
                 cancelAnimationFrame(videoStudioState.activeRafId);
                 videoStudioState.activeRafId = 0;
+            }
+            if (videoStudioState.activeFrameTimerId) {
+                clearTimeout(videoStudioState.activeFrameTimerId);
+                videoStudioState.activeFrameTimerId = 0;
             }
             if (videoStudioState.activeRecorder && videoStudioState.activeRecorder.state !== 'inactive') {
                 try { videoStudioState.activeRecorder.stop(); } catch (_) {}
@@ -5374,6 +5518,8 @@ ${blockText}`;
             if (typeof MediaRecorder === 'undefined') return null;
             const candidates = [
                 { mime: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', ext: 'mp4' },
+                { mime: 'video/mp4;codecs=avc1,mp4a.40.2', ext: 'mp4' },
+                { mime: 'video/mp4;codecs=h264,aac', ext: 'mp4' },
                 { mime: 'video/mp4', ext: 'mp4' },
                 { mime: 'video/webm;codecs=vp9,opus', ext: 'webm' },
                 { mime: 'video/webm;codecs=vp8,opus', ext: 'webm' },
@@ -5992,9 +6138,15 @@ ${blockText}`;
                 return;
             }
             setVideoStudioError('');
+            document.getElementById('vidCreateScenesWrapper')?.classList.add('hidden');
+            document.getElementById('vidResultBox')?.classList.add('hidden');
+
             const btn = document.getElementById('btnVidGenerateScript');
             if (btn) btn.disabled = true;
-            showToast('AI đang phân tích hình ảnh & biên soạn kịch bản video...');
+
+            if (videoStudioState.analyzeTimerId) clearInterval(videoStudioState.analyzeTimerId);
+            let curPct = 8;
+            setVideoAnalyzeProgress('create', true, curPct, 'Đang chuẩn bị hình ảnh & nội dung... (8%)');
 
             try {
                 const styleVal = document.getElementById('vidCreateStyleSelect')?.value || 'teacher';
@@ -6006,6 +6158,15 @@ ${blockText}`;
                 imgs.forEach((im) => {
                     parts.push({ inlineData: { mimeType: im.mimeType || 'image/jpeg', data: im.base64 } });
                 });
+
+                curPct = 24;
+                setVideoAnalyzeProgress('create', true, curPct, `AI đang xem ${imgs.length || 'chủ đề'} & biên soạn lời lồng tiếng... (24%)`);
+                videoStudioState.analyzeTimerId = setInterval(() => {
+                    if (curPct < 94) {
+                        curPct += curPct < 70 ? 5 : 2;
+                        setVideoAnalyzeProgress('create', true, curPct, `AI đang biên soạn lời lồng tiếng & phụ đề chạy chữ... (${curPct}%)`);
+                    }
+                }, 380);
 
                 const sceneCountHint = imgs.length > 0
                     ? `Có đúng ${imgs.length} hình ảnh đính kèm theo thứ tự Ảnh 1 đến Ảnh ${imgs.length}. Hãy viết đúng ${imgs.length} cảnh tương ứng với từng hình ảnh.`
@@ -6025,6 +6186,9 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
 
                 parts.push({ text: prompt });
                 const raw = await callGeminiTextOrMultimodal(parts, '', false, 4096);
+                clearInterval(videoStudioState.analyzeTimerId);
+                videoStudioState.analyzeTimerId = 0;
+
                 const cleaned = String(raw || '').replace(/\r\n/g, '\n');
 
                 const sceneRe = /(?:^|\n)\s*\[\[\[\s*C(?:A|Ả)NH\s*(\d+)\s*(?:\|\s*([^\]]+))?\]\]\]/gi;
@@ -6085,13 +6249,22 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
                     throw new Error('AI chưa tạo được danh sách cảnh. Hãy mô tả rõ chủ đề hơn rồi bấm thử lại nhé!');
                 }
 
+                setVideoAnalyzeProgress('create', true, 100, 'Đã hoàn tất 100% — Đang mở mục 2: Văn bản lồng tiếng & Phụ đề chạy chữ!');
+                await new Promise(r => setTimeout(r, 420));
+                setVideoAnalyzeProgress('create', false);
+
                 videoStudioState.createScenes = parsedScenes;
                 renderVideoCreateScenesList();
                 document.getElementById('vidCreateScenesWrapper')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                showToast(`AI đã viết xong kịch bản ${parsedScenes.length} cảnh! Hãy duyệt văn bản rồi bấm Đồng Ý để xuất video.`);
+                showToast(`Đã hoàn tất 100%! Hãy kiểm tra văn bản ở mục 2 rồi bấm Đồng Ý để xuất Video.`);
             } catch (err) {
+                setVideoAnalyzeProgress('create', false);
                 setVideoStudioError(`Không thể tạo kịch bản video lúc này: ${err.message}`);
             } finally {
+                if (videoStudioState.analyzeTimerId) {
+                    clearInterval(videoStudioState.analyzeTimerId);
+                    videoStudioState.analyzeTimerId = 0;
+                }
                 if (btn) btn.disabled = false;
             }
         }
@@ -6136,11 +6309,6 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
             try { await audioCtx.resume(); } catch (_) {}
 
             const fullScriptTxt = buildFullCreateScriptTxt();
-            if (document.getElementById('vidCreateAutoTxt')?.checked) {
-                const txtBlob = new Blob(['\ufeff', fullScriptTxt], { type: 'text/plain;charset=utf-8' });
-                triggerBlobFileDownload(txtBlob, 'kich_ban_video_ai.txt');
-            }
-
             const voiceId = document.getElementById('vidCreateVoiceSelect')?.value || 'vi-VN-HoaiMyNeural';
             const speed = parseFloat(document.getElementById('vidCreateSpeedRange')?.value || '1.0');
             const showSubs = Boolean(document.getElementById('vidCreateSubtitles')?.checked);
@@ -6247,10 +6415,10 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
                             if (nowMs >= sceneDurMs) {
                                 resolveScene();
                             } else {
-                                videoStudioState.activeRafId = requestAnimationFrame(drawFrame);
+                                videoStudioState.activeFrameTimerId = setTimeout(drawFrame, 33);
                             }
                         };
-                        videoStudioState.activeRafId = requestAnimationFrame(drawFrame);
+                        drawFrame();
                     });
 
                     elapsedTotal += item.durationSec;
@@ -6273,7 +6441,9 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
                     'kich_ban_video_ai.txt',
                     prepared[0]?.mp3Blob || null
                 );
-                showToast('Đã tạo xong Video lồng tiếng kèm phụ đề chạy chữ!');
+                // Tự động tải thẳng file Video hoàn chỉnh (không tự lưu file văn bản .txt)
+                triggerBlobFileDownload(finalBlob, videoStudioState.latestVideoFilename);
+                showToast('Đã xuất xong và tự tải File Video về máy!');
             } catch (err) {
                 if (!videoStudioState.cancelRequested) {
                     setVideoStudioError(`Lỗi khi dựng video: ${err.message}`);
@@ -6390,7 +6560,10 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
             document.getElementById('btnVidDubAddMore')?.classList.remove('hidden');
             document.getElementById('btnVidDubClearAll')?.classList.remove('hidden');
             document.getElementById('vidDubSourcePreviewBox')?.classList.remove('hidden');
-            document.getElementById('vidDubScriptSection')?.classList.remove('hidden');
+            // Giữ ẩn mục số 2 cho tới khi bấm AI phân tích chạy đủ 100%
+            if (!(document.getElementById('vidDubScriptTextarea')?.value || '').trim()) {
+                document.getElementById('vidDubScriptSection')?.classList.add('hidden');
+            }
 
             renderVideoDubClipsList();
             previewVideoDubClip(Math.min(videoStudioState.dubActivePreviewIdx, videoStudioState.dubClips.length - 1));
@@ -6515,11 +6688,15 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
             videoStudioState.dubActivePreviewIdx = 0;
             const player = document.getElementById('vidDubSourcePlayer');
             if (player) { player.pause(); player.removeAttribute('src'); player.load(); }
+            const ta = document.getElementById('vidDubScriptTextarea');
+            if (ta) ta.value = '';
+            setVideoAnalyzeProgress('dub', false);
             document.getElementById('vidDubDropzone')?.classList.remove('hidden');
             document.getElementById('btnVidDubAddMore')?.classList.add('hidden');
             document.getElementById('btnVidDubClearAll')?.classList.add('hidden');
             document.getElementById('vidDubSourcePreviewBox')?.classList.add('hidden');
             document.getElementById('vidDubScriptSection')?.classList.add('hidden');
+            document.getElementById('vidResultBox')?.classList.add('hidden');
         }
 
         function previewVideoDubClip(idx) {
@@ -6580,12 +6757,12 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
                         <div class="flex flex-wrap items-center gap-1.5">
                             <label class="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200">
                                 <span class="text-[10px] font-bold text-slate-500">Từ</span>
-                                <input type="number" step="0.5" min="0" max="${c.duration.toFixed(1)}" value="${c.startSec}" onchange="updateVideoDubClipTrim(${idx}, 'startSec', this.value)" class="w-14 text-center font-mono font-bold text-slate-800 outline-none">
+                                <input type="number" step="0.1" min="0" max="${c.duration.toFixed(1)}" value="${c.startSec}" onchange="updateVideoDubClipTrim(${idx}, 'startSec', this.value)" class="w-14 text-center font-mono font-bold text-slate-800 outline-none">
                                 <span class="text-[10px] text-slate-400">s</span>
                             </label>
                             <label class="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200">
                                 <span class="text-[10px] font-bold text-slate-500">Đến</span>
-                                <input type="number" step="0.5" min="0.5" max="${c.duration.toFixed(1)}" value="${c.endSec}" onchange="updateVideoDubClipTrim(${idx}, 'endSec', this.value)" class="w-14 text-center font-mono font-bold text-slate-800 outline-none">
+                                <input type="number" step="0.1" min="0.5" max="${c.duration.toFixed(1)}" value="${c.endSec}" onchange="updateVideoDubClipTrim(${idx}, 'endSec', this.value)" class="w-14 text-center font-mono font-bold text-slate-800 outline-none">
                                 <span class="text-[10px] text-slate-400">s</span>
                             </label>
                             <button type="button" onclick="moveVideoDubClip(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 disabled:opacity-35" title="Chuyển lên"><i class="fa-solid fa-arrow-up text-[10px]"></i></button>
@@ -6615,12 +6792,15 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
                 const timer = setTimeout(() => done(null), 3200);
                 const drawNow = () => {
                     try {
+                        const vw = v.videoWidth || clip.width || 480;
+                        const vh = v.videoHeight || clip.height || 270;
+                        const sc = Math.min(1, 540 / Math.max(vw, vh));
                         const c = document.createElement('canvas');
-                        c.width = 480;
-                        c.height = 270;
-                        c.getContext('2d').drawImage(v, 0, 0, 480, 270);
+                        c.width = Math.max(160, Math.round(vw * sc));
+                        c.height = Math.max(160, Math.round(vh * sc));
+                        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
                         clearTimeout(timer);
-                        const b64 = c.toDataURL('image/jpeg', 0.7).split(',')[1];
+                        const b64 = c.toDataURL('image/jpeg', 0.72).split(',')[1];
                         done(b64 ? { timeSec: Math.round(seekT), base64: b64 } : null);
                     } catch (_) {
                         clearTimeout(timer);
@@ -6647,11 +6827,13 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
             });
         }
 
-        async function extractKeyframesFromAllDubClips(maxTotalFrames = 8) {
+        async function extractKeyframesFromAllDubClips(maxTotalFrames = 8, onProgress = null) {
             const clips = videoStudioState.dubClips;
             if (!clips.length) return [];
             const frames = [];
             const perClip = Math.max(1, Math.floor(maxTotalFrames / clips.length));
+            const plannedCount = Math.min(maxTotalFrames, clips.length * perClip);
+            let doneCount = 0;
 
             for (let ci = 0; ci < clips.length && frames.length < maxTotalFrames; ci++) {
                 const c = clips[ci];
@@ -6659,6 +6841,10 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
                 for (let k = 0; k < takeCount; k++) {
                     const ratio = (k + 0.5) / takeCount;
                     const captured = await captureSingleFrameFromClip(c, ratio);
+                    doneCount++;
+                    if (typeof onProgress === 'function') {
+                        onProgress(doneCount, Math.max(1, plannedCount), ci + 1, clips.length);
+                    }
                     if (captured && captured.base64) {
                         frames.push({
                             clipIndex: ci + 1,
@@ -6697,12 +6883,31 @@ Trả về đúng định dạng từng cảnh như sau (không dùng ký tự m
                 return;
             }
             setVideoStudioError('');
+            document.getElementById('vidDubScriptSection')?.classList.add('hidden');
+            document.getElementById('vidResultBox')?.classList.add('hidden');
+
             const btn = document.getElementById('btnVidDubAnalyze');
             if (btn) btn.disabled = true;
-            showToast(`AI đang xem ${videoStudioState.dubClips.length} đoạn video để viết văn bản lồng tiếng...`);
+
+            if (videoStudioState.analyzeTimerId) clearInterval(videoStudioState.analyzeTimerId);
+            let curPct = 6;
+            setVideoAnalyzeProgress('dub', true, curPct, `Đang đọc ${videoStudioState.dubClips.length} đoạn video... (6%)`);
 
             try {
-                const frames = await extractKeyframesFromAllDubClips(8);
+                const frames = await extractKeyframesFromAllDubClips(8, (doneF, totalF, clipNum, totalClips) => {
+                    curPct = Math.min(38, 6 + Math.round((doneF / totalF) * 32));
+                    setVideoAnalyzeProgress('dub', true, curPct, `Đang trích xuất hình ảnh Clip ${clipNum}/${totalClips}... (${curPct}%)`);
+                });
+
+                curPct = 42;
+                setVideoAnalyzeProgress('dub', true, curPct, `AI đang xem tất cả video & viết văn bản lồng tiếng... (42%)`);
+                videoStudioState.analyzeTimerId = setInterval(() => {
+                    if (curPct < 95) {
+                        curPct += curPct < 74 ? 5 : 2;
+                        setVideoAnalyzeProgress('dub', true, curPct, `AI đang biên soạn lời lồng tiếng & phụ đề chạy chữ... (${curPct}%)`);
+                    }
+                }, 380);
+
                 const dur = Math.max(5, Math.round(getTotalTrimmedDubDuration()));
                 const targetWords = Math.max(25, Math.min(480, Math.round(dur * 2.4)));
                 const styleVal = document.getElementById('vidDubStyleSelect')?.value || 'narrator';
@@ -6729,16 +6934,37 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
 
                 parts.push({ text: prompt });
                 const script = await callGeminiTextOrMultimodal(parts, '', false, 3072);
-                const ta = document.getElementById('vidDubScriptTextarea');
-                if (ta) {
-                    ta.value = String(script || '').replace(/[*#_`]+/g, '').trim();
-                    updateVideoDubScriptStats();
-                    ta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                clearInterval(videoStudioState.analyzeTimerId);
+                videoStudioState.analyzeTimerId = 0;
+
+                const cleanScript = String(script || '').replace(/[*#_`]+/g, '').trim();
+                if (!cleanScript) {
+                    throw new Error('AI chưa trả về văn bản lồng tiếng, bạn bấm thử lại nhé!');
                 }
-                showToast('AI đã viết xong văn bản lồng tiếng! Bạn kiểm tra duyệt rồi bấm Đồng Ý để cắt ghép & xuất Video.');
+
+                setVideoAnalyzeProgress('dub', true, 100, 'Đã hoàn tất 100% — Đang mở mục 2: Văn bản lồng tiếng & Phụ đề chạy chữ!');
+                await new Promise(r => setTimeout(r, 420));
+                setVideoAnalyzeProgress('dub', false);
+
+                const ta = document.getElementById('vidDubScriptTextarea');
+                const sec2 = document.getElementById('vidDubScriptSection');
+                if (ta) {
+                    ta.value = cleanScript;
+                    updateVideoDubScriptStats();
+                }
+                if (sec2) {
+                    sec2.classList.remove('hidden');
+                    sec2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                showToast('Đã đạt 100%! Mục 2 đã mở — bạn kiểm tra hợp lý rồi bấm Đồng Ý để xuất Video nhé.');
             } catch (err) {
+                setVideoAnalyzeProgress('dub', false);
                 setVideoStudioError(`AI chưa phân tích được chuỗi video này: ${err.message}`);
             } finally {
+                if (videoStudioState.analyzeTimerId) {
+                    clearInterval(videoStudioState.analyzeTimerId);
+                    videoStudioState.analyzeTimerId = 0;
+                }
                 if (btn) btn.disabled = false;
             }
         }
@@ -6783,11 +7009,6 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
             const firstBase = (videoStudioState.dubClips[0]?.name || 'video_ghep').replace(/\.[^.]+$/, '');
             const outSlug = videoStudioState.dubClips.length > 1 ? `${getSafeFilenameSlug(firstBase, 'video')}_ghep_${videoStudioState.dubClips.length}_clip` : `${getSafeFilenameSlug(firstBase, 'video')}_da_long_tieng`;
             const scriptFilename = `${outSlug}_van_ban.txt`;
-
-            if (document.getElementById('vidDubAutoExportTxt')?.checked) {
-                const txtBlob = new Blob(['\ufeff', approvedText], { type: 'text/plain;charset=utf-8' });
-                triggerBlobFileDownload(txtBlob, scriptFilename);
-            }
 
             const voiceId = document.getElementById('vidDubVoiceSelect')?.value || 'vi-VN-HoaiMyNeural';
             const speed = parseFloat(document.getElementById('vidDubSpeedRange')?.value || '1.0');
@@ -6884,7 +7105,8 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                 const loadAndSeekSegment = async (seg, isLast) => {
                     const availDur = Math.max(0.5, (seg.clip.duration || 10) - seg.startSec);
                     playerVid.loop = isLast || seg.playDurSec >= availDur - 0.15;
-                    if (playerVid._loadedClipUrl !== seg.clip.url) {
+                    const needNewSrc = playerVid._loadedClipUrl !== seg.clip.url;
+                    if (needNewSrc) {
                         playerVid._loadedClipUrl = seg.clip.url;
                         playerVid.src = seg.clip.url;
                         await new Promise((resolve, reject) => {
@@ -6893,11 +7115,14 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                             playerVid.onerror = () => { clearTimeout(timer); reject(new Error(`Không phát được clip "${seg.clip.name}".`)); };
                         });
                     }
-                    await new Promise(resolve => {
-                        const timer = setTimeout(resolve, 1000);
-                        playerVid.onseeked = () => { clearTimeout(timer); resolve(); };
-                        try { playerVid.currentTime = Math.max(0, seg.startSec); } catch (_) { clearTimeout(timer); resolve(); }
-                    });
+                    const targetSec = Math.max(0, seg.startSec);
+                    if (needNewSrc || Math.abs((playerVid.currentTime || 0) - targetSec) > 0.04) {
+                        await new Promise(resolve => {
+                            const timer = setTimeout(resolve, 1000);
+                            playerVid.onseeked = () => { clearTimeout(timer); resolve(); };
+                            try { playerVid.currentTime = targetSec; } catch (_) { clearTimeout(timer); resolve(); }
+                        });
+                    }
                 };
 
                 setVideoRenderProgress(true, 26, 'Đang chuẩn bị luồng cắt ghép video & phụ đề...');
@@ -6986,10 +7211,10 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                                 try { playerVid.pause(); } catch (_) {}
                                 resolveClip();
                             } else {
-                                videoStudioState.activeRafId = requestAnimationFrame(loopFrame);
+                                videoStudioState.activeFrameTimerId = setTimeout(loopFrame, 33);
                             }
                         };
-                        videoStudioState.activeRafId = requestAnimationFrame(loopFrame);
+                        loopFrame();
                     });
                 }
 
@@ -7009,7 +7234,9 @@ Chỉ trả về duy nhất văn bản lời lồng tiếng hoàn chỉnh.`;
                     scriptFilename,
                     voiceMp3Blob
                 );
-                showToast(`Đã cắt ghép ${clips.length} video, lồng tiếng & chèn phụ đề chạy chữ thành công!`);
+                // Tự động tải thẳng file Video hoàn chỉnh (không tự lưu file văn bản .txt)
+                triggerBlobFileDownload(finalBlob, videoStudioState.latestVideoFilename);
+                showToast(`Đã xuất xong và tự tải File Video về máy!`);
             } catch (err) {
                 if (!videoStudioState.cancelRequested) {
                     setVideoStudioError(`Lỗi khi cắt ghép & lồng tiếng video: ${err.message}`);
